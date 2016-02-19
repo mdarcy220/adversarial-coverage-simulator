@@ -31,6 +31,14 @@ public class GridNode extends Node {
 		this.nodeType = nodeType;
 	}
 
+	public double getCost() {
+		return this.cost;
+	}
+
+	public void setCost(double cost) {
+		this.cost = cost;
+	}
+
 	/**
 	 * Create a clone of the node
 	 */

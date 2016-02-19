@@ -67,6 +67,9 @@ public class GridEnvironment extends Environment {
 				g.setColor(new Color(200, 50, 255, alpha));
 				g.fillRect(x * cellSize.width, y * cellSize.height, cellSize.width, cellSize.height);
 				g.setColor(Color.BLACK);
+				if (grid[x][y].getNodeType() == NodeType.OBSTACLE) {
+					g.fillRect(x * cellSize.width, y * cellSize.height, cellSize.width, cellSize.height);
+				}
 				if (0 < grid[x][y].getCoverCount()) {
 					g.setColor(new Color(0, 64, 0));
 				} else {
@@ -80,9 +83,12 @@ public class GridEnvironment extends Environment {
 		}
 
 		// Draw the robots
+		g.setColor(Color.darkGray);
 		for (GridRobot r : this.robots) {
+			g.setColor(new Color(40 * r.getId(), 40 * (6 - r.getId()), 100));
 			g.fillOval(r.getLocation().x * cellSize.width, r.getLocation().y * cellSize.height, cellSize.width,
 					cellSize.height);
+
 		}
 	}
 
@@ -214,7 +220,7 @@ public class GridEnvironment extends Environment {
 	public boolean isCovered() {
 		for (int x = 0; x < this.getWidth(); x++) {
 			for (int y = 0; y < this.getHeight(); y++) {
-				if (grid[x][y].getCoverCount() < 1) {
+				if (grid[x][y].getCoverCount() < 1 && grid[x][y].getNodeType() != NodeType.OBSTACLE) {
 					return false;
 				}
 			}

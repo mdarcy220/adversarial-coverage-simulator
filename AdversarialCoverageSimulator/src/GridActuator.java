@@ -55,13 +55,13 @@ public class GridActuator extends Actuator {
 	}
 
 	private void moveTo(Coordinate newLoc) {
-		if(robot.isBroken()) {
+		if (robot.isBroken()) {
 			return;
 		}
-		
+
 		// Move, if possible
-		if (env.isOnGrid(newLoc.x, newLoc.y)
-				&& env.getGridNode(newLoc.x, newLoc.y).getNodeType() != NodeType.OBSTACLE) {
+		if (env.isOnGrid(newLoc.x, newLoc.y) && env.getGridNode(newLoc.x, newLoc.y).getNodeType() != NodeType.OBSTACLE
+				&& env.getRobotsByLocation(newLoc.x, newLoc.y).size() == 0) {
 			this.robot.setLocation(newLoc.x, newLoc.y);
 		}
 
@@ -73,9 +73,9 @@ public class GridActuator extends Actuator {
 	 */
 	public void coverCurrentNode() {
 		double rand = Math.random();
-		
-		if(rand < env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()) {
-			//env.getRobotById(this.robot.getId()).setBroken(true);			
+
+		if (rand < env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()) {
+			// env.getRobotById(this.robot.getId()).setBroken(true);
 		}
 		env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).incrementCoverCount();
 	}

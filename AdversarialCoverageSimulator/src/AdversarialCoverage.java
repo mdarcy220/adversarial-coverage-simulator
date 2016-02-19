@@ -25,9 +25,10 @@ public class AdversarialCoverage {
 	 */
 	boolean hasQuit = false;
 
+
 	public AdversarialCoverage() {
 
-		settings.setIntProperty("autorun.sleeptime", 50);
+		settings.setIntProperty("autorun.stepdelay", 50);
 
 		resetCoverageEnvironment();
 
@@ -37,6 +38,7 @@ public class AdversarialCoverage {
 			}
 		});
 	}
+
 
 	private void createAndShowGUI() {
 		mainPanel = new CoveragePanel(this.env);
@@ -62,6 +64,16 @@ public class AdversarialCoverage {
 			}
 		});
 		fileMenu.add(loadSettingsMenuItem);
+
+		final JMenuItem settingsDialogMenuItem = new JMenuItem("Settings...");
+		settingsDialogMenuItem.setToolTipText("Open the settings editor dialog");
+		settingsDialogMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				settings.openSettingsDialog(cw);
+			}
+		});
+		fileMenu.add(settingsDialogMenuItem);
 
 		menuBar.add(fileMenu);
 
@@ -113,7 +125,7 @@ public class AdversarialCoverage {
 		runMenu.add(stepCoverageMenuItem);
 
 		restartCoverageMenuItem.setToolTipText("Reinitialize the coverage");
-		restartCoverageMenuItem.setAccelerator(KeyStroke.getKeyStroke("Ctrl R"));
+		restartCoverageMenuItem.setAccelerator(KeyStroke.getKeyStroke("control R"));
 		restartCoverageMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
@@ -131,25 +143,31 @@ public class AdversarialCoverage {
 		cw.setJMenuBar(menuBar);
 	}
 
+
 	/**
 	 * Sets up the environment using the settings
 	 */
 	public void resetCoverageEnvironment() {
-		this.env = new GridEnvironment(
-				new Dimension(settings.getIntProperty("env.grid.width"), settings.getIntProperty("env.grid.height")));
+		this.env = new GridEnvironment(new Dimension(settings.getIntProperty("env.grid.width"),
+				settings.getIntProperty("env.grid.height")));
 
 		// Set up the coverage environment
-		if (!this.settings.hasProperty("grid.dangervalues")
-				|| this.settings.getStringProperty("grid.dangervalues") == "") {
+		if (!this.settings.hasProperty("env.grid.dangervalues")
+				|| this.settings.getStringProperty("env.grid.dangervalues").isEmpty()) {
 			randomizeDangerLevels();
+			randomizeObstacles();
 		} else {
 			boolean hasAllValues = true;
-			Scanner valuesScanner = new Scanner(this.settings.getStringProperty("grid.dangervalues"));
+			Scanner valuesScanner = new Scanner(this.settings.getStringProperty("env.grid.dangervalues"));
 			for (int x = 0; x < env.getWidth(); x++) {
 				for (int y = 0; y < env.getHeight(); y++) {
 					if (valuesScanner.hasNext()) {
 						double value = valuesScanner.nextDouble();
-						this.env.getGridNode(x, y).setDangerProb(value);
+						if (0 <= value) {
+							this.env.getGridNode(x, y).setDangerProb(value);
+						} else {
+							this.env.getGridNode(x, y).setNodeType(NodeType.OBSTACLE);
+						}
 					} else {
 						System.err.println(
 								"Missing values in grid.dangervalues setting. Switching to randomized danger levels.");
@@ -158,14 +176,18 @@ public class AdversarialCoverage {
 					}
 				}
 			}
+			valuesScanner.close();
+
 			if (!hasAllValues) {
 				randomizeDangerLevels();
+				randomizeObstacles();
 			}
 		}
 
 		// Set up the robots
 		for (int i = 0; i < 5; i++) {
-			GridRobot robot = new GridRobot(i, (int) (Math.random() * 10), (int) (Math.random() * 10));
+			GridRobot robot = new GridRobot(i, (int) (Math.random() * env.getWidth()),
+					(int) (Math.random() * env.getHeight()));
 			GridSensor sensor = new GridSensor(env, robot);
 			GridActuator actuator = new GridActuator(env, robot);
 			CoverageAlgorithm algo = new RandomGridCoverage(sensor, actuator);
@@ -181,6 +203,18 @@ public class AdversarialCoverage {
 
 	}
 
+
+	private void randomizeObstacles() {
+		for (int x = 0; x < env.getWidth(); x++) {
+			for (int y = 0; y < env.getHeight(); y++) {
+				if (Math.random() < 0.05) {
+					env.getGridNode(x, y).setNodeType(NodeType.OBSTACLE);
+				}
+			}
+		}
+	}
+
+
 	private void randomizeDangerLevels() {
 		Random rand = new Random();
 		rand.setSeed(System.currentTimeMillis());
@@ -192,17 +226,19 @@ public class AdversarialCoverage {
 				if (env.getGridNode(x, y).getDangerProb() < 0.5) {
 					env.getGridNode(x, y).setDangerProb(0.0);
 				} else {
-					env.getGridNode(x, y).setDangerProb((env.getGridNode(x, y).getDangerProb() - 0.5)/10.0);
+					env.getGridNode(x, y).setDangerProb(
+							(env.getGridNode(x, y).getDangerProb() - 0.5) / 10.0);
 				}
 			}
 		}
 	}
 
+
 	/**
 	 * Loads settings from the given file.
 	 * 
 	 * @param file
-	 *            the file containing setting information
+	 *                the file containing setting information
 	 */
 	public void loadSettingsFromFile(File file) {
 		Scanner input = null;
@@ -219,17 +255,21 @@ public class AdversarialCoverage {
 		// Read all settings
 		while (input.hasNext()) {
 			settingName = input.next();
-			if (!input.next().equals("=")) {
-				System.err.println("Bad format for setting: " + settingName);
+			String equalSign = input.next().trim();
+			if (!equalSign.equals("=")) {
+				System.err.println("Bad format for setting: " + settingName + " (Expected '=', found "
+						+ equalSign + ")");
+				continue;
 			}
-			String value = input.nextLine();
+			String value = input.nextLine().trim();
 			if (settingName.equals("grid_danger_values")) {
 				// Special case when loading a saved grid
 
 			} else {
 				if (!settings.hasProperty(settingName)) {
 					settings.setStringProperty(settingName, value);
-				} else if (settings.getSettingType(settingName) == AdversarialCoverageSettings.SettingType.INT) {
+				} else if (settings.getSettingType(
+						settingName) == AdversarialCoverageSettings.SettingType.INT) {
 					settings.setIntProperty(settingName, Integer.parseInt(value));
 				} else {
 					settings.setStringProperty(settingName, value);
@@ -240,33 +280,55 @@ public class AdversarialCoverage {
 		input.close();
 	}
 
+
 	public void runCoverage() {
-		new Timer(settings.getIntProperty("autorun.sleeptime"), new ActionListener() {
-			public void actionPerformed(ActionEvent ev) {
-				if (env.isFinished() || !AdversarialCoverage.this.isRunning) {
-					((javax.swing.Timer) ev.getSource()).stop();
-					if (env.isCovered()) {
-						System.out.printf("Covered the environment in %d steps.\n", env.getStepCount());
-					} else if (env.isFinished()) {
-						System.out.println("All robots are broken and cannot continue");
-					}
-				}
-				env.step();
-				mainPanel.repaint();
+
+		new Thread() {
+			public void run() {
+				coverageLoop();
 			}
-		}).start();
-		/*
-		 * while (!env.isFinished() && this.isRunning) { env.step();
-		 * mainPanel.repaint(); try { Thread.sleep(settings.AUTORUN_SLEEP_TIME);
-		 * } catch (InterruptedException e) { e.printStackTrace(); } }
-		 */
+		}.start();
+
 
 	}
+
+
+	public void coverageLoop() {
+		long delay = settings.getIntProperty("autorun.stepdelay");
+		while (isRunning) {
+			long time = System.currentTimeMillis();
+			step();
+			mainPanel.repaint();
+			if (env.isFinished() || !AdversarialCoverage.this.isRunning) {
+				AdversarialCoverage.this.isRunning = false;
+				if (env.isCovered()) {
+					System.out.printf("Covered the environment in %d steps.\n", env.getStepCount());
+				} else if (env.isFinished()) {
+					System.out.println("All robots are broken and cannot continue");
+				}
+			}
+			time = System.currentTimeMillis() - time;
+			if (time < delay) {
+				try {
+					Thread.sleep(delay - time);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+
+	private void step() {
+		env.step();
+	}
+
 
 	public static void main(String[] args) {
 		new AdversarialCoverage();
 	}
 }
+
 
 /**
  * Container for all the settings needed to configure the coverage simulation.
@@ -277,14 +339,21 @@ public class AdversarialCoverage {
 class AdversarialCoverageSettings {
 	final private int DEFAULT_GRID_WIDTH = 10;
 	final private int DEFAULT_GRID_HEIGHT = 10;
-	final private int DEFAULT_AUTORUN_SLEEP_TIME = 100;
+	final private int DEFAULT_AUTORUN_STEP_DELAY = 100;
+	final private int DEFAULT_AUTORUN_FRAME_DELAY = 100;
+	final private int DEFAULT_NUM_ROBOTS = 2;
+
+	final private String BOOLEAN_TRUE_STRING = "true";
+	final private String BOOLEAN_FALSE_STRING = "false";
 
 	private Map<String, String> settingsMap = new HashMap<String, String>();
 	private Map<String, SettingType> settingTypes = new HashMap<String, SettingType>();
 	/**
-	 * Error information that can be used to check whether an operation failed
+	 * Error information that can be used to check whether an operation
+	 * failed
 	 */
 	Error lastError = Error.NO_ERROR;
+
 
 	/**
 	 * Creates a new {@code AdversarialCoverageSettings} with the default
@@ -294,9 +363,85 @@ class AdversarialCoverageSettings {
 		// Set up defaults
 		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
 		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
-		this.setIntProperty("autorun.sleeptime", this.DEFAULT_AUTORUN_SLEEP_TIME);
-		this.setStringProperty("grid.dangervalues", "");
+		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
+		//this.setIntProperty("autorun.framedelay", this.DEFAULT_AUTORUN_FRAME_DELAY);
+		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
+		this.setIntProperty("robots.id_0.startpos.x", 0);
+		this.setIntProperty("robots.id_0.startpos.y", 0);
+		this.setIntProperty("robots.id_1.startpos.x", 5);
+		this.setIntProperty("robots.id_1.startpos.y", 5);
+		this.setStringProperty("env.grid.dangervalues", "");
+		this.setStringProperty("rules.robots.robotsAreObstacles", "true");
 	}
+
+
+	public void openSettingsDialog(Frame parent) {
+		System.out.println("Opening settings dialog...");
+		final JDialog sd = new JDialog(parent, "Settings");
+		sd.setLayout(new BorderLayout());
+		sd.setModal(true);
+
+		final JPanel jp = new JPanel();
+		jp.setPreferredSize(new Dimension(600, 24 * this.settingsMap.keySet().size()));
+		jp.setLayout(new GridLayout(0, 2));
+
+		final Map<String, JTextField> textfields = new HashMap<String, JTextField>();
+
+		for (String settingName : this.settingsMap.keySet()) {
+			JLabel settingLabel = new JLabel(settingName);
+			textfields.put(settingName, new JTextField(this.settingsMap.get(settingName)));
+			jp.add(settingLabel);
+			jp.add(textfields.get(settingName));
+		}
+
+		final JScrollPane sp = new JScrollPane(jp);
+		sd.add(sp);
+		JPanel buttonPanel = new JPanel();
+		JButton okButton = new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				for (String settingName : textfields.keySet()) {
+					SettingType type = settingTypes.get(settingName);
+					String newValStr = textfields.get(settingName).getText();
+					if (type == SettingType.STRING) {
+						settingsMap.put(settingName, newValStr);
+					} else if (type == SettingType.INT) {
+						try {
+							int value = Integer.parseInt(newValStr);
+							setIntProperty(settingName, value);
+						} catch (NumberFormatException e) {
+							System.err.println("Failed to parse value for integer setting: "
+									+ settingName);
+						}
+					} else if (type == SettingType.BOOLEAN) {
+						if (newValStr.equalsIgnoreCase("true")) {
+							setBooleanProperty(settingName, true);
+						} else if (newValStr.equalsIgnoreCase("false")) {
+							setBooleanProperty(settingName, false);
+						} else {
+							System.err.println("Failed to parse value for boolean setting: "
+									+ settingName);
+						}
+					}
+				}
+				sd.dispose();
+			}
+		});
+		buttonPanel.add(okButton);
+		JButton cancelButton = new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				sd.dispose();
+			}
+		});
+		buttonPanel.add(cancelButton);
+		sd.add(buttonPanel, BorderLayout.SOUTH);
+		sd.pack();
+		sd.setVisible(true);
+	}
+
 
 	/**
 	 * Returns the last error code. Error codes are as
@@ -307,12 +452,14 @@ class AdversarialCoverageSettings {
 		return lastError;
 	}
 
+
 	/**
 	 * Resets the last error code to 0.
 	 */
 	public void resetLastError() {
 		this.lastError = Error.NO_ERROR;
 	}
+
 
 	public SettingType getSettingType(String key) {
 		if (!this.hasProperty(key)) {
@@ -323,11 +470,12 @@ class AdversarialCoverageSettings {
 		}
 	}
 
+
 	/**
 	 * Gets an integer property
 	 * 
 	 * @param key
-	 *            the name of the integer property
+	 *                the name of the integer property
 	 * @return the property (int)
 	 */
 	public int getIntProperty(String key) {
@@ -346,13 +494,14 @@ class AdversarialCoverageSettings {
 		return value;
 	}
 
+
 	/**
 	 * Sets an integer property
 	 * 
 	 * @param key
-	 *            the name of the property
+	 *                the name of the property
 	 * @param value
-	 *            the value to set
+	 *                the value to set
 	 */
 	public void setIntProperty(String key, int value) {
 		if (key == null) {
@@ -362,9 +511,11 @@ class AdversarialCoverageSettings {
 		this.settingTypes.put(key, SettingType.INT);
 	}
 
+
 	public boolean hasProperty(String key) {
 		return settingsMap.containsKey(key);
 	}
+
 
 	public String getStringProperty(String key) {
 		if (key == null) {
@@ -381,6 +532,7 @@ class AdversarialCoverageSettings {
 		}
 	}
 
+
 	public void setStringProperty(String key, String value) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
@@ -390,11 +542,57 @@ class AdversarialCoverageSettings {
 		this.settingTypes.put(key, SettingType.STRING);
 	}
 
+
+	/**
+	 * Get a boolean property. If an error is encountered, the method
+	 * returns false and sets the lastError appropriately.
+	 * 
+	 * @param key
+	 *                the property name
+	 * @return the boolean value of the property
+	 */
+	public boolean getBooleanProperty(String key) {
+		if (key == null) {
+			this.lastError = Error.NULL_KEY;
+			return false;
+		} else if (!this.hasProperty(key)) {
+			this.lastError = Error.NO_SUCH_PROPERTY;
+			return false;
+		} else if (this.settingTypes.get(key) != SettingType.BOOLEAN) {
+			this.lastError = Error.WRONG_SETTING_TYPE;
+			return false;
+		}
+
+		String strVal = this.settingsMap.get(key);
+		if (strVal.equals("true")) {
+			return true;
+		} else if (strVal.equals("false")) {
+			return false;
+		} else {
+			this.lastError = Error.BAD_FORMAT;
+			return false;
+		}
+
+	}
+
+
+	public void setBooleanProperty(String key, boolean value) {
+		if (key == null) {
+			this.lastError = Error.NULL_KEY;
+			return;
+		}
+
+		this.settingTypes.put(key, SettingType.BOOLEAN);
+		this.settingsMap.put(key, value ? BOOLEAN_TRUE_STRING : BOOLEAN_FALSE_STRING);
+	}
+
 	/**
 	 * Errors that can occur when performing operations on settings.
 	 * <li>{@link #NO_ERROR}</li>
 	 * <li>{@link #NULL_KEY}</li>
 	 * <li>{@link #NO_SUCH_PROPERTY}</li>
+	 * <li>{@link #WRONG_SETTING_TYPE}</li>
+	 * <li>{@link #BAD_FORMAT}</li>
 	 * 
 	 * @author Mike D'Arcy
 	 *
@@ -409,14 +607,20 @@ class AdversarialCoverageSettings {
 		 */
 		NULL_KEY,
 		/**
-		 * A key that did not reference any valid property name was passed to a
-		 * function
+		 * A key that did not reference any valid property name was
+		 * passed to a function
 		 */
 		NO_SUCH_PROPERTY,
 		/**
-		 * The type of the setting did not match the expected setting type
+		 * The type of the setting did not match the expected setting
+		 * type
 		 */
-		WRONG_SETTING_TYPE
+		WRONG_SETTING_TYPE,
+		/**
+		 * The correct setting type could not be produced from the
+		 * stored String value
+		 */
+		BAD_FORMAT
 	}
 
 	/**
@@ -426,6 +630,6 @@ class AdversarialCoverageSettings {
 	 *
 	 */
 	enum SettingType {
-		INT, STRING
+		INT, STRING, BOOLEAN
 	}
 }
