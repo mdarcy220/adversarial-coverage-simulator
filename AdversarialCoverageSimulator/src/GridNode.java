@@ -49,6 +49,14 @@ public class GridNode extends Node {
 		clone.setDangerProb(this.dangerProb);
 		return clone;
 	}
+
+	public int getX() {
+		return this.location.x;
+	}
+	
+	public int getY() {
+		return this.location.y;
+	}
 }
 
 /**

@@ -4,7 +4,8 @@ import javax.swing.*;
 class CoveragePanel extends JPanel {
 	private static final long serialVersionUID = -3413050706073789678L;
 
-	Environment env;
+	GridEnvironment env;
+
 
 	public CoveragePanel(GridEnvironment env) {
 		super();
@@ -12,13 +13,25 @@ class CoveragePanel extends JPanel {
 		this.env = env;
 	}
 
+
 	@Override
 	public void paint(Graphics g) {
 		g.clearRect(0, 0, this.getWidth(), this.getHeight());
 		env.draw(g, this.getSize());
 	}
 
+
 	public void setEnvironment(GridEnvironment env) {
 		this.env = env;
+	}
+
+
+	public int getGridX(int x) {
+		return env.getWidth() * x / this.getWidth();
+	}
+
+
+	public int getGridY(int y) {
+		return env.getHeight() * y / this.getHeight();
 	}
 }

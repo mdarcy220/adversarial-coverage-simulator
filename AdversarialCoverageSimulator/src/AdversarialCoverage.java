@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -45,6 +46,13 @@ public class AdversarialCoverage {
 		// Set up the window
 		cw.setVisible(true);
 		mainPanel.setSize(500, 500);
+		mainPanel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				openGridNodeEditDialog(env.getGridNode(mainPanel.getGridX(e.getX()),
+						mainPanel.getGridY(e.getY())));
+			}
+		});
 		cw.add(mainPanel);
 		JMenuBar menuBar = new JMenuBar();
 
@@ -141,6 +149,94 @@ public class AdversarialCoverage {
 
 		menuBar.add(runMenu);
 		cw.setJMenuBar(menuBar);
+	}
+
+
+	protected void openGridNodeEditDialog(final GridNode gridNode) {
+		final JDialog dialog = new JDialog(cw, "Edit node (" + gridNode.getX() + ", " + gridNode.getY()+")");
+		dialog.setModal(true);
+		final JPanel contentPanel = new JPanel(new GridLayout(0, 1));
+		NumberFormat doubleFormat = NumberFormat.getNumberInstance();
+	        doubleFormat.setMinimumFractionDigits(4);
+
+		final JPanel settingsPanel = new JPanel(new GridLayout(0, 2));
+		
+		final JLabel costLabel = new JLabel("Cost: ");
+		settingsPanel.add(costLabel);
+		final JFormattedTextField costField = new JFormattedTextField(doubleFormat);
+		costField.setValue(new Double(gridNode.getCost()));
+		settingsPanel.add(costField);
+		
+		final JLabel dangerLabel = new JLabel("Danger: ");
+		settingsPanel.add(dangerLabel);
+		final JFormattedTextField dangerField = new JFormattedTextField(doubleFormat);
+		dangerField.setValue(new Double(gridNode.getDangerProb()));
+		settingsPanel.add(dangerField);
+		
+		final JLabel coverCountLabel = new JLabel("Times covered: ");
+		settingsPanel.add(coverCountLabel);
+		final JSpinner coverCountSpinner = new JSpinner();
+		coverCountSpinner.setValue(new Integer(gridNode.getCoverCount()));
+		settingsPanel.add(coverCountSpinner);
+		
+		final JLabel typeLabel = new JLabel("Type: ");
+		settingsPanel.add(typeLabel);
+		class ComboBoxNodeType {
+			NodeType nodetype;
+			String label;
+			
+			ComboBoxNodeType(NodeType nodetype, String label) {
+				this.nodetype = nodetype;
+				this.label = label;
+			}
+			
+			@Override
+			public String toString() {
+				return label;
+			}
+		}
+		final JComboBox<ComboBoxNodeType> typeBox = new JComboBox<ComboBoxNodeType>();
+		typeBox.addItem(new ComboBoxNodeType(NodeType.FREE, "Free"));
+		typeBox.addItem(new ComboBoxNodeType(NodeType.OBSTACLE, "Obstacle"));
+		for(int i = 0; i < typeBox.getItemCount(); i++) {
+			if(gridNode.getNodeType() == typeBox.getItemAt(i).nodetype) {
+				typeBox.setSelectedIndex(i);
+			}
+		}
+		settingsPanel.add(typeBox);
+		
+		contentPanel.add(settingsPanel);
+		
+		JPanel buttonPanel = new JPanel();
+		
+		JButton okButton = new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				gridNode.setDangerProb(((Number)dangerField.getValue()).doubleValue());
+				gridNode.setCost(((Number)costField.getValue()).doubleValue());
+				gridNode.setCoverCount(((Number)coverCountSpinner.getValue()).intValue());
+				gridNode.setNodeType(((ComboBoxNodeType)typeBox.getSelectedItem()).nodetype);
+				mainPanel.repaint();
+				dialog.dispose();
+			}
+		});
+		buttonPanel.add(okButton);
+		
+		JButton cancelButton = new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.dispose();
+			}
+		});
+		buttonPanel.add(cancelButton);
+		
+		contentPanel.add(buttonPanel);
+		
+		dialog.add(contentPanel);
+		dialog.pack();
+		dialog.setVisible(true);
 	}
 
 
@@ -282,14 +378,11 @@ public class AdversarialCoverage {
 
 
 	public void runCoverage() {
-
 		new Thread() {
 			public void run() {
 				coverageLoop();
 			}
 		}.start();
-
-
 	}
 
 
@@ -364,7 +457,8 @@ class AdversarialCoverageSettings {
 		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
 		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
 		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
-		//this.setIntProperty("autorun.framedelay", this.DEFAULT_AUTORUN_FRAME_DELAY);
+		// this.setIntProperty("autorun.framedelay",
+		// this.DEFAULT_AUTORUN_FRAME_DELAY);
 		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
 		this.setIntProperty("robots.id_0.startpos.x", 0);
 		this.setIntProperty("robots.id_0.startpos.y", 0);
