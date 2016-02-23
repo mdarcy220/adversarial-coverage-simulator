@@ -77,4 +77,40 @@ public class Node {
 		return this.dangerProb;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + coverCount;
+		long temp;
+		temp = Double.doubleToLongBits(dangerProb);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + ((nodeType == null) ? 0 : nodeType.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		Node other = (Node) obj;
+		if (coverCount != other.coverCount) {
+			return false;
+		}
+		if (Double.doubleToLongBits(dangerProb) != Double.doubleToLongBits(other.dangerProb)) {
+			return false;
+		}
+		if (nodeType != other.nodeType) {
+			return false;
+		}
+		return true;
+	}
+
 }

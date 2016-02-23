@@ -29,7 +29,7 @@ public class GridSensor extends Sensor {
 	 * @return the robot's current location as a {@code Coordinate}
 	 */
 	public Coordinate getLocation() {
-		return this.robot.getLocation().clone();
+		return new Coordinate(this.robot.getLocation().x, this.robot.getLocation().y);
 	}
 
 	/**
@@ -59,5 +59,13 @@ public class GridSensor extends Sensor {
 	
 	public boolean isOnGrid(int x, int y) {
 		return env.isOnGrid(x, y);
+	}
+
+	/**
+	 * Returns the node that the robot is currently at
+	 * @return
+	 */
+	public GridNode getCurrentNode() {
+		return this.getNodeAt(this.robot.getLocation().x, this.robot.getLocation().y);
 	}
 }

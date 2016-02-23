@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +59,21 @@ public class AdversarialCoverage {
 
 		// File menu
 		JMenu fileMenu = new JMenu("File");
+		final JMenuItem exportSettingsMenuItem = new JMenuItem("Export...");
+		exportSettingsMenuItem.setToolTipText("Load program settings from a file");
+		exportSettingsMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				JFileChooser chooser = new JFileChooser();
+				int status = chooser.showOpenDialog(cw);
+				if (status == JFileChooser.APPROVE_OPTION) {
+					File settingsFile = chooser.getSelectedFile();
+					exportSettingsToFile(settingsFile);
+				}
+			}
+		});
+		fileMenu.add(exportSettingsMenuItem);
+
 		final JMenuItem loadSettingsMenuItem = new JMenuItem("Load settings from file...");
 		loadSettingsMenuItem.setToolTipText("Load program settings from a file");
 		loadSettingsMenuItem.addActionListener(new ActionListener() {
@@ -153,43 +169,45 @@ public class AdversarialCoverage {
 
 
 	protected void openGridNodeEditDialog(final GridNode gridNode) {
-		final JDialog dialog = new JDialog(cw, "Edit node (" + gridNode.getX() + ", " + gridNode.getY()+")");
+		final JDialog dialog = new JDialog(cw, "Edit node (" + gridNode.getX() + ", " + gridNode.getY() + ")");
 		dialog.setModal(true);
 		final JPanel contentPanel = new JPanel(new GridLayout(0, 1));
 		NumberFormat doubleFormat = NumberFormat.getNumberInstance();
-	        doubleFormat.setMinimumFractionDigits(4);
+		doubleFormat.setMinimumFractionDigits(4);
 
 		final JPanel settingsPanel = new JPanel(new GridLayout(0, 2));
-		
+
 		final JLabel costLabel = new JLabel("Cost: ");
 		settingsPanel.add(costLabel);
 		final JFormattedTextField costField = new JFormattedTextField(doubleFormat);
 		costField.setValue(new Double(gridNode.getCost()));
 		settingsPanel.add(costField);
-		
+
 		final JLabel dangerLabel = new JLabel("Danger: ");
 		settingsPanel.add(dangerLabel);
 		final JFormattedTextField dangerField = new JFormattedTextField(doubleFormat);
 		dangerField.setValue(new Double(gridNode.getDangerProb()));
 		settingsPanel.add(dangerField);
-		
+
 		final JLabel coverCountLabel = new JLabel("Times covered: ");
 		settingsPanel.add(coverCountLabel);
 		final JSpinner coverCountSpinner = new JSpinner();
 		coverCountSpinner.setValue(new Integer(gridNode.getCoverCount()));
 		settingsPanel.add(coverCountSpinner);
-		
+
 		final JLabel typeLabel = new JLabel("Type: ");
 		settingsPanel.add(typeLabel);
 		class ComboBoxNodeType {
 			NodeType nodetype;
 			String label;
-			
+
+
 			ComboBoxNodeType(NodeType nodetype, String label) {
 				this.nodetype = nodetype;
 				this.label = label;
 			}
-			
+
+
 			@Override
 			public String toString() {
 				return label;
@@ -198,31 +216,31 @@ public class AdversarialCoverage {
 		final JComboBox<ComboBoxNodeType> typeBox = new JComboBox<ComboBoxNodeType>();
 		typeBox.addItem(new ComboBoxNodeType(NodeType.FREE, "Free"));
 		typeBox.addItem(new ComboBoxNodeType(NodeType.OBSTACLE, "Obstacle"));
-		for(int i = 0; i < typeBox.getItemCount(); i++) {
-			if(gridNode.getNodeType() == typeBox.getItemAt(i).nodetype) {
+		for (int i = 0; i < typeBox.getItemCount(); i++) {
+			if (gridNode.getNodeType() == typeBox.getItemAt(i).nodetype) {
 				typeBox.setSelectedIndex(i);
 			}
 		}
 		settingsPanel.add(typeBox);
-		
+
 		contentPanel.add(settingsPanel);
-		
+
 		JPanel buttonPanel = new JPanel();
-		
+
 		JButton okButton = new JButton("OK");
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				gridNode.setDangerProb(((Number)dangerField.getValue()).doubleValue());
-				gridNode.setCost(((Number)costField.getValue()).doubleValue());
-				gridNode.setCoverCount(((Number)coverCountSpinner.getValue()).intValue());
-				gridNode.setNodeType(((ComboBoxNodeType)typeBox.getSelectedItem()).nodetype);
+				gridNode.setDangerProb(((Number) dangerField.getValue()).doubleValue());
+				gridNode.setCost(((Number) costField.getValue()).doubleValue());
+				gridNode.setCoverCount(((Number) coverCountSpinner.getValue()).intValue());
+				gridNode.setNodeType(((ComboBoxNodeType) typeBox.getSelectedItem()).nodetype);
 				mainPanel.repaint();
 				dialog.dispose();
 			}
 		});
 		buttonPanel.add(okButton);
-		
+
 		JButton cancelButton = new JButton("Cancel");
 		cancelButton.addActionListener(new ActionListener() {
 			@Override
@@ -231,9 +249,9 @@ public class AdversarialCoverage {
 			}
 		});
 		buttonPanel.add(cancelButton);
-		
+
 		contentPanel.add(buttonPanel);
-		
+
 		dialog.add(contentPanel);
 		dialog.pack();
 		dialog.setVisible(true);
@@ -281,12 +299,12 @@ public class AdversarialCoverage {
 		}
 
 		// Set up the robots
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 1; i++) {
 			GridRobot robot = new GridRobot(i, (int) (Math.random() * env.getWidth()),
 					(int) (Math.random() * env.getHeight()));
 			GridSensor sensor = new GridSensor(env, robot);
 			GridActuator actuator = new GridActuator(env, robot);
-			CoverageAlgorithm algo = new RandomGridCoverage(sensor, actuator);
+			CoverageAlgorithm algo = new GSACGridCoverage(sensor, actuator);//new RandomGridCoverage(sensor, actuator);
 			robot.coverAlgo = algo;
 			env.addRobot(robot);
 		}
@@ -322,8 +340,7 @@ public class AdversarialCoverage {
 				if (env.getGridNode(x, y).getDangerProb() < 0.5) {
 					env.getGridNode(x, y).setDangerProb(0.0);
 				} else {
-					env.getGridNode(x, y).setDangerProb(
-							(env.getGridNode(x, y).getDangerProb() - 0.5) / 10.0);
+					env.getGridNode(x, y).setDangerProb(0.5); // (env.getGridNode(x, y).getDangerProb() - 0.5) / 10.0
 				}
 			}
 		}
@@ -374,6 +391,26 @@ public class AdversarialCoverage {
 		}
 
 		input.close();
+	}
+
+
+	/**
+	 * Exports settings to the given file, so they can be loaded later
+	 * 
+	 * @param settingsFile
+	 *                the file to export to
+	 */
+	public void exportSettingsToFile(File settingsFile) {
+		try {
+			PrintWriter pw = new PrintWriter(settingsFile);
+			System.out.println("Set: "+this.settings.exportToString());
+			pw.println(this.settings.exportToString());
+			pw.flush();
+			pw.close();
+		} catch (FileNotFoundException e) {
+			System.err.println("Failed to write settings to file. File not found.");
+			e.printStackTrace();
+		}
 	}
 
 
@@ -534,6 +571,27 @@ class AdversarialCoverageSettings {
 		sd.add(buttonPanel, BorderLayout.SOUTH);
 		sd.pack();
 		sd.setVisible(true);
+	}
+
+
+	/**
+	 * Convert the settings into string form, with one setting per line, in
+	 * the format:
+	 * 
+	 * <pre>
+	 * settingName = settingValue
+	 * </pre>
+	 * 
+	 */
+	public String exportToString() {
+		StringBuilder exportStr = new StringBuilder("");
+		for (String s : this.settingsMap.keySet()) {
+			exportStr.append(s);
+			exportStr.append(" = ");
+			exportStr.append(this.settingsMap.get(s));
+			exportStr.append('\n');
+		}
+		return exportStr.toString();
 	}
 
 
