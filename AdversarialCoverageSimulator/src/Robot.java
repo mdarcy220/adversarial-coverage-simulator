@@ -36,4 +36,27 @@ public abstract class Robot {
 	public void setBroken(boolean broken) {
 		this.isBroken = broken;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + uniqueId;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Robot other = (Robot) obj;
+		if (uniqueId != other.uniqueId)
+			return false;
+		return true;
+	}
+	
 }

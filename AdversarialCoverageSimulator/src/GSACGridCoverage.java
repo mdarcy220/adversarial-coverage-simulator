@@ -25,18 +25,13 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 	public GSACGridCoverage(GridSensor sensor, GridActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
-		System.out.printf("Robot at (%d, %d)\n", sensor.getLocation().x, sensor.getLocation().y);
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 
 	@Override
 	public void init() {
+		//System.out.printf("Robot at (%d, %d)\n", sensor.getLocation().x, sensor.getLocation().y);
+		this.stepNum = 0;
 		coveragePath = createGSACCoveragePath(createGraph(), sensor.getCurrentNode());
 	}
 
@@ -73,8 +68,8 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 
 
 	private List<GridNode> createGSACCoveragePath(GridNodeGraph graph, GridNode startNode) {
-		for(GridNode node : graph.getAllNodes()) {
-			if(node.getX() == startNode.getX() && node.getY() == startNode.getY()) {
+		for (GridNode node : graph.getAllNodes()) {
+			if (node.getX() == startNode.getX() && node.getY() == startNode.getY()) {
 				startNode = node;
 			}
 		}
@@ -85,20 +80,13 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 		Iterator<GridNode> iter = unvisited.iterator();
 		while (iter.hasNext()) {
 			GridNode node = iter.next();
-			if (node.getNodeType() == NodeType.OBSTACLE || (node.getX() == startNode.getX() && node.getY() == startNode.getY())) {
+			if (node.getNodeType() == NodeType.OBSTACLE
+					|| (node.getX() == startNode.getX() && node.getY() == startNode.getY())) {
 				iter.remove();
 			}
 		}
 		unvisited.remove(startNode);
 		GridNode curNode = startNode;
-		
-		for(GridNode node : graph.getAllNodes()) {
-			System.out.printf("(%d, %d) -> ", node.getX(), node.getY());
-			for(GridNode node2 : graph.getAdjacentNodes(node)) {
-				System.out.printf("(%d, %d), ", node2.getX(), node2.getY());
-			}
-			System.out.println();
-		}
 
 		while (!unvisited.isEmpty()) {
 			// Find lowest-cost node
@@ -110,6 +98,7 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 				GridNode node = iter.next();
 				double costToNode = dj.getCostToNode(node);
 				if (costToNode < minCost) {
+					minCost = costToNode;
 					minCostNode = node;
 				} else if (costToNode == Double.POSITIVE_INFINITY) {
 					// Node is unreachable
@@ -123,17 +112,13 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 			unvisited.removeAll(curPath);
 			// Don't include the start node, or else it will be
 			// added twice
-			//curPath.remove(0);
+			// curPath.remove(0);
 			path.addAll(curPath);
-			
+
 			curNode = path.get(path.size() - 1);
-			
-			
+
+
 		}
-		for (GridNode node : path) {
-			System.out.printf("(%d, %d) -> \n", node.getX(), node.getY());
-		}
-		System.out.println("END");
 
 		return path;
 	}
@@ -165,8 +150,11 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 		for (int x = 0; x < sensor.getGridWidth(); x++) {
 			for (int y = 0; y < sensor.getGridHeight(); y++) {
 				grid[x][y] = sensor.getNodeAt(x, y);
-				grid[x][y].setCost(0.0 < grid[x][y].getDangerProb() ? 1.0
-						: 1.0 / ((double) grid.length));
+				if (0.0 < grid[x][y].getDangerProb()) {
+					grid[x][y].setCost((sensor.getGridWidth() * sensor.getGridHeight())*grid[x][y].getDangerProb());
+				} else {
+					grid[x][y].setCost(1.0 / (sensor.getGridWidth() * sensor.getGridHeight()));
+				}
 				if (grid[x][y].getNodeType() == NodeType.OBSTACLE) {
 					grid[x][y].setCost(Double.POSITIVE_INFINITY);
 				}
@@ -252,11 +240,7 @@ class DijkstraGraph {
 		for (GridNode node : this.unvisited) {
 			this.prevNodes.put(node, null);
 			this.costs.put(node, new Double(Double.POSITIVE_INFINITY));
-			if(node.equals(this.start)) {
-				System.out.printf("FOUND IT!%d %d\n", node.getX(), node.getY());
-			}
 		}
-		System.out.printf("Starting at (%d, %d)\n", this.start.getX(), this.start.getY());
 		this.costs.put(this.start, new Double(0.0));
 	}
 
@@ -265,7 +249,7 @@ class DijkstraGraph {
 		initNodes();
 		GridNode curNode;
 		while (!this.unvisited.isEmpty()) {
-			
+
 			curNode = getMinCostNodeFromUnvisitedSet();
 			if (curNode == target) {
 				return;
@@ -288,7 +272,9 @@ class DijkstraGraph {
 		double minDist = Double.POSITIVE_INFINITY;
 		GridNode minDistNode = null;
 		for (GridNode node : this.unvisited) {
-			if (this.costs.get(node).doubleValue() < minDist || minDistNode == null) {
+			double dist = this.costs.get(node).doubleValue();
+			if (dist < minDist || minDistNode == null) {
+				minDist = dist;
 				minDistNode = node;
 			}
 		}

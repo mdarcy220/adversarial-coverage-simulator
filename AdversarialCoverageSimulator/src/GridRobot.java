@@ -7,21 +7,23 @@
 public class GridRobot extends Robot {
 	private Coordinate location;
 
+
 	/**
 	 * Constructs a new grid-based robot at the specified location, with the
 	 * specified unique id.
 	 * 
 	 * @param uniqueId
-	 *            the robot's id, used to identify it
+	 *                the robot's id, used to identify it
 	 * @param x
-	 *            the starting x coordinate of the robot
+	 *                the starting x coordinate of the robot
 	 * @param y
-	 *            the starting y coordinate of the robot
+	 *                the starting y coordinate of the robot
 	 */
 	public GridRobot(int uniqueId, int x, int y) {
 		super(uniqueId);
 		this.location = new Coordinate(x, y);
 	}
+
 
 	/**
 	 * Get this robot's (x, y) location
@@ -31,6 +33,7 @@ public class GridRobot extends Robot {
 	public Coordinate getLocation() {
 		return location;
 	}
+
 
 	/**
 	 * Set this robot's (x, y) location
@@ -43,6 +46,7 @@ public class GridRobot extends Robot {
 		this.location.y = y;
 	}
 
+
 	/**
 	 * Sets this robot's coverage algorithm
 	 * 
@@ -50,5 +54,32 @@ public class GridRobot extends Robot {
 	 */
 	public void setCoverageAlgorithm(CoverageAlgorithm algo) {
 		this.coverAlgo = algo;
+	}
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((location == null) ? 0 : location.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GridRobot other = (GridRobot) obj;
+		if (location == null) {
+			if (other.location != null)
+				return false;
+		} else if (!location.equals(other.location))
+			return false;
+		return true;
 	}
 }
