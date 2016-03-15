@@ -1,3 +1,4 @@
+package adversarialcoverage;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -8,12 +9,12 @@ import javax.swing.*;
 
 public class AdversarialCoverage {
 
-	static AdversarialCoverageSettings settings = new AdversarialCoverageSettings();
+	public static AdversarialCoverageSettings settings = new AdversarialCoverageSettings();
 	GridEnvironment env = null;
 	CoverageWindow cw = new CoverageWindow();
 	CoveragePanel mainPanel;
 	static SimulationStats stats;
-	
+
 	/**
 	 * Keeps track of whether the coverage simulation is running
 	 */
@@ -26,8 +27,6 @@ public class AdversarialCoverage {
 
 
 	public AdversarialCoverage() {
-
-		settings.setIntProperty("autorun.stepdelay", 50);
 
 		resetCoverageEnvironment();
 
@@ -48,7 +47,8 @@ public class AdversarialCoverage {
 		this.mainPanel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				openGridNodeEditDialog(AdversarialCoverage.this.env.getGridNode(AdversarialCoverage.this.mainPanel.getGridX(e.getX()),
+				openGridNodeEditDialog(AdversarialCoverage.this.env.getGridNode(
+						AdversarialCoverage.this.mainPanel.getGridX(e.getX()),
 						AdversarialCoverage.this.mainPanel.getGridY(e.getY())));
 			}
 		});
@@ -185,7 +185,8 @@ public class AdversarialCoverage {
 
 
 	protected void openGridNodeEditDialog(final GridNode gridNode) {
-		final JDialog dialog = new JDialog(this.cw, "Edit node (" + gridNode.getX() + ", " + gridNode.getY() + ")");
+		final JDialog dialog = new JDialog(this.cw,
+				"Edit node (" + gridNode.getX() + ", " + gridNode.getY() + ")");
 		dialog.setModal(true);
 		final JPanel contentPanel = new JPanel(new GridLayout(0, 1));
 		NumberFormat doubleFormat = NumberFormat.getNumberInstance();
@@ -283,14 +284,16 @@ public class AdversarialCoverage {
 
 
 		// Set up the coverage environment
-//		if (!AdversarialCoverage.settings.hasProperty("env.grid.dangervalues")
-//				|| AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues").isEmpty()) {
-//			randomizeDangerLevels();
-//			randomizeObstacles();
-//		} else {
-			genGridFromDangerValuesString(
-					AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
-		//}
+		// if
+		// (!AdversarialCoverage.settings.hasProperty("env.grid.dangervalues")
+		// ||
+		// AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues").isEmpty())
+		// {
+		// randomizeDangerLevels();
+		// randomizeObstacles();
+		// } else {
+		genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
+		// }
 
 		// Set up the robots
 		for (int i = 0; i < AdversarialCoverage.settings.getIntProperty("robots.count"); i++) {
@@ -298,7 +301,7 @@ public class AdversarialCoverage {
 					(int) (Math.random() * this.env.getHeight()));
 			GridSensor sensor = new GridSensor(this.env, robot);
 			GridActuator actuator = new GridActuator(this.env, robot);
-			CoverageAlgorithm algo = new GSACGridCoverage(sensor, actuator);
+			CoverageAlgorithm algo = new DeepQLGridCoverage(sensor, actuator);
 			robot.coverAlgo = algo;
 			this.env.addRobot(robot);
 		}
@@ -399,27 +402,60 @@ public class AdversarialCoverage {
 
 	public void coverageLoop() {
 		long delay = settings.getIntProperty("autorun.stepdelay");
+		boolean doRepaint = settings.getBooleanProperty("autorun.do_repaint");
 		while (this.isRunning) {
 			long time = System.currentTimeMillis();
 			step();
-			this.mainPanel.repaint();
+			if (doRepaint) {
+				this.mainPanel.repaint();
+			}
 			if (this.env.isFinished() || !AdversarialCoverage.this.isRunning) {
-				AdversarialCoverage.this.isRunning = false;
+
 				if (this.env.isCovered()) {
-					System.out.printf("Covered the environment in %d steps.\n", this.env.getStepCount());
+					System.out.printf("Covered the environment in %d steps.\n",
+							this.env.getStepCount());
 				} else if (this.env.isFinished()) {
-					System.out.println("All robots are broken and cannot continue");
+					//System.out.println("All robots are broken and cannot continue");
 				}
 				if (this.env.isFinished()) {
-//					File settingsFile = new File("/tmp/stats.txt");
-//					try {
-//						printStats(new PrintStream(settingsFile));
-//					} catch (FileNotFoundException e) {
-//						e.printStackTrace();
-//					}
-//
-					printStats(new PrintStream(System.out));
+
+					// File settingsFile = new
+					// File("/tmp/stats.txt");
+					// try {
+					// printStats(new
+					// PrintStream(settingsFile));
+					// } catch (FileNotFoundException e) {
+					// e.printStackTrace();
+					// }
+					//
+					if(settings.getBooleanProperty("autorun.finished.display_full_stats")) {
+						printStats(new PrintStream(System.out));
+					} else {
+						//System.out.printf("Max covers of a cell\t%d\n", AdversarialCoverage.stats.getMaxCellCovers());
+						//System.out.printf("Total time steps\t%d\n", AdversarialCoverage.stats.getNumTimeSteps());
+					}
+					if (settings.getBooleanProperty("autorun.finished.newgrid")) {
+						// resetCoverageEnvironment();
+						//reinitializeCoverage();
+						for(GridRobot r : this.env.getRobotList()){
+							r.setBroken(false);
+						}
+						
+						genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
+						this.env.init();
+
+						if (this.mainPanel != null) {
+							this.mainPanel.setEnvironment(this.env);
+						}
+						this.mainPanel.repaint();
+						//System.out.println("New environment!");
+					} else {
+						AdversarialCoverage.this.isRunning = false;
+					}
+					AdversarialCoverage.stats = new SimulationStats(this.env,
+							this.env.getRobotList());
 				}
+
 			}
 			time = System.currentTimeMillis() - time;
 			if (time < delay) {

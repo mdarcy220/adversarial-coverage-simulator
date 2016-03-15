@@ -1,3 +1,4 @@
+package adversarialcoverage;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -5,7 +6,7 @@ import java.util.Set;
 public class SimulationStats {
 	private long nTimeSteps = 0;
 	private long totalFreeCells = 0;
-	private Set<RobotStats> robotStats = new HashSet<RobotStats>();
+	private Set<RobotStats> robotStats = new HashSet<>();
 	private GridEnvironment env;
 	private long[][] lastCellVisitTimes;
 
@@ -14,7 +15,7 @@ public class SimulationStats {
 		this.env = env;
 		this.lastCellVisitTimes = new long[env.getWidth()][env.getHeight()];
 		for (GridRobot r : robots) {
-			robotStats.add(new RobotStats(r, env));
+			this.robotStats.add(new RobotStats(r, env));
 		}
 		for (int x = 0; x < env.getWidth(); x++) {
 			for (int y = 0; y < env.getHeight(); y++) {
@@ -33,9 +34,9 @@ public class SimulationStats {
 
 	public double getFractionCovered() {
 		long totalCellsCovered = 0;
-		for (int x = 0; x < env.getWidth(); x++) {
-			for (int y = 0; y < env.getHeight(); y++) {
-				if (0 < env.getGridNode(x, y).getCoverCount()) {
+		for (int x = 0; x < this.env.getWidth(); x++) {
+			for (int y = 0; y < this.env.getHeight(); y++) {
+				if (0 < this.env.getGridNode(x, y).getCoverCount()) {
 					totalCellsCovered++;
 				}
 			}
@@ -47,10 +48,10 @@ public class SimulationStats {
 
 	public double getAvgCoversPerFreeCell() {
 		long totalCovers = 0;
-		for (int x = 0; x < env.getWidth(); x++) {
-			for (int y = 0; y < env.getHeight(); y++) {
-				if (env.getGridNode(x, y).getNodeType() == NodeType.FREE) {
-					totalCovers += env.getGridNode(x, y).getCoverCount();
+		for (int x = 0; x < this.env.getWidth(); x++) {
+			for (int y = 0; y < this.env.getHeight(); y++) {
+				if (this.env.getGridNode(x, y).getNodeType() == NodeType.FREE) {
+					totalCovers += this.env.getGridNode(x, y).getCoverCount();
 				}
 			}
 		}
@@ -66,10 +67,10 @@ public class SimulationStats {
 	 */
 	public long getMaxCellCovers() {
 		long maxCovers = 0;
-		for (int x = 0; x < env.getWidth(); x++) {
-			for (int y = 0; y < env.getHeight(); y++) {
-				if (maxCovers < env.getGridNode(x, y).getCoverCount()) {
-					maxCovers = env.getGridNode(x, y).getCoverCount();
+		for (int x = 0; x < this.env.getWidth(); x++) {
+			for (int y = 0; y < this.env.getHeight(); y++) {
+				if (maxCovers < this.env.getGridNode(x, y).getCoverCount()) {
+					maxCovers = this.env.getGridNode(x, y).getCoverCount();
 				}
 			}
 		}
@@ -84,11 +85,11 @@ public class SimulationStats {
 	 */
 	public long getMinCellCovers() {
 		long minCovers = Long.MAX_VALUE;
-		for (int x = 0; x < env.getWidth(); x++) {
-			for (int y = 0; y < env.getHeight(); y++) {
-				if (env.getGridNode(x, y).getNodeType() == NodeType.FREE
-						&& env.getGridNode(x, y).getCoverCount() < minCovers) {
-					minCovers = env.getGridNode(x, y).getCoverCount();
+		for (int x = 0; x < this.env.getWidth(); x++) {
+			for (int y = 0; y < this.env.getHeight(); y++) {
+				if (this.env.getGridNode(x, y).getNodeType() == NodeType.FREE
+						&& this.env.getGridNode(x, y).getCoverCount() < minCovers) {
+					minCovers = this.env.getGridNode(x, y).getCoverCount();
 				}
 			}
 		}
@@ -98,7 +99,7 @@ public class SimulationStats {
 
 	public long getNumBrokenRobots() {
 		long nBroken = 0;
-		for (Robot r : env.getRobotList()) {
+		for (Robot r : this.env.getRobotList()) {
 			if (r.isBroken()) {
 				nBroken++;
 			}
@@ -108,7 +109,7 @@ public class SimulationStats {
 
 
 	public long getNumSurvivingRobots() {
-		return env.getRobotList().size() - getNumBrokenRobots();
+		return this.env.getRobotList().size() - getNumBrokenRobots();
 	}
 
 
@@ -118,7 +119,7 @@ public class SimulationStats {
 
 
 	public long getTotalCells() {
-		return env.getHeight() * env.getWidth();
+		return this.env.getHeight() * this.env.getWidth();
 	}
 
 
@@ -168,15 +169,24 @@ public class SimulationStats {
 
 	public long numFreeCellsCoveredNTimes(long n) {
 		long num = 0;
-		for (int x = 0; x < env.getWidth(); x++) {
-			for (int y = 0; y < env.getHeight(); y++) {
-				if (env.getGridNode(x, y).getNodeType() == NodeType.FREE
-						&& env.getGridNode(x, y).getCoverCount() == n) {
+		for (int x = 0; x < this.env.getWidth(); x++) {
+			for (int y = 0; y < this.env.getHeight(); y++) {
+				if (this.env.getGridNode(x, y).getNodeType() == NodeType.FREE
+						&& this.env.getGridNode(x, y).getCoverCount() == n) {
 					num++;
 				}
 			}
 		}
 		return num;
+	}
+	
+	public RobotStats getRobotStats(GridRobot r) {
+		for (RobotStats rs : this.robotStats) {
+			if (rs.robot.equals(r)) {
+				return rs;
+			}
+		}
+		return null;
 	}
 }
 
@@ -196,10 +206,11 @@ class RobotStats {
 
 
 	public void updateCellCovered() {
-		int x = robot.getLocation().x;
-		int y = robot.getLocation().y;
+		int x = this.robot.getLocation().x;
+		int y = this.robot.getLocation().y;
 
-		this.coverageProb *= (1.0 - env.getGridNode(x, y).getDangerProb());
+		this.coverageProb *= (1.0 - this.env.getGridNode(x, y).getDangerProb());
 		this.survivability += this.coverageProb;
+		this.pathLength++;
 	}
 }

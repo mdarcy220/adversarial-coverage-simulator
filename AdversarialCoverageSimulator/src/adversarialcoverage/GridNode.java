@@ -1,3 +1,4 @@
+package adversarialcoverage;
 
 /**
  * Represents a node that is part of a grid.
@@ -71,9 +72,9 @@ public class GridNode extends Node {
 		final int prime = 31;
 		int result = 1;
 		long temp;
-		temp = Double.doubleToLongBits(cost);
+		temp = Double.doubleToLongBits(this.cost);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((location == null) ? 0 : location.hashCode());
+		result = prime * result + ((this.location == null) ? 0 : this.location.hashCode());
 		return result;
 	}
 
@@ -90,14 +91,14 @@ public class GridNode extends Node {
 			return false;
 		}
 		GridNode other = (GridNode) obj;
-		if (Double.doubleToLongBits(cost) != Double.doubleToLongBits(other.cost)) {
+		if (Double.doubleToLongBits(this.cost) != Double.doubleToLongBits(other.cost)) {
 			return false;
 		}
-		if (location == null) {
+		if (this.location == null) {
 			if (other.location != null) {
 				return false;
 			}
-		} else if (!location.equals(other.location)) {
+		} else if (!this.location.equals(other.location)) {
 			return false;
 		}
 		return true;
@@ -105,84 +106,4 @@ public class GridNode extends Node {
 }
 
 
-/**
- * This class represents an (x, y) coordinate pair in 2D space.
- * 
- * @author Mike D'Arcy
- *
- */
-class Coordinate {
-	int x;
-	int y;
 
-
-	/**
-	 * Creates a new coordinate representing (0, 0)
-	 */
-	public Coordinate() {
-		this(0, 0);
-	}
-
-
-	/**
-	 * Creates a new coordinate representing the given x and y.
-	 * 
-	 * @param x
-	 * @param y
-	 */
-	public Coordinate(int x, int y) {
-		this.x = x;
-		this.y = y;
-	}
-
-
-	/**
-	 * Returns the Manhattan distance between this coordinate and the given
-	 * coordinate.
-	 * 
-	 * @param c
-	 *                the other coordinate
-	 * @return the Manhattan distance between the coordinates
-	 */
-	public int manhattanDistance(Coordinate c) {
-		return Math.abs(this.x - c.x) + Math.abs(this.y - c.y);
-	}
-
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + x;
-		result = prime * result + y;
-		return result;
-	}
-
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		Coordinate other = (Coordinate) obj;
-		if (x != other.x) {
-			return false;
-		}
-		if (y != other.y) {
-			return false;
-		}
-		return true;
-	}
-
-
-	@Override
-	public Coordinate clone() {
-		return new Coordinate(this.x, this.y);
-	}
-}

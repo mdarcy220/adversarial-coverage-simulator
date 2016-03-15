@@ -1,3 +1,4 @@
+package adversarialcoverage;
 abstract class CoverageAlgorithm {
 	Sensor sensor;
 	Actuator actuator;

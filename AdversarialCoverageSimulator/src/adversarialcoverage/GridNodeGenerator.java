@@ -1,3 +1,4 @@
+package adversarialcoverage;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -90,6 +91,9 @@ public class GridNodeGenerator {
 			node.setNodeType(NodeType.FREE);
 			node.setDangerProb(
 					this.randgen.nextDouble() * (this.dangerMax - this.dangerMin) + this.dangerMin);
+		} else {
+			node.setNodeType(NodeType.FREE);
+			node.setDangerProb(0.0);
 		}
 
 

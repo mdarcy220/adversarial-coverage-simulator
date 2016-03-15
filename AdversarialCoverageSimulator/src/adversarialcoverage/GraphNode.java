@@ -1,3 +1,4 @@
+package adversarialcoverage;
 import java.util.ArrayList;
 import java.util.List;
 

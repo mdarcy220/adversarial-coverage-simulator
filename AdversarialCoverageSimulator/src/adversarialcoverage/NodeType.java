@@ -1,3 +1,4 @@
+package adversarialcoverage;
 
 public enum NodeType {
 	OBSTACLE,

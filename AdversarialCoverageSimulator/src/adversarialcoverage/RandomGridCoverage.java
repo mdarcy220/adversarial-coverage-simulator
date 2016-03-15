@@ -1,7 +1,9 @@
+package adversarialcoverage;
 
 public class RandomGridCoverage extends CoverageAlgorithm {
 	GridSensor sensor;
 	GridActuator actuator;
+	long stepNum = 0;
 
 
 	public RandomGridCoverage(GridSensor sensor, GridActuator actuator) {
@@ -41,27 +43,26 @@ public class RandomGridCoverage extends CoverageAlgorithm {
 		int direction = 0;
 		double rnum = Math.random();
 
-		if (rnum < 1) {
+		if (rnum < 0) {
 			direction = bestDirection;
 		} else {
 			direction = (int) (Math.random() * 4);
 		}
 
-		switch (direction) {
-		case 0:
-			actuator.moveRight();
-			break;
-		case 1:
-			actuator.moveUp();
-			break;
-		case 2:
-			actuator.moveLeft();
-			break;
-		case 3:
-			actuator.moveDown();
-			break;
-		default:
-			actuator.coverCurrentNode();
+		takeAction(direction);
+		this.stepNum++;
+	}
+	private void takeAction(int actionNum) {
+		if (actionNum == 0) {
+			this.actuator.moveRight();
+		} else if (actionNum == 1) {
+			this.actuator.moveUp();
+		} else if (actionNum == 2) {
+			this.actuator.moveLeft();
+		} else if (actionNum == 3) {
+			this.actuator.moveDown();
+		} else {
+			this.actuator.coverCurrentNode();
 		}
 	}
 

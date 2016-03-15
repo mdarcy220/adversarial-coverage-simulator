@@ -1,3 +1,4 @@
+package adversarialcoverage;
 import java.awt.Dimension;
 import java.awt.Graphics;
 

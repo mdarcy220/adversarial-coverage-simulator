@@ -1,3 +1,4 @@
+package adversarialcoverage;
 import javax.swing.*;
 
 class CoverageWindow extends JFrame {

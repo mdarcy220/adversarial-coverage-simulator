@@ -1,3 +1,4 @@
+package adversarialcoverage;
 /**
  * A robot spcialized for grid environments.
  * 
@@ -31,7 +32,7 @@ public class GridRobot extends Robot {
 	 * @return
 	 */
 	public Coordinate getLocation() {
-		return location;
+		return this.location;
 	}
 
 
@@ -61,7 +62,7 @@ public class GridRobot extends Robot {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((location == null) ? 0 : location.hashCode());
+		result = prime * result + ((this.location == null) ? 0 : this.location.hashCode());
 		return result;
 	}
 
@@ -75,10 +76,10 @@ public class GridRobot extends Robot {
 		if (getClass() != obj.getClass())
 			return false;
 		GridRobot other = (GridRobot) obj;
-		if (location == null) {
+		if (this.location == null) {
 			if (other.location != null)
 				return false;
-		} else if (!location.equals(other.location))
+		} else if (!this.location.equals(other.location))
 			return false;
 		return true;
 	}

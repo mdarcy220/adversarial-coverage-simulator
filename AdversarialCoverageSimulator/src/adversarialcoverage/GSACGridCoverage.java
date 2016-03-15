@@ -1,3 +1,4 @@
+package adversarialcoverage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,20 +33,20 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 	public void init() {
 		//System.out.printf("Robot at (%d, %d)\n", sensor.getLocation().x, sensor.getLocation().y);
 		this.stepNum = 0;
-		coveragePath = createGSACCoveragePath(createGraph(), sensor.getCurrentNode());
+		this.coveragePath = createGSACCoveragePath(createGraph(), this.sensor.getCurrentNode());
 	}
 
 
 	@Override
 	public void step() {
 		// Just follow the coverage path
-		Coordinate curLoc = sensor.getLocation();
+		Coordinate curLoc = this.sensor.getLocation();
 		int nextX;
 		int nextY;
-		if (stepNum < this.coveragePath.size()) {
-			nextX = this.coveragePath.get(stepNum).getX();
-			nextY = this.coveragePath.get(stepNum).getY();
-			stepNum++;
+		if (this.stepNum < this.coveragePath.size()) {
+			nextX = this.coveragePath.get(this.stepNum).getX();
+			nextY = this.coveragePath.get(this.stepNum).getY();
+			this.stepNum++;
 		} else {
 			this.actuator.coverCurrentNode();
 			return;
@@ -67,15 +68,16 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 	}
 
 
-	private List<GridNode> createGSACCoveragePath(GridNodeGraph graph, GridNode startNode) {
+	private List<GridNode> createGSACCoveragePath(GridNodeGraph graph, GridNode tmpStartNode) {
+		GridNode startNode = tmpStartNode;
 		for (GridNode node : graph.getAllNodes()) {
 			if (node.getX() == startNode.getX() && node.getY() == startNode.getY()) {
 				startNode = node;
 			}
 		}
-		List<GridNode> path = new ArrayList<GridNode>();
+		List<GridNode> path = new ArrayList<>();
 		path.add(startNode);
-		Set<GridNode> unvisited = new HashSet<GridNode>();
+		Set<GridNode> unvisited = new HashSet<>();
 		unvisited.addAll(graph.getAllNodes());
 		Iterator<GridNode> iter = unvisited.iterator();
 		while (iter.hasNext()) {
@@ -124,36 +126,36 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 	}
 
 
-	private double getPathCost(List<GridNode> path) {
-		double cost = 0.0;
-		for (int i = 1; i < path.size(); i++) {
-			cost += path.get(i).getCost();
-		}
-		return cost;
-	}
-
-
-	private boolean allGraphNodesCovered(GridNodeGraph graph) {
-		for (GridNode node : graph.getAllNodes()) {
-			if (node.coverCount <= 0) {
-				return false;
-			}
-		}
-		return true;
-	}
+//	private double getPathCost(List<GridNode> path) {
+//		double cost = 0.0;
+//		for (int i = 1; i < path.size(); i++) {
+//			cost += path.get(i).getCost();
+//		}
+//		return cost;
+//	}
+//
+//
+//	private boolean allGraphNodesCovered(GridNodeGraph graph) {
+//		for (GridNode node : graph.getAllNodes()) {
+//			if (node.coverCount <= 0) {
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 
 
 	private GridNodeGraph createGraph() {
 		GridNodeGraph graph = new GridNodeGraph();
 		// Create a temporary grid to avoid duplicating nodes
-		GridNode[][] grid = new GridNode[sensor.getGridWidth()][sensor.getGridHeight()];
-		for (int x = 0; x < sensor.getGridWidth(); x++) {
-			for (int y = 0; y < sensor.getGridHeight(); y++) {
-				grid[x][y] = sensor.getNodeAt(x, y);
+		GridNode[][] grid = new GridNode[this.sensor.getGridWidth()][this.sensor.getGridHeight()];
+		for (int x = 0; x < this.sensor.getGridWidth(); x++) {
+			for (int y = 0; y < this.sensor.getGridHeight(); y++) {
+				grid[x][y] = this.sensor.getNodeAt(x, y);
 				if (0.0 < grid[x][y].getDangerProb()) {
-					grid[x][y].setCost((sensor.getGridWidth() * sensor.getGridHeight())*grid[x][y].getDangerProb());
+					grid[x][y].setCost((this.sensor.getGridWidth() * this.sensor.getGridHeight())*grid[x][y].getDangerProb());
 				} else {
-					grid[x][y].setCost(1.0 / (sensor.getGridWidth() * sensor.getGridHeight()));
+					grid[x][y].setCost(1.0 / (this.sensor.getGridWidth() * this.sensor.getGridHeight()));
 				}
 				if (grid[x][y].getNodeType() == NodeType.OBSTACLE) {
 					grid[x][y].setCost(Double.POSITIVE_INFINITY);
@@ -166,22 +168,22 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 			for (int y = 0; y < grid[0].length; y++) {
 				graph.addNode(grid[x][y]);
 				GridNode adjNode;
-				if (sensor.isOnGrid(x - 1, y)) {
+				if (this.sensor.isOnGrid(x - 1, y)) {
 					adjNode = grid[x - 1][y];
 					graph.addEdge(grid[x][y], adjNode);
 				}
 
-				if (sensor.isOnGrid(x + 1, y)) {
+				if (this.sensor.isOnGrid(x + 1, y)) {
 					adjNode = grid[x + 1][y];
 					graph.addEdge(grid[x][y], adjNode);
 				}
 
-				if (sensor.isOnGrid(x, y - 1)) {
+				if (this.sensor.isOnGrid(x, y - 1)) {
 					adjNode = grid[x][y - 1];
 					graph.addEdge(grid[x][y], adjNode);
 				}
 
-				if (sensor.isOnGrid(x, y + 1)) {
+				if (this.sensor.isOnGrid(x, y + 1)) {
 					adjNode = grid[x][y + 1];
 					graph.addEdge(grid[x][y], adjNode);
 				}
@@ -196,9 +198,9 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 
 
 class DijkstraGraph {
-	Map<GridNode, GridNode> prevNodes = new HashMap<GridNode, GridNode>();
-	Map<GridNode, Double> costs = new HashMap<GridNode, Double>();
-	private Set<GridNode> unvisited = new HashSet<GridNode>();
+	Map<GridNode, GridNode> prevNodes = new HashMap<>();
+	Map<GridNode, Double> costs = new HashMap<>();
+	private Set<GridNode> unvisited = new HashSet<>();
 	GridNode start;
 	GridNode target = null;
 	GridNodeGraph graph;
@@ -219,7 +221,7 @@ class DijkstraGraph {
 
 
 	public List<GridNode> getPathToNode(GridNode target) {
-		List<GridNode> path = new ArrayList<GridNode>();
+		List<GridNode> path = new ArrayList<>();
 
 		for (GridNode curNode = target; this.prevNodes.get(curNode) != null; curNode = this.prevNodes
 				.get(curNode)) {
@@ -251,12 +253,12 @@ class DijkstraGraph {
 		while (!this.unvisited.isEmpty()) {
 
 			curNode = getMinCostNodeFromUnvisitedSet();
-			if (curNode == target) {
+			if (curNode == this.target) {
 				return;
 			}
 			this.unvisited.remove(curNode);
 			double curCost = this.costs.get(curNode).doubleValue();
-			for (GridNode node : graph.getAdjacentNodes(curNode)) {
+			for (GridNode node : this.graph.getAdjacentNodes(curNode)) {
 				double nodeCost = node.getCost();
 				double tmpCost = curCost + nodeCost;
 				if (tmpCost < this.costs.get(node).doubleValue()) {
@@ -291,7 +293,7 @@ class DijkstraGraph {
  *
  */
 class GridNodeGraph {
-	Map<GridNode, Set<GridNode>> adjacencyMap = new HashMap<GridNode, Set<GridNode>>();
+	Map<GridNode, Set<GridNode>> adjacencyMap = new HashMap<>();
 
 
 	public GridNodeGraph() {

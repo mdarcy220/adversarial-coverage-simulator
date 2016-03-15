@@ -1,3 +1,4 @@
+package adversarialcoverage;
 import java.awt.image.BufferedImage;
 
 public abstract class Robot {
@@ -41,7 +42,7 @@ public abstract class Robot {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + uniqueId;
+		result = prime * result + this.uniqueId;
 		return result;
 	}
 
@@ -54,7 +55,7 @@ public abstract class Robot {
 		if (getClass() != obj.getClass())
 			return false;
 		Robot other = (Robot) obj;
-		if (uniqueId != other.uniqueId)
+		if (this.uniqueId != other.uniqueId)
 			return false;
 		return true;
 	}

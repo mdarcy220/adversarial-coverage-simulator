@@ -1,4 +1,4 @@
-
+package adversarialcoverage;
 public class GridActuator extends Actuator {
 	/**
 	 * The environment in which this actuator exists
@@ -8,6 +8,7 @@ public class GridActuator extends Actuator {
 	 * The robot to which this actuator is attached.
 	 */
 	private GridRobot robot;
+	private double lastReward = 0.0;
 
 
 	/**
@@ -61,14 +62,15 @@ public class GridActuator extends Actuator {
 
 
 	private void moveTo(Coordinate newLoc) {
-		if (robot.isBroken()) {
+		this.lastReward = 0.0;
+		if (this.robot.isBroken()) {
 			return;
 		}
 
 		// Move, if possible
-		if (env.isOnGrid(newLoc.x, newLoc.y)
-				&& env.getGridNode(newLoc.x, newLoc.y).getNodeType() != NodeType.OBSTACLE
-				&& env.getRobotsByLocation(newLoc.x, newLoc.y).size() == 0) {
+		if (this.env.isOnGrid(newLoc.x, newLoc.y)
+				&& this.env.getGridNode(newLoc.x, newLoc.y).getNodeType() != NodeType.OBSTACLE
+				&& this.env.getRobotsByLocation(newLoc.x, newLoc.y).size() == 0) {
 			this.robot.setLocation(newLoc.x, newLoc.y);
 		}
 
@@ -82,11 +84,32 @@ public class GridActuator extends Actuator {
 	public void coverCurrentNode() {
 		double rand = Math.random();
 
-		if (rand < env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()
+		if (rand < this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()
 				&& AdversarialCoverage.settings.getBooleanProperty("robots.breakable")) {
-			env.getRobotById(this.robot.getId()).setBroken(true);
+			this.env.getRobotById(this.robot.getId()).setBroken(true);
+			this.lastReward = -2.0;
+			return;
 		}
-		env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).incrementCoverCount();
+		
+		int coverCount = this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getCoverCount();
+		if(coverCount == 0) {
+			this.env.squaresLeft--;
+		}
+		this.lastReward = coverCount < 1 ? 1.0 : -0.1;
+		//this.lastReward -= this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb();
+		if(this.env.isCovered()) {
+			this.lastReward = 4.0;
+		}
+		//this.lastReward -= this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()*10;
+		this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).incrementCoverCount();
 		AdversarialCoverage.stats.updateCellCovered(this.robot);
+	}
+	
+	/**
+	 * Get the reward value from the most recent action (usually useful for MDP-based coverage algorithms)
+	 * @return
+	 */
+	public double getLastReward() {
+		return this.lastReward;
 	}
 }
