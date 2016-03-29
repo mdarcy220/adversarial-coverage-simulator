@@ -14,7 +14,7 @@ public class RandomGridCoverage extends CoverageAlgorithm {
 
 	@Override
 	public void init() {
-		actuator.coverCurrentNode();
+		this.actuator.coverCurrentNode();
 	}
 
 
@@ -78,7 +78,7 @@ public class RandomGridCoverage extends CoverageAlgorithm {
 
 
 	private GridNode getNodeRelative(int dx, int dy) {
-		return sensor.getNodeAt(sensor.getLocation().x + dx, sensor.getLocation().y + dy);
+		return this.sensor.getNodeAt(this.sensor.getLocation().x + dx, this.sensor.getLocation().y + dy);
 	}
 
 }

@@ -9,6 +9,11 @@ public class GridActuator extends Actuator {
 	 */
 	private GridRobot robot;
 	private double lastReward = 0.0;
+	private double COVER_UNIQUE_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.cover_unique");
+	private double COVER_AGAIN_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.cover_again");
+	private double DEATH_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.death");
+	private double FULL_COVERAGE_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.full_coverage");
+	private boolean ROBOTS_BREAKABLE = AdversarialCoverage.settings.getBooleanProperty("robots.breakable");
 
 
 	/**
@@ -85,9 +90,9 @@ public class GridActuator extends Actuator {
 		double rand = Math.random();
 
 		if (rand < this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()
-				&& AdversarialCoverage.settings.getBooleanProperty("robots.breakable")) {
+				&& this.ROBOTS_BREAKABLE) {
 			this.env.getRobotById(this.robot.getId()).setBroken(true);
-			this.lastReward = -2.0;
+			this.lastReward = this.DEATH_REWARD;
 			return;
 		}
 		
@@ -95,10 +100,10 @@ public class GridActuator extends Actuator {
 		if(coverCount == 0) {
 			this.env.squaresLeft--;
 		}
-		this.lastReward = coverCount < 1 ? 1.0 : -0.1;
+		this.lastReward = coverCount < 1 ? this.COVER_UNIQUE_REWARD : this.COVER_AGAIN_REWARD;
 		//this.lastReward -= this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb();
 		if(this.env.isCovered()) {
-			this.lastReward = 4.0;
+			this.lastReward = this.FULL_COVERAGE_REWARD;
 		}
 		//this.lastReward -= this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()*10;
 		this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).incrementCoverCount();
@@ -111,5 +116,14 @@ public class GridActuator extends Actuator {
 	 */
 	public double getLastReward() {
 		return this.lastReward;
+	}
+
+
+	public void reloadSettings() {
+		this.COVER_UNIQUE_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.cover_unique");
+		this.COVER_AGAIN_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.cover_again");
+		this.DEATH_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.death");
+		this.FULL_COVERAGE_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.full_coverage");
+		this.ROBOTS_BREAKABLE = AdversarialCoverage.settings.getBooleanProperty("robots.breakable");
 	}
 }

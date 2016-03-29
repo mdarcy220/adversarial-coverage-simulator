@@ -18,7 +18,7 @@ class CoveragePanel extends JPanel {
 	@Override
 	public void paint(Graphics g) {
 		g.clearRect(0, 0, this.getWidth(), this.getHeight());
-		env.draw(g, this.getSize());
+		this.env.draw(g, this.getSize());
 	}
 
 
@@ -28,11 +28,11 @@ class CoveragePanel extends JPanel {
 
 
 	public int getGridX(int x) {
-		return env.getWidth() * x / this.getWidth();
+		return this.env.getWidth() * x / this.getWidth();
 	}
 
 
 	public int getGridY(int y) {
-		return env.getHeight() * y / this.getHeight();
+		return this.env.getHeight() * y / this.getHeight();
 	}
 }

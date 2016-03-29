@@ -4,7 +4,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class GridEnvironment extends Environment {
 	private GridNode[][] grid;
@@ -257,5 +256,12 @@ public class GridEnvironment extends Environment {
 			}
 		}
 		return true;
+	}
+
+
+	public void reloadSettings() {
+		for(Robot r : this.robots) {
+			r.reloadSettings();
+		}
 	}
 }

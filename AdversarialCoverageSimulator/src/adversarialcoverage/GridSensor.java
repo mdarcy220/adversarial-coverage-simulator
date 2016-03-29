@@ -120,4 +120,9 @@ public class GridSensor extends Sensor {
 	public GridNode getCurrentNode() {
 		return this.getNodeAt(this.robot.getLocation().x, this.robot.getLocation().y);
 	}
+
+
+	public void reloadSettings() {
+		return;
+	}
 }

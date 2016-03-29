@@ -15,33 +15,45 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	GridSensor sensor;
 	GridActuator actuator;
 	Random randgen = new Random();
-	double greedyEpsilon = 1;
+	double greedyEpsilon = AdversarialCoverage.settings.getDoubleProperty("deepql.greedy_epsilon_start");
 	long stepNum = 0;
 	List<StateTransition> lastStates = new ArrayList<>();
-	final static int STATE_SIZE = 75;
-	final static int HISTORY_MAX = 100000;
-	final static double DISCOUNT_FACTOR = 0.5;
-	final static double GREEDY_EPSILON_DECREMENT = 0.0000005;
-	final static int MINIBATCH_SIZE = 32;
+	final int STATE_SIZE = 75;
+	final int HISTORY_MAX = 100000;
+	double DISCOUNT_FACTOR = AdversarialCoverage.settings.getDoubleProperty("deepql.discountfactor");
+	double GREEDY_EPSILON_DECREMENT = AdversarialCoverage.settings
+			.getDoubleProperty("deepql.greedy_epsilon_decrement");
+	double GREEDY_EPSILON_MINIMUM = AdversarialCoverage.settings.getDoubleProperty("deepql.greedy_epsilon_minimum");
+	int MINIBATCH_SIZE = AdversarialCoverage.settings.getIntProperty("deepql.minibatch_size");
+	double LEARNING_RATE_DECAY_FACTOR = AdversarialCoverage.settings
+			.getDoubleProperty("deepql.learning_rate_decay_factor");
 
 
 	private double[] getPreprocessedState() {
 
-		double[] curState = new double[STATE_SIZE];
+		double[] curState = new double[this.STATE_SIZE];
+		int xLowBound = Math.min(Math.max(this.sensor.getLocation().x - 3, 0),
+				(this.sensor.getGridWidth() - 5));
+		// int xHighBound = xLowBound + 5;
+		int yLowBound = Math.min(Math.max(this.sensor.getLocation().y - 3, 0),
+				(this.sensor.getGridHeight() - 5));
+		// int yHighBound = yLowBound + 5;
 		for (int x = 0; x < 5; x++) {
 			for (int y = 0; y < 5; y++) {
-				curState[x * 5 + y] = this.sensor.getDangerLevelAt(x, y);
-				curState[25 + x * 5 + y] = this.sensor.getCoverCountAt(x, y) < 1 ? -1 : 1;
+				curState[x * 5 + y] = this.sensor.getDangerLevelAt(xLowBound + x, yLowBound + y) * 3.0;
+				curState[25 + x * 5 + y] = this.sensor.getCoverCountAt(xLowBound + x, yLowBound + y) < 1
+						? -1 : 1;
 				curState[50 + x * 5 + y] = 0;
 			}
 		}
-		curState[50 + this.sensor.getLocation().x * 5 + this.sensor.getLocation().y] = 1;
+		curState[50 + (this.sensor.getLocation().x - xLowBound) * 5
+				+ (this.sensor.getLocation().y - yLowBound)] = 1;
 
 		// Normalize the data
 		// The sum of squares should be around 27 (1 for danger levels +
 		// 25 for coverage + 1 for location)
 		double approxStdDev = Math.sqrt(27.0);
-		for (int i = 0; i < STATE_SIZE; i++) {
+		for (int i = 0; i < this.STATE_SIZE; i++) {
 			curState[i] /= approxStdDev;
 		}
 
@@ -73,11 +85,12 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		System.out.printf("LEARNING_RATE=%f\n", this.nn.LEARNING_RATE);
 		System.out.printf("MOMENTUM_FACTOR=%f\n", this.nn.MOMENTUM_GAMMA);
 		System.out.printf("GREEDINESS=%f\n", (1.0 - this.greedyEpsilon));
-		System.out.printf("GREEDINESS_INCREMENT=%f\n", (1.0 - DeepQLGridCoverage.GREEDY_EPSILON_DECREMENT));
-		System.out.printf("MINIBATCH_SIZE=%d\n", DeepQLGridCoverage.MINIBATCH_SIZE);
-		System.out.printf("DISCOUNT_FACTOR=%f\n", DeepQLGridCoverage.DISCOUNT_FACTOR);
-		System.out.printf("STATE_SIZE=%d\n", DeepQLGridCoverage.STATE_SIZE);
-		System.out.printf("HISTORY_MAX=%d\n", DeepQLGridCoverage.HISTORY_MAX);
+		System.out.printf("GREEDINESS_INCREMENT=%E\n", this.GREEDY_EPSILON_DECREMENT);
+		System.out.printf("GREEDINESS_MAX=%E\n", 1.0 - this.GREEDY_EPSILON_MINIMUM);
+		System.out.printf("MINIBATCH_SIZE=%d\n", this.MINIBATCH_SIZE);
+		System.out.printf("DISCOUNT_FACTOR=%f\n", this.DISCOUNT_FACTOR);
+		System.out.printf("STATE_SIZE=%d\n", this.STATE_SIZE);
+		System.out.printf("HISTORY_MAX=%d\n", this.HISTORY_MAX);
 		System.out.printf("ROBOTS_BREAKABLE=%b\n",
 				AdversarialCoverage.settings.getBooleanProperty("robots.breakable"));
 		System.out.printf("GRID_GENERATOR_STRING=%s\n",
@@ -90,14 +103,16 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		}
 		System.out.printf("%d", layerSizes[layerSizes.length - 1]);
 		System.out.printf("]\n");
+
+		System.out.println("----------------");
 	}
 
 
 	@Override
 	public void step() {
 		double[] curState = getPreprocessedState();
-		double[] nnInput = new double[STATE_SIZE];
-		for (int i = 0; i < STATE_SIZE; i++) {
+		double[] nnInput = new double[this.STATE_SIZE];
+		for (int i = 0; i < this.STATE_SIZE; i++) {
 			nnInput[i] = curState[i];
 		}
 
@@ -120,8 +135,8 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		takeAction(action);
 		curState = getPreprocessedState();
 
-		double[] nnInput2 = new double[STATE_SIZE];
-		for (int i = 0; i < STATE_SIZE; i++) {
+		double[] nnInput2 = new double[this.STATE_SIZE];
+		for (int i = 0; i < this.STATE_SIZE; i++) {
 			nnInput2[i] = curState[i];
 		}
 		transition.nextInput = curState;
@@ -139,10 +154,10 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 				}
 			}
 
-			transition.correctQVal += DeepQLGridCoverage.DISCOUNT_FACTOR * maxVal;
+			transition.correctQVal += this.DISCOUNT_FACTOR * maxVal;
 			transition.isTerminal = false;
 		}
-		transition.correctQVal /= 4.0;
+		transition.correctQVal /= 2.0;
 
 		double[] correctOut = new double[5];
 		for (int i = 0; i < nnOutput.length; i++) {
@@ -151,28 +166,30 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		correctOut[action] = transition.correctQVal;
 		if (this.stepNum % 500 == 0) {
 			double squaredErrorSum = this.getSquaredErrorSum(correctOut[action], nnOutput[action]);
-			System.out.printf("Loss for minibatch %d: %f\n", this.stepNum,
-					correctOut[action] - nnOutput[action]);
-			if (squaredErrorSum < 0.00002) {
-				this.nn.LEARNING_RATE *= 0.99;
-			}
+			System.out.printf("Loss for minibatch %d: %f  (%.5f)\n", this.stepNum,
+					correctOut[action] - nnOutput[action], squaredErrorSum);
+					// if (squaredErrorSum < 0.00002) {
+
+			// }
 		}
 		this.lastStates.add(transition);
-		if (HISTORY_MAX < this.lastStates.size()) {
+		if (this.HISTORY_MAX < this.lastStates.size()) {
 			this.lastStates.remove(0);
 		}
 
-		trainMinibatchFromHistory(32);
+		trainMinibatchFromHistory(this.MINIBATCH_SIZE);
 
 		if (this.stepNum % 50000 == 0) {
 			System.out.println(this.nn.exportToString());
 			System.out.println("Minibatch number=" + this.stepNum);
 			System.out.println("Epsilon=" + this.greedyEpsilon);
+			System.out.println("Learning rate=" + this.nn.LEARNING_RATE);
+			this.nn.LEARNING_RATE *= this.LEARNING_RATE_DECAY_FACTOR;
 		}
-		if (0.1 < this.greedyEpsilon) {
-			this.greedyEpsilon -= 0.0000005;
+		if (this.GREEDY_EPSILON_MINIMUM < this.greedyEpsilon) {
+			this.greedyEpsilon -= this.GREEDY_EPSILON_DECREMENT;
 		} else {
-			this.greedyEpsilon = 0.1;
+			this.greedyEpsilon = this.GREEDY_EPSILON_MINIMUM;
 		}
 
 
@@ -193,8 +210,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 				correctOut[j] = nnOutput[j];
 			}
 			correctOut[sample.action] = (sample.reward
-					+ (sample.isTerminal ? 0.0 : (DeepQLGridCoverage.DISCOUNT_FACTOR * nextQVal)))
-					/ 4.0;
+					+ (sample.isTerminal ? 0.0 : (this.DISCOUNT_FACTOR * nextQVal))) / 4.0;
 			this.nn.backPropagateFromLastSample(correctOut);
 		}
 		this.nn.finishBatch();
@@ -209,27 +225,40 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 
 	private void initNeuralNet() {
 		if (AdversarialCoverage.settings.getStringProperty("neuralnet.loadfile").length() == 0) {
-			this.nn = new NeuralNet(new int[] { STATE_SIZE, 1 });
+			this.nn = new NeuralNet(new int[] { this.STATE_SIZE, 1 });
 			this.nn.removeLastLayer();
 			// this.nn.addConvolutionalLayer(3, 1);
-			this.nn.addFullyConnectedLayer(75, ActivationFunction.RELU_ACTIVATION);
-			this.nn.addFullyConnectedLayer(50, ActivationFunction.RELU_ACTIVATION);
-			this.nn.addFullyConnectedLayer(25, ActivationFunction.RELU_ACTIVATION);
+			// this.nn.addFullyConnectedLayer(150,
+			// ActivationFunction.RELU_ACTIVATION);
+			// this.nn.addFullyConnectedLayer(130,
+			// ActivationFunction.RELU_ACTIVATION);
+			// this.nn.addFullyConnectedLayer(110,
+			// ActivationFunction.RELU_ACTIVATION);
+			this.nn.addFullyConnectedLayer(90, ActivationFunction.RELU_ACTIVATION);
+			this.nn.addFullyConnectedLayer(90, ActivationFunction.RELU_ACTIVATION);
+			this.nn.addFullyConnectedLayer(90, ActivationFunction.RELU_ACTIVATION);
 			this.nn.addFullyConnectedLayer(5, ActivationFunction.LINEAR_ACTIVATION);
-			this.nn.removeNeuronFromLayer(4, 5);
+			final int[] nnLayerSizes = this.nn.getLayerSizes();
+			this.nn.removeNeuronFromLayer(nnLayerSizes.length - 1,
+					nnLayerSizes[nnLayerSizes.length - 1] - 1);
 		} else {
-			Scanner scan = null;
+
 			try {
-				scan = new Scanner(new File(
+				Scanner scan = new Scanner(new File(
 						AdversarialCoverage.settings.getStringProperty("neuralnet.loadfile")));
+				this.nn = new NeuralNet(scan.nextLine());
+				int numLayers = this.nn.getLayerSizes().length;
+				for (int i = 0; i < numLayers - 1; i++) {
+					this.nn.setLayerActivation(i, ActivationFunction.RELU_ACTIVATION);
+				}
+				this.nn.setLayerActivation(this.nn.getLayerSizes().length - 1,
+						ActivationFunction.LINEAR_ACTIVATION);
+				scan.close();
 			} catch (FileNotFoundException e) {
 				System.err.print("Neural net load file not found!");
 				System.err.println(" Please check the file name in setting neuralnet.loadfile");
 				e.printStackTrace();
 			}
-			this.nn = new NeuralNet(scan.nextLine());
-			scan.close();
-			this.greedyEpsilon = 0.1;
 		}
 
 	}
@@ -247,6 +276,21 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		} else {
 			this.actuator.coverCurrentNode();
 		}
+	}
+
+
+	@Override
+	public void reloadSettings() {
+		this.actuator.reloadSettings();
+		this.sensor.reloadSettings();
+		this.DISCOUNT_FACTOR = AdversarialCoverage.settings.getDoubleProperty("deepql.discountfactor");
+		this.GREEDY_EPSILON_DECREMENT = AdversarialCoverage.settings
+				.getDoubleProperty("deepql.greedy_epsilon_decrement");
+		this.GREEDY_EPSILON_MINIMUM = AdversarialCoverage.settings
+				.getDoubleProperty("deepql.greedy_epsilon_minimum");
+		this.MINIBATCH_SIZE = AdversarialCoverage.settings.getIntProperty("deepql.minibatch_size");
+		this.LEARNING_RATE_DECAY_FACTOR = AdversarialCoverage.settings
+				.getDoubleProperty("deepql.learning_rate_decay_factor");
 	}
 
 	class StateTransition {

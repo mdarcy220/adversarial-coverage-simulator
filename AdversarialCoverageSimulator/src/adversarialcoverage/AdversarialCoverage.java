@@ -401,8 +401,13 @@ public class AdversarialCoverage {
 
 
 	public void coverageLoop() {
+		// Update settings
+		this.env.reloadSettings();
+		
+		long statsBatchSize = AdversarialCoverage.settings.getIntProperty("stats.multirun.batch_size");
 		long delay = settings.getIntProperty("autorun.stepdelay");
 		boolean doRepaint = settings.getBooleanProperty("autorun.do_repaint");
+		
 		while (this.isRunning) {
 			long time = System.currentTimeMillis();
 			step();
@@ -414,6 +419,11 @@ public class AdversarialCoverage {
 				if (this.env.isCovered()) {
 					System.out.printf("Covered the environment in %d steps.\n",
 							this.env.getStepCount());
+					AdversarialCoverage.stats.startNewRun();
+					if(AdversarialCoverage.stats.getRunsInCurrentBatch() % statsBatchSize == 0) {
+						System.out.printf("Average steps for last %d coverages: %f\n", AdversarialCoverage.stats.getRunsInCurrentBatch(), AdversarialCoverage.stats.getBatchAvgSteps());
+						AdversarialCoverage.stats.reset();
+					}
 				} else if (this.env.isFinished()) {
 					//System.out.println("All robots are broken and cannot continue");
 				}
@@ -452,8 +462,6 @@ public class AdversarialCoverage {
 					} else {
 						AdversarialCoverage.this.isRunning = false;
 					}
-					AdversarialCoverage.stats = new SimulationStats(this.env,
-							this.env.getRobotList());
 				}
 
 			}

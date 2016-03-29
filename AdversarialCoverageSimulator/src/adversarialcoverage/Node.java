@@ -46,7 +46,7 @@ public class Node {
 	 * @return the {@code NodeType} of this node
 	 */
 	public NodeType getNodeType() {
-		return nodeType;
+		return this.nodeType;
 	}
 
 	/**
@@ -82,11 +82,11 @@ public class Node {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + coverCount;
+		result = prime * result + this.coverCount;
 		long temp;
-		temp = Double.doubleToLongBits(dangerProb);
+		temp = Double.doubleToLongBits(this.dangerProb);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((nodeType == null) ? 0 : nodeType.hashCode());
+		result = prime * result + ((this.nodeType == null) ? 0 : this.nodeType.hashCode());
 		return result;
 	}
 
@@ -102,13 +102,13 @@ public class Node {
 			return false;
 		}
 		Node other = (Node) obj;
-		if (coverCount != other.coverCount) {
+		if (this.coverCount != other.coverCount) {
 			return false;
 		}
-		if (Double.doubleToLongBits(dangerProb) != Double.doubleToLongBits(other.dangerProb)) {
+		if (Double.doubleToLongBits(this.dangerProb) != Double.doubleToLongBits(other.dangerProb)) {
 			return false;
 		}
-		if (nodeType != other.nodeType) {
+		if (this.nodeType != other.nodeType) {
 			return false;
 		}
 		return true;

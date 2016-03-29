@@ -1,10 +1,13 @@
 package adversarialcoverage;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class SimulationStats {
-	private long nTimeSteps = 0;
+	private long nStepsInRun = 0;
+	private long nStepsInBatch = 0;
+	private long nRunsInBatch = 0;
 	private long totalFreeCells = 0;
 	private Set<RobotStats> robotStats = new HashSet<>();
 	private GridEnvironment env;
@@ -114,7 +117,7 @@ public class SimulationStats {
 
 
 	public long getNumTimeSteps() {
-		return this.nTimeSteps;
+		return this.nStepsInRun;
 	}
 
 
@@ -152,7 +155,8 @@ public class SimulationStats {
 
 
 	public void updateTimeStep() {
-		this.nTimeSteps++;
+		this.nStepsInRun++;
+
 	}
 
 
@@ -163,7 +167,7 @@ public class SimulationStats {
 			}
 		}
 
-		this.lastCellVisitTimes[r.getLocation().x][r.getLocation().y] = this.nTimeSteps;
+		this.lastCellVisitTimes[r.getLocation().x][r.getLocation().y] = this.nStepsInRun;
 	}
 
 
@@ -179,7 +183,8 @@ public class SimulationStats {
 		}
 		return num;
 	}
-	
+
+
 	public RobotStats getRobotStats(GridRobot r) {
 		for (RobotStats rs : this.robotStats) {
 			if (rs.robot.equals(r)) {
@@ -187,6 +192,61 @@ public class SimulationStats {
 			}
 		}
 		return null;
+	}
+
+
+	/**
+	 * Get the average number of steps per run for the current batch
+	 * @return
+	 */
+	public double getBatchAvgSteps() {
+		return ((double)this.nStepsInBatch/(double)this.nRunsInBatch);
+	}
+	
+	/**
+	 * Gets the number of runs that are in the current batch
+	 * @return
+	 */
+	public long getRunsInCurrentBatch() {
+		return this.nRunsInBatch;
+	}
+
+
+	/**
+	 * Resets the statistics for an individual coverage. Batch statistics
+	 * will remain intact.
+	 */
+	public void startNewRun() {
+		this.nStepsInBatch += this.nStepsInRun;
+		this.nRunsInBatch++;
+		resetRunStats();
+	}
+
+
+	private void resetRunStats() {
+		this.nStepsInRun = 0;
+		this.totalFreeCells = 0;
+		this.lastCellVisitTimes = new long[this.env.getWidth()][this.env.getHeight()];
+		for (int x = 0; x < this.env.getWidth(); x++) {
+			for (int y = 0; y < this.env.getHeight(); y++) {
+				if (this.env.getGridNode(x, y).getNodeType() == NodeType.FREE) {
+					this.totalFreeCells++;
+				}
+			}
+		}
+		for(RobotStats rs : this.robotStats) {
+			rs.reset();
+		}
+	}
+
+
+	/**
+	 * Reset all statistics.
+	 */
+	public void reset() {
+		this.nStepsInBatch = 0;
+		this.nRunsInBatch = 0;
+		resetRunStats();
 	}
 }
 
@@ -212,5 +272,12 @@ class RobotStats {
 		this.coverageProb *= (1.0 - this.env.getGridNode(x, y).getDangerProb());
 		this.survivability += this.coverageProb;
 		this.pathLength++;
+	}
+
+
+	public void reset() {
+		this.pathLength = 0;
+		this.survivability = 1.0;
+		this.coverageProb = 1.0;
 	}
 }

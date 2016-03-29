@@ -145,7 +145,7 @@ public class NeuralNet {
 	}
 
 
-	public static void main_(String[] args) throws FileNotFoundException {
+	public static void main_(/* String[] args */) throws FileNotFoundException {
 		int[] nodesPerLayer = new int[] { 1, 1 };
 		NeuralNet nn = new NeuralNet(nodesPerLayer);
 		nn.removeLastLayer();
@@ -204,8 +204,8 @@ public class NeuralNet {
 		System.out.println("Time: " + (System.nanoTime() - t) / 1000000000.0);
 		// System.out.println(nn.exportToString());
 
-		byte num1 = 4;
-		byte num2 = 9;
+		// byte num1 = 4;
+		// byte num2 = 9;
 		inputs1[0] = 5 / 64.0;
 		// System.arraycopy(byteToDoubleBinaryArray(num1), 0, inputs1,
 		// 0, 7);
@@ -219,6 +219,14 @@ public class NeuralNet {
 			System.out.printf("Output #%d: %f\n", i, out1[i]);
 		}
 
+	}
+	
+	
+	public void setLayerActivation(int layerNum, ActivationFunction activation) {
+		List<Neuron> layer = this.layers.get(layerNum);
+		for(int i = 0; i < layer.size(); i++) {
+			layer.get(i).setActivation(activation);
+		}
 	}
 
 
@@ -323,6 +331,7 @@ public class NeuralNet {
 	}
 
 
+	@SuppressWarnings("unused")
 	private static double[] byteToDoubleBinaryArray(byte in) {
 		double[] bindata = new double[7];
 		for (byte i = 6; 0 <= i; i--) {
@@ -332,6 +341,7 @@ public class NeuralNet {
 	}
 
 
+	@SuppressWarnings("unused")
 	private static int doubleBinaryArrayToInt(double[] binary) {
 		int out = 0;
 		for (int i = 0; i < binary.length && i < 31; i++) {
@@ -433,7 +443,7 @@ public class NeuralNet {
 	 */
 	class Neuron {
 		List<Neuron> inputNeurons = new ArrayList<>();
-		List<Double> inputWeights = new ArrayList<>();
+		List<EditableDouble> inputWeights = new ArrayList<>();
 		double[] deltaWeights = new double[0];
 		long nSamples = 0;
 		int idInLayer;
@@ -470,7 +480,7 @@ public class NeuralNet {
 
 		public void addInput(Neuron n, double weight) {
 			this.inputNeurons.add(n);
-			this.inputWeights.add(new Double(weight));
+			this.inputWeights.add(new EditableDouble(weight));
 			this.deltaWeights = new double[this.inputWeights.size()];
 		}
 
@@ -478,23 +488,28 @@ public class NeuralNet {
 		public void normalizeWeights() {
 			double inverseInputSizeSqrt = 1.0 / Math.sqrt(this.inputWeights.size());
 			for (int i = 0; i < this.inputWeights.size(); i++) {
-				this.inputWeights.set(i, new Double(
-						inverseInputSizeSqrt * (2 * NeuralNet.randgen.nextDouble() - 1)));
+				this.inputWeights.get(i).value = inverseInputSizeSqrt
+						* (2 * NeuralNet.randgen.nextDouble() - 1);
 			}
+		}
+		
+		
+		public void setActivation(ActivationFunction activation) {
+			this.activeFunc = activation;
 		}
 
 
 		public void applyWeightDeltas() {
 			for (int i = 0; i < this.deltaWeights.length; i++) {
-				double oldWeight = this.inputWeights.get(i);
+				double oldWeight = this.inputWeights.get(i).value;
 				double newWeight = oldWeight - this.deltaWeights[i];
 				// double newWeight = oldWeight -
 				// LEARNING_RATE*this.deltaWeights[i]-0.001*oldWeight;
-				this.inputWeights.set(i, new Double(newWeight));
+				this.inputWeights.get(i).value = newWeight;
 				this.deltaWeights[i] = 0.0;
-				if (Double.isNaN(this.inputWeights.get(i))) {
-					this.inputWeights.set(i,
-							new Double(randgen.nextDouble() / this.inputWeights.size()));
+				if (Double.isNaN(this.inputWeights.get(i).value)) {
+					this.inputWeights.get(i).value = randgen.nextDouble()
+							/ this.inputWeights.size();
 					System.out.println("ERROR: Weight is NaN. Aborting...");
 					System.exit(1);
 				}
@@ -505,14 +520,14 @@ public class NeuralNet {
 
 		public void applyWeightDeltasWithoutMomentum() {
 			for (int i = 0; i < this.deltaWeights.length; i++) {
-				double oldWeight = this.inputWeights.get(i);
+				double oldWeight = this.inputWeights.get(i).value;
 				double newWeight = oldWeight
 						- NeuralNet.this.LEARNING_RATE * (this.deltaWeights[i] / this.nSamples);
-				this.inputWeights.set(i, new Double(newWeight));
+				this.inputWeights.get(i).value = newWeight;
 				this.deltaWeights[i] = 0.0;
-				if (Double.isNaN(this.inputWeights.get(i))) {
-					this.inputWeights.set(i,
-							new Double(randgen.nextDouble() / this.inputWeights.size()));
+				if (Double.isNaN(this.inputWeights.get(i).value)) {
+					this.inputWeights.get(i).value = randgen.nextDouble()
+							/ this.inputWeights.size();
 					System.out.println("ERROR: Weight is NaN. Aborting...");
 					System.exit(1);
 				}
@@ -528,11 +543,11 @@ public class NeuralNet {
 		public void backPropagate() {
 			for (int i = 0; i < this.inputNeurons.size(); i++) {
 				Neuron n = this.inputNeurons.get(i);
-				n.setWeightedErrorSum(
-						n.getWeightedErrorSum() + (this.errorTerm * this.inputWeights.get(i)));
+				n.setWeightedErrorSum(n.getWeightedErrorSum()
+						+ (this.errorTerm * this.inputWeights.get(i).value));
 
 
-				double newWeight = this.inputWeights.get(i);
+				double newWeight = this.inputWeights.get(i).value;
 				newWeight -= NeuralNet.this.LEARNING_RATE * (+0.000 * newWeight);
 				// this.inputWeights.set(i, new
 				// Double(newWeight));
@@ -545,8 +560,8 @@ public class NeuralNet {
 		public void backPropagate(double gamma) {
 			for (int i = 0; i < this.inputNeurons.size(); i++) {
 				Neuron n = this.inputNeurons.get(i);
-				n.setWeightedErrorSum(
-						n.getWeightedErrorSum() + (this.errorTerm * this.inputWeights.get(i)));
+				n.setWeightedErrorSum(n.getWeightedErrorSum()
+						+ (this.errorTerm * this.inputWeights.get(i).value));
 
 				this.deltaWeights[i] = gamma * this.deltaWeights[i]
 						+ NeuralNet.this.LEARNING_RATE * (this.errorTerm * n.getOutputValue());
@@ -612,7 +627,7 @@ public class NeuralNet {
 			this.weightedInputSum = 0.0;
 			for (int i = 0; i < this.inputNeurons.size(); i++) {
 				this.weightedInputSum += this.inputNeurons.get(i).getOutputValue()
-						* this.inputWeights.get(i).doubleValue();
+						* this.inputWeights.get(i).value;
 			}
 		}
 
@@ -643,5 +658,26 @@ public class NeuralNet {
 		private void setWeightedErrorSum(double weightedErrorSum) {
 			this.weightedErrorSum = weightedErrorSum;
 		}
+	}
+}
+
+
+class EditableDouble {
+	public double value = 0.0;
+
+
+	public EditableDouble() {
+
+	}
+
+
+	public EditableDouble(double value) {
+		this.value = value;
+	}
+
+
+	@Override
+	public String toString() {
+		return String.format("%f", this.value);
 	}
 }

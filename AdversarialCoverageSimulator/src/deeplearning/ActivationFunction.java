@@ -50,18 +50,21 @@ public abstract class ActivationFunction {
 
 	};
 	
+	@SuppressWarnings("unused")
 	private static double activationFunc(double x) {
 		// return sigmoid(x);
 		return reLU(x);
 	}
 
 
+	@SuppressWarnings("unused")
 	private static double activationFuncDerivative(double x) {
 		// return sigmoidDerivative(x);
 		return reLUDerivative(x);
 	}
 
 
+	@SuppressWarnings("unused")
 	private static double activationFuncDerivative(double x, double lastOutput) {
 		// return fastSigmoidDerivative(lastOutput);
 		return reLUDerivative(x);

@@ -59,5 +59,9 @@ public abstract class Robot {
 			return false;
 		return true;
 	}
+
+	public void reloadSettings() {
+		this.coverAlgo.reloadSettings();
+	}
 	
 }

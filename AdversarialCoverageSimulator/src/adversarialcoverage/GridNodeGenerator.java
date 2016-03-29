@@ -28,7 +28,7 @@ public class GridNodeGenerator {
 	 * Resets parameters to default values
 	 */
 	public void reset() {
-		randgen.setSeed(System.nanoTime());
+		this.randgen.setSeed(System.nanoTime());
 		this.resetNodeParameters();
 		this.paramStr = "";
 		this.stringEmpty = true;
@@ -121,14 +121,14 @@ public class GridNodeGenerator {
 	 *         parameter set has been reached), false otherwise
 	 */
 	private boolean loadNextParameter() {
-		if (this.stringEmpty || !scan.hasNext()) {
+		if (this.stringEmpty || !this.scan.hasNext()) {
 			this.stringEmpty = true;
 			return false;
 		}
-		String strVal = scan.next().trim();
+		String strVal = this.scan.next().trim();
 		if (strVal.charAt(0) != '@') {
-			if (scan.hasNextDouble()) {
-				double nodeDangerLevel = scan.nextDouble();
+			if (this.scan.hasNextDouble()) {
+				double nodeDangerLevel = this.scan.nextDouble();
 				this.dangerMax = nodeDangerLevel;
 				this.dangerMin = nodeDangerLevel;
 				this.dangerNodeProb = 1.0;
@@ -146,17 +146,17 @@ public class GridNodeGenerator {
 
 		char code = strVal.charAt(1);
 		if (code == 'r') {
-			if (3 <= strVal.length() && strVal.charAt(2) == 'o' && scan.hasNextDouble()) {
-				this.obstacleProb = scan.nextDouble();
+			if (3 <= strVal.length() && strVal.charAt(2) == 'o' && this.scan.hasNextDouble()) {
+				this.obstacleProb = this.scan.nextDouble();
 			}
-			if (4 <= strVal.length() && strVal.charAt(3) == 'd' && scan.hasNextDouble()) {
-				this.dangerNodeProb = scan.nextDouble();
+			if (4 <= strVal.length() && strVal.charAt(3) == 'd' && this.scan.hasNextDouble()) {
+				this.dangerNodeProb = this.scan.nextDouble();
 			}
-			if (scan.hasNextDouble()) {
-				this.dangerMin = scan.nextDouble();
+			if (this.scan.hasNextDouble()) {
+				this.dangerMin = this.scan.nextDouble();
 			}
-			if (scan.hasNextDouble()) {
-				this.dangerMax = scan.nextDouble();
+			if (this.scan.hasNextDouble()) {
+				this.dangerMax = this.scan.nextDouble();
 			} else {
 				this.stringEmpty = true;
 			}
@@ -166,8 +166,8 @@ public class GridNodeGenerator {
 				this.obstacleProb = this.scan.nextDouble();
 			}
 		} else if (code == 'm') {
-			if (scan.hasNextInt()) {
-				this.repeatCount = scan.nextInt();
+			if (this.scan.hasNextInt()) {
+				this.repeatCount = this.scan.nextInt();
 			} else {
 				this.stringEmpty = true;
 			}
