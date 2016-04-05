@@ -1,4 +1,5 @@
 package adversarialcoverage;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -40,6 +41,18 @@ public class AdversarialCoverage {
 
 
 	private void createAndShowGUI() {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (UnsupportedLookAndFeelException e) {
+			// handle exception
+		} catch (ClassNotFoundException e) {
+			// handle exception
+		} catch (InstantiationException e) {
+			// handle exception
+		} catch (IllegalAccessException e) {
+			// handle exception
+		}
+
 		this.mainPanel = new CoveragePanel(this.env);
 		// Set up the window
 		this.cw.setVisible(true);
@@ -93,9 +106,21 @@ public class AdversarialCoverage {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
 				settings.openSettingsDialog(AdversarialCoverage.this.cw);
+				AdversarialCoverage.this.env.reloadSettings();
 			}
 		});
 		fileMenu.add(settingsDialogMenuItem);
+
+
+		final JMenuItem exportMapDialogMenuItem = new JMenuItem("Export grid...");
+		exportMapDialogMenuItem.setToolTipText("Export the current grid as a parsable input string");
+		exportMapDialogMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				System.out.println(AdversarialCoverage.this.env.exportToString());
+			}
+		});
+		fileMenu.add(exportMapDialogMenuItem);
 
 		menuBar.add(fileMenu);
 
@@ -403,11 +428,11 @@ public class AdversarialCoverage {
 	public void coverageLoop() {
 		// Update settings
 		this.env.reloadSettings();
-		
+
 		long statsBatchSize = AdversarialCoverage.settings.getIntProperty("stats.multirun.batch_size");
 		long delay = settings.getIntProperty("autorun.stepdelay");
 		boolean doRepaint = settings.getBooleanProperty("autorun.do_repaint");
-		
+
 		while (this.isRunning) {
 			long time = System.currentTimeMillis();
 			step();
@@ -420,12 +445,15 @@ public class AdversarialCoverage {
 					System.out.printf("Covered the environment in %d steps.\n",
 							this.env.getStepCount());
 					AdversarialCoverage.stats.startNewRun();
-					if(AdversarialCoverage.stats.getRunsInCurrentBatch() % statsBatchSize == 0) {
-						System.out.printf("Average steps for last %d coverages: %f\n", AdversarialCoverage.stats.getRunsInCurrentBatch(), AdversarialCoverage.stats.getBatchAvgSteps());
+					if (AdversarialCoverage.stats.getRunsInCurrentBatch() % statsBatchSize == 0) {
+						System.out.printf("Average steps for last %d coverages: %f\n",
+								AdversarialCoverage.stats.getRunsInCurrentBatch(),
+								AdversarialCoverage.stats.getBatchAvgSteps());
 						AdversarialCoverage.stats.reset();
 					}
 				} else if (this.env.isFinished()) {
-					//System.out.println("All robots are broken and cannot continue");
+					// System.out.println("All robots are
+					// broken and cannot continue");
 				}
 				if (this.env.isFinished()) {
 
@@ -438,27 +466,33 @@ public class AdversarialCoverage {
 					// e.printStackTrace();
 					// }
 					//
-					if(settings.getBooleanProperty("autorun.finished.display_full_stats")) {
+					if (settings.getBooleanProperty("autorun.finished.display_full_stats")) {
 						printStats(new PrintStream(System.out));
 					} else {
-						//System.out.printf("Max covers of a cell\t%d\n", AdversarialCoverage.stats.getMaxCellCovers());
-						//System.out.printf("Total time steps\t%d\n", AdversarialCoverage.stats.getNumTimeSteps());
+						// System.out.printf("Max covers
+						// of a cell\t%d\n",
+						// AdversarialCoverage.stats.getMaxCellCovers());
+						// System.out.printf("Total time
+						// steps\t%d\n",
+						// AdversarialCoverage.stats.getNumTimeSteps());
 					}
 					if (settings.getBooleanProperty("autorun.finished.newgrid")) {
 						// resetCoverageEnvironment();
-						//reinitializeCoverage();
-						for(GridRobot r : this.env.getRobotList()){
+						// reinitializeCoverage();
+						for (GridRobot r : this.env.getRobotList()) {
 							r.setBroken(false);
 						}
-						
-						genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
+
+						genGridFromDangerValuesString(AdversarialCoverage.settings
+								.getStringProperty("env.grid.dangervalues"));
 						this.env.init();
 
 						if (this.mainPanel != null) {
 							this.mainPanel.setEnvironment(this.env);
 						}
 						this.mainPanel.repaint();
-						//System.out.println("New environment!");
+						// System.out.println("New
+						// environment!");
 					} else {
 						AdversarialCoverage.this.isRunning = false;
 					}

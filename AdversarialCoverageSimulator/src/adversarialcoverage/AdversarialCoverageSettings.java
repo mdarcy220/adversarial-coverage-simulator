@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -51,9 +52,9 @@ public class AdversarialCoverageSettings {
 	 */
 	public AdversarialCoverageSettings() {
 		// Set up defaults
+		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
 		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
 		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
-		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
 		// this.setIntProperty("autorun.framedelay",
 		// this.DEFAULT_AUTORUN_FRAME_DELAY);
 		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
@@ -62,28 +63,35 @@ public class AdversarialCoverageSettings {
 		//this.setIntProperty("robots.id_1.startpos.x", 5);
 		//this.setIntProperty("robots.id_1.startpos.y", 5);
 		this.setIntProperty("deepql.minibatch_size", 32);
+		this.setIntProperty("deepql.history_max", 100000);
+		this.setIntProperty("neuralnet.hidden_layer_size", 80);
 		this.setIntProperty("stats.multirun.batch_size", 100);
-
-		this.setBooleanProperty("robots.breakable", false);
-		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
-		this.setBooleanProperty("autorun.finished.newgrid", true);
+		
 		this.setBooleanProperty("autorun.do_repaint", false);
+		this.setBooleanProperty("autorun.finished.newgrid", true);
 		this.setBooleanProperty("autorun.finished.display_full_stats", false);
+		this.setBooleanProperty("autorun.randomize_robot_start", true);
+		this.setBooleanProperty("display.show_binary_coverage", false);
+		this.setBooleanProperty("robots.breakable", true);
+		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
+		this.setBooleanProperty("deepql.display.print_q_values", false);
 
 		this.setDoubleProperty("neuralnet.learning_rate", 0.1);
 		this.setDoubleProperty("neuralnet.momentum", 0.9);
+		this.setDoubleProperty("neuralnet.rms.decay_rate", 0.9);
 		this.setDoubleProperty("deepql.discountfactor", 0.9);
 		this.setDoubleProperty("deepql.greedy_epsilon_decrement", 0.0000005);
 		this.setDoubleProperty("deepql.greedy_epsilon_minimum", 0.1);
 		this.setDoubleProperty("deepql.greedy_epsilon_start", 1.0);
 		this.setDoubleProperty("deepql.learning_rate_decay_factor", 0.99);
-		this.setDoubleProperty("deepql.reward.cover_unique", 1.0);
 		this.setDoubleProperty("deepql.reward.cover_again", -0.1);
+		this.setDoubleProperty("deepql.reward.cover_unique", 1.0);
 		this.setDoubleProperty("deepql.reward.death", -2.0);
 		this.setDoubleProperty("deepql.reward.full_coverage", 4.0);
 
+		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
 		this.setStringProperty("neuralnet.loadfile", "");
-		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.5 @r 0.00 0.15");
+		this.setStringProperty("neuralnet.trainingtype", "rmsprop");
 	}
 
 
@@ -302,7 +310,11 @@ public class AdversarialCoverageSettings {
 
 		final Map<String, JTextField> textfields = new HashMap<>();
 
-		for (String settingName : this.settingsMap.keySet()) {
+		String[] settingNames = new String[this.settingsMap.keySet().size()];
+		this.settingsMap.keySet().toArray(settingNames);
+		Arrays.sort(settingNames);
+		
+		for (String settingName : settingNames) {
 			JLabel settingLabel = new JLabel(settingName);
 			textfields.put(settingName, new JTextField(this.settingsMap.get(settingName)));
 			jp.add(settingLabel);

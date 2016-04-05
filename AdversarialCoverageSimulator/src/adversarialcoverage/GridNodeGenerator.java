@@ -1,4 +1,5 @@
 package adversarialcoverage;
+
 import java.util.Random;
 import java.util.Scanner;
 
@@ -127,8 +128,15 @@ public class GridNodeGenerator {
 		}
 		String strVal = this.scan.next().trim();
 		if (strVal.charAt(0) != '@') {
-			if (this.scan.hasNextDouble()) {
-				double nodeDangerLevel = this.scan.nextDouble();
+			boolean hasError = false;
+			double val = 0.0;
+			try {
+				val = Double.parseDouble(strVal);
+			} catch (NumberFormatException e) {
+				hasError = true;
+			}
+			if (!hasError) {
+				double nodeDangerLevel = val;
 				this.dangerMax = nodeDangerLevel;
 				this.dangerMin = nodeDangerLevel;
 				this.dangerNodeProb = 1.0;

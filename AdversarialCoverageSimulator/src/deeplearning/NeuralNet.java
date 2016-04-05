@@ -13,6 +13,9 @@ public class NeuralNet {
 
 	public double LEARNING_RATE = AdversarialCoverage.settings.getDoubleProperty("neuralnet.learning_rate");
 	public double MOMENTUM_GAMMA = AdversarialCoverage.settings.getDoubleProperty("neuralnet.momentum");
+	public double RMS_DECAY_RATE = AdversarialCoverage.settings.getDoubleProperty("neuralnet.rms.decay_rate");
+	public TrainingType trainingType = TrainingType.RMSPROP;
+	private int samplesInBatch = 0;
 	static Random randgen = new Random();
 	static final ActivationFunction DEFAULT_ACTIVATION = ActivationFunction.RELU_ACTIVATION;
 
@@ -146,85 +149,13 @@ public class NeuralNet {
 
 
 	public static void main_(/* String[] args */) throws FileNotFoundException {
-		int[] nodesPerLayer = new int[] { 1, 1 };
-		NeuralNet nn = new NeuralNet(nodesPerLayer);
-		nn.removeLastLayer();
-		// nn.addConvolutionalLayer(3, 1);
-		// nn.addFullyConnectedLayer(75,
-		// ActivationFunction.RELU_ACTIVATION);
-		// nn.addFullyConnectedLayer(75,
-		// ActivationFunction.RELU_ACTIVATION);
-		nn.addFullyConnectedLayer(75, ActivationFunction.RELU_ACTIVATION);
-		nn.addFullyConnectedLayer(1, ActivationFunction.LINEAR_ACTIVATION);
-		nn.removeNeuronFromLayer(nn.layers.size() - 1, 1);
-		// Scanner scan = new Scanner(new File("/tmp/nnex1.dat"));
-		// NeuralNet nn = new NeuralNet(scan.nextLine());
-		// scan.close();
-		double[] inputs1 = new double[1];
-		// inputs1[0] = 1;
-		// inputs1[1] = 1;
-		long t = System.nanoTime();
-		Random randgen = new Random();
-		for (int i = 0; i < 20000; i++) {
-			byte num1 = (byte) randgen.nextInt(63);
-			// byte num2 = (byte) randgen.nextInt(63);
-			inputs1[0] = num1 / 64.0;
-			// inputs1[1] = num2;
-			// System.arraycopy(byteToDoubleBinaryArray(num1), 0,
-			// inputs1, 0, 7);
-			// System.arraycopy(byteToDoubleBinaryArray(num2), 0,
-			// inputs1, 7, 7);
-			System.out.printf("Weights: [%f, %f]\n", nn.layers.get(1).get(0).inputWeights.get(0),
-					nn.layers.get(1).get(0).inputWeights.get(1));
-
-			double[] correctOut = { 0.1 * num1 + 0.3 };// byteToDoubleBinaryArray((byte)
-									// (num1
-									// +
-									// num2));//new
-									// double[]{num1+num2};//
-			// nn.learnFromExample(inputs1, correctOut);
-			nn.addExampleToBatch(inputs1, correctOut);
-			if (i % 10 == 0) {
-				nn.finishBatch();
-			}
-			if (i % 1 == 0) {
-
-				double squaredErrorSum = 0.0;
-				nn.feedForward(inputs1);
-				double[] out1 = nn.getOutputs();
-				for (int j = 0; j < out1.length; j++) {
-					squaredErrorSum += 0.5 * (correctOut[j] - out1[j]) * (correctOut[j] - out1[j]);
-				}
-				System.out.printf("%d\t%f\tNum=%d\n", i, squaredErrorSum, num1);
-				if (squaredErrorSum < 0.002) {
-					// nn.LEARNING_RATE *= 0.9;
-				}
-			}
-		}
-		System.out.println("Time: " + (System.nanoTime() - t) / 1000000000.0);
-		// System.out.println(nn.exportToString());
-
-		// byte num1 = 4;
-		// byte num2 = 9;
-		inputs1[0] = 5 / 64.0;
-		// System.arraycopy(byteToDoubleBinaryArray(num1), 0, inputs1,
-		// 0, 7);
-		// System.arraycopy(byteToDoubleBinaryArray(num2), 0, inputs1,
-		// 7, 7);
-		nn.feedForward(inputs1);
-		double[] out1 = nn.getOutputs();
-		// System.out.printf("Result: %d + %d = %d\n", (int)inputs1[0],
-		// (int)inputs1[1], doubleBinaryArrayToInt(out1));
-		for (int i = 0; i < out1.length; i++) {
-			System.out.printf("Output #%d: %f\n", i, out1[i]);
-		}
-
+		return;
 	}
-	
-	
+
+
 	public void setLayerActivation(int layerNum, ActivationFunction activation) {
 		List<Neuron> layer = this.layers.get(layerNum);
-		for(int i = 0; i < layer.size(); i++) {
+		for (int i = 0; i < layer.size(); i++) {
 			layer.get(i).setActivation(activation);
 		}
 	}
@@ -370,7 +301,7 @@ public class NeuralNet {
 	}
 
 
-	public void backPropagateFromLastSample(double[] correctOutputs) {
+	public void backPropagateFromLastSample_Momentum(double[] correctOutputs) {
 		double[] realOutputs = this.getOutputs();
 		List<Neuron> outputNeurons = this.layers.get(this.layers.size() - 1);
 		for (int i = 0; i < outputNeurons.size(); i++) {
@@ -384,6 +315,31 @@ public class NeuralNet {
 			for (int j = 0; j < this.layers.get(i).size(); j++) {
 				this.layers.get(i).get(j).recalcErrorTerm();
 				this.layers.get(i).get(j).backPropagate(this.MOMENTUM_GAMMA);
+			}
+		}
+		for (int i = 0; i < this.layers.size(); i++) {
+			for (int j = 0; j < this.layers.get(i).size(); j++) {
+				this.layers.get(i).get(j).resetBackPropagationTerms();
+			}
+		}
+	}
+
+
+	public void backPropagateFromLastSample_RMSProp(double[] correctOutputs) {
+		this.samplesInBatch++;
+		double[] realOutputs = this.getOutputs();
+		List<Neuron> outputNeurons = this.layers.get(this.layers.size() - 1);
+		for (int i = 0; i < outputNeurons.size(); i++) {
+			outputNeurons.get(i)
+					.setErrorTerm(-(correctOutputs[i] - realOutputs[i])
+							* outputNeurons.get(i).activeFunc.activationDerivative(
+									outputNeurons.get(i).getWeightedSumOfInputs()));
+			outputNeurons.get(i).backPropagate_RMSProp();
+		}
+		for (int i = this.layers.size() - 2; 0 < i; i--) {
+			for (int j = 0; j < this.layers.get(i).size(); j++) {
+				this.layers.get(i).get(j).recalcErrorTerm();
+				this.layers.get(i).get(j).backPropagate_RMSProp();
 			}
 		}
 		for (int i = 0; i < this.layers.size(); i++) {
@@ -409,11 +365,31 @@ public class NeuralNet {
 
 	public void addExampleToBatch(double[] inputs, double[] correctOutputs) {
 		feedForward(inputs);
-		backPropagateFromLastSample(correctOutputs);
+		backPropagateFromLastSample_Momentum(correctOutputs);
 	}
 
 
-	public void finishBatch() {
+	public void addExampleToBatch_RMSProp(double[] inputs, double[] correctOutputs) {
+		feedForward(inputs);
+		backPropagateFromLastSample_RMSProp(correctOutputs);
+	}
+
+
+	public void finishBatch_RMSProp() {
+		if(this.samplesInBatch == 0) {
+			return;
+		}
+		
+		for (int i = 0; i < this.layers.size(); i++) {
+			for (int j = 0; j < this.layers.get(i).size(); j++) {
+				this.layers.get(i).get(j).applyWeightDeltas_RMSProp();
+			}
+		}
+		this.samplesInBatch = 0;
+	}
+
+
+	public void finishBatch_Momentum() {
 		for (int i = 0; i < this.layers.size(); i++) {
 			for (int j = 0; j < this.layers.get(i).size(); j++) {
 				this.layers.get(i).get(j).applyWeightDeltas();
@@ -431,7 +407,7 @@ public class NeuralNet {
 		}
 
 		feedForward(inputs);
-		this.backPropagateFromLastSample(correctOutputs);
+		this.backPropagateFromLastSample_Momentum(correctOutputs);
 	}
 
 
@@ -445,6 +421,7 @@ public class NeuralNet {
 		List<Neuron> inputNeurons = new ArrayList<>();
 		List<EditableDouble> inputWeights = new ArrayList<>();
 		double[] deltaWeights = new double[0];
+		double[] rmsprop_cache = new double[0];
 		long nSamples = 0;
 		int idInLayer;
 		ActivationFunction activeFunc;
@@ -482,6 +459,7 @@ public class NeuralNet {
 			this.inputNeurons.add(n);
 			this.inputWeights.add(new EditableDouble(weight));
 			this.deltaWeights = new double[this.inputWeights.size()];
+			this.rmsprop_cache = new double[this.inputWeights.size()];
 		}
 
 
@@ -492,8 +470,8 @@ public class NeuralNet {
 						* (2 * NeuralNet.randgen.nextDouble() - 1);
 			}
 		}
-		
-		
+
+
 		public void setActivation(ActivationFunction activation) {
 			this.activeFunc = activation;
 		}
@@ -505,6 +483,27 @@ public class NeuralNet {
 				double newWeight = oldWeight - this.deltaWeights[i];
 				// double newWeight = oldWeight -
 				// LEARNING_RATE*this.deltaWeights[i]-0.001*oldWeight;
+				this.inputWeights.get(i).value = newWeight;
+				this.deltaWeights[i] = 0.0;
+				if (Double.isNaN(this.inputWeights.get(i).value)) {
+					this.inputWeights.get(i).value = randgen.nextDouble()
+							/ this.inputWeights.size();
+					System.out.println("ERROR: Weight is NaN. Aborting...");
+					System.exit(1);
+				}
+			}
+			this.nSamples = 0;
+		}
+
+
+		public void applyWeightDeltas_RMSProp() {
+			for (int i = 0; i < this.deltaWeights.length; i++) {
+				double avgDelta = this.deltaWeights[i] / NeuralNet.this.samplesInBatch;
+				double oldWeight = this.inputWeights.get(i).value;
+				this.rmsprop_cache[i] = NeuralNet.this.RMS_DECAY_RATE * this.rmsprop_cache[i]
+						+ (1 - NeuralNet.this.RMS_DECAY_RATE) * (avgDelta * avgDelta);
+				double newWeight = oldWeight - NeuralNet.this.LEARNING_RATE * avgDelta
+						/ (Math.sqrt(this.rmsprop_cache[i]) + 1e-3);
 				this.inputWeights.get(i).value = newWeight;
 				this.deltaWeights[i] = 0.0;
 				if (Double.isNaN(this.inputWeights.get(i).value)) {
@@ -565,6 +564,19 @@ public class NeuralNet {
 
 				this.deltaWeights[i] = gamma * this.deltaWeights[i]
 						+ NeuralNet.this.LEARNING_RATE * (this.errorTerm * n.getOutputValue());
+			}
+			this.nSamples++;
+		}
+
+
+		public void backPropagate_RMSProp() {
+			for (int i = 0; i < this.inputNeurons.size(); i++) {
+				Neuron n = this.inputNeurons.get(i);
+				n.setWeightedErrorSum(n.getWeightedErrorSum()
+						+ (this.errorTerm * this.inputWeights.get(i).value));
+
+				double gradient = this.errorTerm * n.getOutputValue();
+				this.deltaWeights[i] += gradient;
 			}
 			this.nSamples++;
 		}
@@ -658,6 +670,10 @@ public class NeuralNet {
 		private void setWeightedErrorSum(double weightedErrorSum) {
 			this.weightedErrorSum = weightedErrorSum;
 		}
+	}
+
+	public enum TrainingType {
+		BATCH, MOMENTUM, RMSPROP
 	}
 }
 

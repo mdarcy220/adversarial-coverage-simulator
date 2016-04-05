@@ -1,4 +1,5 @@
 package adversarialcoverage;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -11,6 +12,10 @@ public class GridEnvironment extends Environment {
 	private List<GridRobot> robots;
 	private int stepCount = 0;
 	public int squaresLeft = 0;
+	private boolean SHOW_BINARY_COVERAGE = AdversarialCoverage.settings
+			.getBooleanProperty("display.show_binary_coverage");
+	private boolean RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings
+			.getBooleanProperty("autorun.randomize_robot_start");
 
 
 	public GridEnvironment(Dimension gridSize) {
@@ -42,11 +47,11 @@ public class GridEnvironment extends Environment {
 		// Draw the grid
 		for (int x = 0; x < this.gridSize.width; x++) {
 			for (int y = 0; y < this.gridSize.height; y++) {
-				int alpha = (int) (255 * 10 * this.grid[x][y].dangerProb);
+				int alpha = (int) (255 * 2 * this.grid[x][y].dangerProb);
 				if (255 < alpha) {
 					alpha = 255;
 				}
-				g.setColor(new Color(200, 50, 255, alpha));
+				g.setColor(new Color(255, 80, 255, alpha));
 				g.fillRect(x * cellSize.width, y * cellSize.height, cellSize.width, cellSize.height);
 				g.setColor(Color.BLACK);
 				if (this.grid[x][y].getNodeType() == NodeType.OBSTACLE) {
@@ -58,8 +63,14 @@ public class GridEnvironment extends Environment {
 				} else {
 					g.setColor(new Color(255, 20, 40));
 				}
-				g.drawString("" + this.grid[x][y].getCoverCount(), x * cellSize.width,
-						(y + 1) * cellSize.height);
+
+				if (this.SHOW_BINARY_COVERAGE) {
+					g.drawString(this.grid[x][y].getCoverCount() < 1 ? "NO" : "YES",
+							x * cellSize.width, (y + 1) * cellSize.height);
+				} else {
+					g.drawString("" + this.grid[x][y].getCoverCount(), x * cellSize.width,
+							(y + 1) * cellSize.height);
+				}
 				g.setColor(Color.BLACK);
 
 				g.drawRect(x * cellSize.width, y * cellSize.height, cellSize.width, cellSize.height);
@@ -85,6 +96,10 @@ public class GridEnvironment extends Environment {
 		this.stepCount = 1;
 		for (int robotNum = 0; robotNum < this.robots.size(); robotNum++) {
 			this.robots.get(robotNum).coverAlgo.init();
+			if (this.RANDOMIZE_ROBOT_LOCATION_ON_INIT) {
+				this.robots.get(robotNum).setLocation((int) (Math.random() * this.getWidth()),
+						(int) (Math.random() * this.getHeight()));
+			}
 		}
 	}
 
@@ -99,6 +114,17 @@ public class GridEnvironment extends Environment {
 				this.robots.get(robotNum).coverAlgo.step();
 			}
 		}
+	}
+
+
+	public String exportToString() {
+		StringBuilder sb = new StringBuilder();
+		for (int x = 0; x < this.getWidth(); x++) {
+			for (int y = 0; y < this.getHeight(); y++) {
+				sb.append(String.format("%f ", this.grid[x][y].getDangerProb()));
+			}
+		}
+		return sb.toString();
 	}
 
 
@@ -260,8 +286,12 @@ public class GridEnvironment extends Environment {
 
 
 	public void reloadSettings() {
-		for(Robot r : this.robots) {
+		for (Robot r : this.robots) {
 			r.reloadSettings();
 		}
+		this.SHOW_BINARY_COVERAGE = AdversarialCoverage.settings
+				.getBooleanProperty("display.show_binary_coverage");
+		this.RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings
+				.getBooleanProperty("autorun.randomize_robot_start");
 	}
 }
