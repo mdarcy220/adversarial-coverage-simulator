@@ -65,6 +65,7 @@ public class AdversarialCoverageSettings {
 		this.setIntProperty("deepql.minibatch_size", 32);
 		this.setIntProperty("deepql.history_max", 100000);
 		this.setIntProperty("neuralnet.hidden_layer_size", 80);
+		this.setIntProperty("neuralnet.num_hidden_layers", 3);
 		this.setIntProperty("stats.multirun.batch_size", 100);
 		
 		this.setBooleanProperty("autorun.do_repaint", false);
@@ -75,6 +76,7 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("robots.breakable", true);
 		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
 		this.setBooleanProperty("deepql.display.print_q_values", false);
+		this.setBooleanProperty("neuralnet.give_global_pos_and_size", true);
 
 		this.setDoubleProperty("neuralnet.learning_rate", 0.1);
 		this.setDoubleProperty("neuralnet.momentum", 0.9);
@@ -92,6 +94,8 @@ public class AdversarialCoverageSettings {
 		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
 		this.setStringProperty("neuralnet.loadfile", "");
 		this.setStringProperty("neuralnet.trainingtype", "rmsprop");
+		this.setStringProperty("deepql.nn_setup_mode", "torch");
+		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai03/prog/lua/scratch/");
 	}
 
 

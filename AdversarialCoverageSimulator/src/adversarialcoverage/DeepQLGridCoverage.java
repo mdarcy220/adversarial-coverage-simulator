@@ -2,6 +2,7 @@ package adversarialcoverage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -10,6 +11,7 @@ import java.util.Scanner;
 import deeplearning.NeuralNet;
 import deeplearning.NeuralNet.TrainingType;
 import deeplearning.ActivationFunction;
+import deeplearning.ExternalTorchNN;
 
 public class DeepQLGridCoverage extends CoverageAlgorithm {
 	NeuralNet nn = null;
@@ -19,7 +21,9 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	double greedyEpsilon = AdversarialCoverage.settings.getDoubleProperty("deepql.greedy_epsilon_start");
 	long stepNum = 0;
 	List<StateTransition> lastStates = new ArrayList<>();
-	final int STATE_SIZE = 75;
+	final int STATE_SIZE = 75
+			+ (AdversarialCoverage.settings.getBooleanProperty("neuralnet.give_global_pos_and_size") ? 4
+					: 0);
 	int HISTORY_MAX = AdversarialCoverage.settings.getIntProperty("deepql.history_max");
 	double DISCOUNT_FACTOR = AdversarialCoverage.settings.getDoubleProperty("deepql.discountfactor");
 	double GREEDY_EPSILON_DECREMENT = AdversarialCoverage.settings
@@ -31,6 +35,9 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	TrainingType NN_TRAINING_TYPE = TrainingType.RMSPROP;
 	boolean PRINT_Q_VALUES = AdversarialCoverage.settings.getBooleanProperty("deepql.display.print_q_values");
 	int HIDDEN_LAYER_SIZE = AdversarialCoverage.settings.getIntProperty("neuralnet.hidden_layer_size");
+	int NUM_HIDDEN_LAYERS = AdversarialCoverage.settings.getIntProperty("neuralnet.num_hidden_layers");
+	final boolean GIVE_GLOBAL_POS_AND_SIZE = AdversarialCoverage.settings
+			.getBooleanProperty("neuralnet.give_global_pos_and_size");
 
 
 	private double[] getPreprocessedState() {
@@ -50,6 +57,12 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		}
 		curState[50 + (this.sensor.getLocation().x - xLowBound) * 5
 				+ (this.sensor.getLocation().y - yLowBound)] = 1;
+		if (this.GIVE_GLOBAL_POS_AND_SIZE) {
+			curState[this.STATE_SIZE - 4] = this.sensor.getLocation().x;
+			curState[this.STATE_SIZE - 3] = this.sensor.getLocation().y;
+			curState[this.STATE_SIZE - 2] = this.sensor.getGridWidth();
+			curState[this.STATE_SIZE - 1] = this.sensor.getGridHeight();
+		}
 
 		// Normalize the data
 		// The sum of squares should be around 27 (1 for danger levels +
@@ -105,7 +118,9 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		for (int i = 0; i < layerSizes.length - 1; i++) {
 			System.out.printf("%d, ", layerSizes[i]);
 		}
-		System.out.printf("%d", layerSizes[layerSizes.length - 1]);
+		if(1 <= layerSizes.length) {
+			System.out.printf("%d", layerSizes[layerSizes.length - 1]);
+		}
 		System.out.printf("]\n");
 
 		System.out.printf("NEURAL_NET_TRAINER=%s\n",
@@ -119,9 +134,11 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	public void step() {
 		double[] curState = getPreprocessedState();
 		double[] nnInput = new double[this.STATE_SIZE];
-		for (int i = 0; i < this.STATE_SIZE; i++) {
-			nnInput[i] = curState[i];
-		}
+		
+			for (int i = 0; i < this.STATE_SIZE; i++) {
+				nnInput[i] = curState[i];
+			}
+		
 
 		StateTransition transition = new StateTransition(nnInput);
 		this.nn.feedForward(nnInput);
@@ -166,6 +183,9 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 
 			transition.correctQVal += this.DISCOUNT_FACTOR * maxVal;
 			transition.isTerminal = false;
+		}
+		if (this.PRINT_Q_VALUES) {
+			System.out.printf("\"correct\" q-value for %d: %f\n", action, transition.correctQVal);
 		}
 
 		double[] correctOut = new double[5];
@@ -248,17 +268,23 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 
 
 	private void initNeuralNet() {
-		if (AdversarialCoverage.settings.getStringProperty("neuralnet.loadfile").length() == 0) {
+		final String setupMode = AdversarialCoverage.settings.getStringProperty("deepql.nn_setup_mode");
+		if (setupMode.equals("native")) {
 			this.nn = new NeuralNet(new int[] { this.STATE_SIZE, 1 });
 			this.nn.removeLastLayer();
-			this.nn.addFullyConnectedLayer(this.HIDDEN_LAYER_SIZE, ActivationFunction.RELU_ACTIVATION);
-			this.nn.addFullyConnectedLayer(this.HIDDEN_LAYER_SIZE, ActivationFunction.RELU_ACTIVATION);
-			this.nn.addFullyConnectedLayer(this.HIDDEN_LAYER_SIZE, ActivationFunction.RELU_ACTIVATION);
+			for (int i = 0; i < this.NUM_HIDDEN_LAYERS; i++) {
+				this.nn.addFullyConnectedLayer(this.HIDDEN_LAYER_SIZE,
+						ActivationFunction.RELU_ACTIVATION);
+			}
 			this.nn.addFullyConnectedLayer(5, ActivationFunction.LINEAR_ACTIVATION);
 			final int[] nnLayerSizes = this.nn.getLayerSizes();
 			this.nn.removeNeuronFromLayer(nnLayerSizes.length - 1,
 					nnLayerSizes[nnLayerSizes.length - 1] - 1);
 			this.nn.trainingType = this.NN_TRAINING_TYPE;
+		} else if (setupMode.equals("torch")) {
+			String prefix = AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.io_file_prefix");
+			this.nn = new ExternalTorchNN(prefix+"input2.dat", prefix+"output2.dat");
+			System.out.println("Using Torch neural network...");
 		} else {
 
 			try {
@@ -321,6 +347,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		this.PRINT_Q_VALUES = AdversarialCoverage.settings.getBooleanProperty("deepql.display.print_q_values");
 		this.HIDDEN_LAYER_SIZE = AdversarialCoverage.settings.getIntProperty("neuralnet.hidden_layer_size");
 		this.HISTORY_MAX = AdversarialCoverage.settings.getIntProperty("deepql.history_max");
+		this.NUM_HIDDEN_LAYERS = AdversarialCoverage.settings.getIntProperty("neuralnet.num_hidden_layers");
 	}
 
 	class StateTransition {

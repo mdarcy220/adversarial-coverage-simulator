@@ -20,6 +20,11 @@ public class NeuralNet {
 	static final ActivationFunction DEFAULT_ACTIVATION = ActivationFunction.RELU_ACTIVATION;
 
 
+	protected NeuralNet() {
+
+	}
+
+
 	public NeuralNet(int[] nNodesInLayer) {
 		// Set up the input layer
 		this.layers.add(new ArrayList<Neuron>());
@@ -120,6 +125,9 @@ public class NeuralNet {
 
 
 	public String exportToString() {
+		if(this.layers.size() == 0) {
+			return "Torch network.";
+		}
 		StringBuilder sb = new StringBuilder("");
 		sb.append(this.layers.get(0).size());
 		for (int i = 1; i < this.layers.size(); i++) {
@@ -258,7 +266,9 @@ public class NeuralNet {
 	 * Remove the last layer from the network
 	 */
 	public void removeLastLayer() {
-		this.layers.remove(this.layers.size() - 1);
+		if (0 < this.layers.size()) {
+			this.layers.remove(this.layers.size() - 1);
+		}
 	}
 
 
@@ -376,10 +386,10 @@ public class NeuralNet {
 
 
 	public void finishBatch_RMSProp() {
-		if(this.samplesInBatch == 0) {
+		if (this.samplesInBatch == 0) {
 			return;
 		}
-		
+
 		for (int i = 0; i < this.layers.size(); i++) {
 			for (int j = 0; j < this.layers.get(i).size(); j++) {
 				this.layers.get(i).get(j).applyWeightDeltas_RMSProp();

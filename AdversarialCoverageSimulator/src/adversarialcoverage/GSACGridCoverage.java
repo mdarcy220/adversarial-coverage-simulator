@@ -192,6 +192,12 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 		}
 		return graph;
 	}
+	
+	@Override
+	public void reloadSettings() {
+		this.sensor.reloadSettings();
+		this.actuator.reloadSettings();
+	}
 
 
 }

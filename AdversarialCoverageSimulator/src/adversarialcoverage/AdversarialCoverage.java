@@ -309,16 +309,8 @@ public class AdversarialCoverage {
 
 
 		// Set up the coverage environment
-		// if
-		// (!AdversarialCoverage.settings.hasProperty("env.grid.dangervalues")
-		// ||
-		// AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues").isEmpty())
-		// {
-		// randomizeDangerLevels();
-		// randomizeObstacles();
-		// } else {
 		genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
-		// }
+		
 
 		// Set up the robots
 		for (int i = 0; i < AdversarialCoverage.settings.getIntProperty("robots.count"); i++) {

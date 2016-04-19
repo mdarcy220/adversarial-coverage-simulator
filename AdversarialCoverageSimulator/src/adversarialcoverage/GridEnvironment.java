@@ -95,11 +95,12 @@ public class GridEnvironment extends Environment {
 		this.squaresLeft = this.gridSize.width * this.gridSize.height;
 		this.stepCount = 1;
 		for (int robotNum = 0; robotNum < this.robots.size(); robotNum++) {
-			this.robots.get(robotNum).coverAlgo.init();
 			if (this.RANDOMIZE_ROBOT_LOCATION_ON_INIT) {
 				this.robots.get(robotNum).setLocation((int) (Math.random() * this.getWidth()),
 						(int) (Math.random() * this.getHeight()));
 			}
+			this.robots.get(robotNum).coverAlgo.init();
+			
 		}
 	}
 
