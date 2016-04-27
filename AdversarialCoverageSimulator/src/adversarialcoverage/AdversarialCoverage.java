@@ -9,8 +9,9 @@ import java.text.NumberFormat;
 import javax.swing.*;
 
 public class AdversarialCoverage {
-
-	public static AdversarialCoverageSettings settings = new AdversarialCoverageSettings();
+	
+	public static AdversarialCoverageArgs args = null;
+	public static AdversarialCoverageSettings settings = null;
 	GridEnvironment env = null;
 	CoverageWindow cw = new CoverageWindow();
 	CoveragePanel mainPanel;
@@ -27,16 +28,27 @@ public class AdversarialCoverage {
 	boolean hasQuit = false;
 
 
-	public AdversarialCoverage() {
+	public AdversarialCoverage(String argsArr[]) {
 
+		args = new AdversarialCoverageArgs(argsArr);
+		settings = new AdversarialCoverageSettings();
 		resetCoverageEnvironment();
 
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				createAndShowGUI();
+		if (!args.HEADLESS) {
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					createAndShowGUI();
+				}
+			});
+		} else {
+			System.out.println("WARNING: Headless environment support is very limited.");
+			if(args.USE_AUTOSTART) {
+				this.isRunning = true;
+				runCoverage();
 			}
-		});
+			System.exit(1);
+		}
 	}
 
 
@@ -197,7 +209,6 @@ public class AdversarialCoverage {
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				// resetCoverageEnvironment();
 				resetCoverageEnvironment();
 				AdversarialCoverage.this.mainPanel.repaint();
 			}
@@ -206,6 +217,11 @@ public class AdversarialCoverage {
 
 		menuBar.add(runMenu);
 		this.cw.setJMenuBar(menuBar);
+		
+		if(args.USE_AUTOSTART) {
+			this.isRunning = true;
+			runCoverage();
+		}
 	}
 
 
@@ -310,7 +326,7 @@ public class AdversarialCoverage {
 
 		// Set up the coverage environment
 		genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
-		
+
 
 		// Set up the robots
 		for (int i = 0; i < AdversarialCoverage.settings.getIntProperty("robots.count"); i++) {
@@ -408,12 +424,23 @@ public class AdversarialCoverage {
 
 
 	public void runCoverage() {
-		new Thread() {
+		Thread t = new Thread() {
 			@Override
 			public void run() {
 				coverageLoop();
 			}
-		}.start();
+		};
+		t.start();
+		if(args.HEADLESS) {
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
 	}
 
 
@@ -428,7 +455,7 @@ public class AdversarialCoverage {
 		while (this.isRunning) {
 			long time = System.currentTimeMillis();
 			step();
-			if (doRepaint) {
+			if (doRepaint && !args.HEADLESS) {
 				this.mainPanel.repaint();
 			}
 			if (this.env.isFinished() || !AdversarialCoverage.this.isRunning) {
@@ -448,16 +475,6 @@ public class AdversarialCoverage {
 					// broken and cannot continue");
 				}
 				if (this.env.isFinished()) {
-
-					// File settingsFile = new
-					// File("/tmp/stats.txt");
-					// try {
-					// printStats(new
-					// PrintStream(settingsFile));
-					// } catch (FileNotFoundException e) {
-					// e.printStackTrace();
-					// }
-					//
 					if (settings.getBooleanProperty("autorun.finished.display_full_stats")) {
 						printStats(new PrintStream(System.out));
 					} else {
@@ -482,7 +499,9 @@ public class AdversarialCoverage {
 						if (this.mainPanel != null) {
 							this.mainPanel.setEnvironment(this.env);
 						}
-						this.mainPanel.repaint();
+						if(!args.HEADLESS) {
+							this.mainPanel.repaint();
+						}
 						// System.out.println("New
 						// environment!");
 					} else {
@@ -509,7 +528,7 @@ public class AdversarialCoverage {
 	}
 
 
-	public static void main(String[] args) {
-		new AdversarialCoverage();
+	public static void main(String[] argsArr) {
+		new AdversarialCoverage(argsArr);
 	}
 }

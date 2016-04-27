@@ -31,7 +31,6 @@ public class AdversarialCoverageSettings {
 	final private int DEFAULT_GRID_WIDTH = 5;
 	final private int DEFAULT_GRID_HEIGHT = 5;
 	final private int DEFAULT_AUTORUN_STEP_DELAY = 0;
-	// final private int DEFAULT_AUTORUN_FRAME_DELAY = 100;
 	final private int DEFAULT_NUM_ROBOTS = 1;
 
 	final private String BOOLEAN_TRUE_STRING = "true";
@@ -52,22 +51,28 @@ public class AdversarialCoverageSettings {
 	 */
 	public AdversarialCoverageSettings() {
 		// Set up defaults
+		this.setDefaults();
+
+		if (AdversarialCoverage.args.USE_SETTINGS_FILE) {
+			this.loadFromFile(new File(AdversarialCoverage.args.SETTINGS_FILE));
+		}
+	}
+
+
+	/**
+	 * Sets all settings to the default values
+	 */
+	public void setDefaults() {
 		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
 		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
 		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
-		// this.setIntProperty("autorun.framedelay",
-		// this.DEFAULT_AUTORUN_FRAME_DELAY);
 		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
-		//this.setIntProperty("robots.id_0.startpos.x", 0);
-		//this.setIntProperty("robots.id_0.startpos.y", 0);
-		//this.setIntProperty("robots.id_1.startpos.x", 5);
-		//this.setIntProperty("robots.id_1.startpos.y", 5);
-		this.setIntProperty("deepql.minibatch_size", 32);
+		this.setIntProperty("deepql.minibatch_size", 2);
 		this.setIntProperty("deepql.history_max", 100000);
-		this.setIntProperty("neuralnet.hidden_layer_size", 80);
-		this.setIntProperty("neuralnet.num_hidden_layers", 3);
+		this.setIntProperty("neuralnet.hidden_layer_size", 40);
+		this.setIntProperty("neuralnet.num_hidden_layers", 2);
 		this.setIntProperty("stats.multirun.batch_size", 100);
-		
+
 		this.setBooleanProperty("autorun.do_repaint", false);
 		this.setBooleanProperty("autorun.finished.newgrid", true);
 		this.setBooleanProperty("autorun.finished.display_full_stats", false);
@@ -283,19 +288,24 @@ public class AdversarialCoverageSettings {
 				continue;
 			}
 			String value = input.nextLine().trim();
-			if (settingName.equals("grid_danger_values")) {
-				// Special case when loading a saved grid
 
-			} else {
-				if (!this.hasProperty(settingName)) {
-					this.setStringProperty(settingName, value);
-				} else if (this.getSettingType(
-						settingName) == AdversarialCoverageSettings.SettingType.INT) {
-					this.setIntProperty(settingName, Integer.parseInt(value));
-				} else {
-					this.setStringProperty(settingName, value);
+			if (!this.hasProperty(settingName)) {
+				this.setStringProperty(settingName, value);
+			} else if (this.getSettingType(settingName) == AdversarialCoverageSettings.SettingType.INT) {
+				this.setIntProperty(settingName, Integer.parseInt(value));
+			} else if (this.getSettingType(settingName) == AdversarialCoverageSettings.SettingType.DOUBLE) {
+				this.setDoubleProperty(settingName, Double.parseDouble(value));
+			} else if (this.getSettingType(
+					settingName) == AdversarialCoverageSettings.SettingType.BOOLEAN) {
+				if (value.equalsIgnoreCase("true")) {
+					this.setBooleanProperty(settingName, true);
+				} else if (value.equalsIgnoreCase("false")) {
+					this.setBooleanProperty(settingName, false);
 				}
+			} else {
+				this.setStringProperty(settingName, value);
 			}
+
 		}
 
 		input.close();
@@ -317,7 +327,7 @@ public class AdversarialCoverageSettings {
 		String[] settingNames = new String[this.settingsMap.keySet().size()];
 		this.settingsMap.keySet().toArray(settingNames);
 		Arrays.sort(settingNames);
-		
+
 		for (String settingName : settingNames) {
 			JLabel settingLabel = new JLabel(settingName);
 			textfields.put(settingName, new JTextField(this.settingsMap.get(settingName)));

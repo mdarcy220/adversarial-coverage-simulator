@@ -2,7 +2,6 @@ package adversarialcoverage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -269,7 +268,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 
 	private void initNeuralNet() {
 		final String setupMode = AdversarialCoverage.settings.getStringProperty("deepql.nn_setup_mode");
-		if (setupMode.equals("native")) {
+		if (setupMode.equalsIgnoreCase("native")) {
 			this.nn = new NeuralNet(new int[] { this.STATE_SIZE, 1 });
 			this.nn.removeLastLayer();
 			for (int i = 0; i < this.NUM_HIDDEN_LAYERS; i++) {
@@ -281,7 +280,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 			this.nn.removeNeuronFromLayer(nnLayerSizes.length - 1,
 					nnLayerSizes[nnLayerSizes.length - 1] - 1);
 			this.nn.trainingType = this.NN_TRAINING_TYPE;
-		} else if (setupMode.equals("torch")) {
+		} else if (setupMode.equalsIgnoreCase("torch")) {
 			String prefix = AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.io_file_prefix");
 			this.nn = new ExternalTorchNN(prefix+"input2.dat", prefix+"output2.dat");
 			System.out.println("Using Torch neural network...");

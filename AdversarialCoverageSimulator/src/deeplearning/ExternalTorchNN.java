@@ -40,7 +40,7 @@ public class ExternalTorchNN extends NeuralNet {
 	@Override
 	public double[] getOutputs() {
 		// Scanner s = new Scanner(System.in);
-		BufferedReader br = null;
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		try {
 			// s = new Scanner(new File(this.inFile));
 			br = new BufferedReader(new FileReader(this.inFile));
