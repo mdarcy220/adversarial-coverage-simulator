@@ -13,7 +13,7 @@ public class AdversarialCoverage {
 	public static AdversarialCoverageArgs args = null;
 	public static AdversarialCoverageSettings settings = null;
 	GridEnvironment env = null;
-	CoverageWindow cw = new CoverageWindow();
+	CoverageWindow cw = null;
 	CoveragePanel mainPanel;
 	static SimulationStats stats;
 
@@ -29,12 +29,12 @@ public class AdversarialCoverage {
 
 
 	public AdversarialCoverage(String argsArr[]) {
-
 		args = new AdversarialCoverageArgs(argsArr);
 		settings = new AdversarialCoverageSettings();
 		resetCoverageEnvironment();
 
 		if (!args.HEADLESS) {
+			this.cw = new CoverageWindow();
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
@@ -477,17 +477,8 @@ public class AdversarialCoverage {
 				if (this.env.isFinished()) {
 					if (settings.getBooleanProperty("autorun.finished.display_full_stats")) {
 						printStats(new PrintStream(System.out));
-					} else {
-						// System.out.printf("Max covers
-						// of a cell\t%d\n",
-						// AdversarialCoverage.stats.getMaxCellCovers());
-						// System.out.printf("Total time
-						// steps\t%d\n",
-						// AdversarialCoverage.stats.getNumTimeSteps());
 					}
 					if (settings.getBooleanProperty("autorun.finished.newgrid")) {
-						// resetCoverageEnvironment();
-						// reinitializeCoverage();
 						for (GridRobot r : this.env.getRobotList()) {
 							r.setBroken(false);
 						}
@@ -502,8 +493,6 @@ public class AdversarialCoverage {
 						if(!args.HEADLESS) {
 							this.mainPanel.repaint();
 						}
-						// System.out.println("New
-						// environment!");
 					} else {
 						AdversarialCoverage.this.isRunning = false;
 					}

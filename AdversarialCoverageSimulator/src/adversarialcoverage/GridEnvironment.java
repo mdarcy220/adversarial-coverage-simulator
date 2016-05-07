@@ -16,6 +16,7 @@ public class GridEnvironment extends Environment {
 			.getBooleanProperty("display.show_binary_coverage");
 	private boolean RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings
 			.getBooleanProperty("autorun.randomize_robot_start");
+	private int MAX_STEPS_PER_RUN = AdversarialCoverage.settings.getIntProperty("autorun.max_steps_per_run");
 
 
 	public GridEnvironment(Dimension gridSize) {
@@ -93,14 +94,49 @@ public class GridEnvironment extends Environment {
 	 */
 	public void init() {
 		this.squaresLeft = this.gridSize.width * this.gridSize.height;
+		for(int x = 0; x < this.gridSize.width; x++) {
+			for(int y = 0; y < this.gridSize.height; y++) {
+				if(this.getGridNode(x, y).getNodeType() == NodeType.OBSTACLE) {
+					this.squaresLeft--;
+				}
+			}
+		}
 		this.stepCount = 1;
 		for (int robotNum = 0; robotNum < this.robots.size(); robotNum++) {
 			if (this.RANDOMIZE_ROBOT_LOCATION_ON_INIT) {
 				this.robots.get(robotNum).setLocation((int) (Math.random() * this.getWidth()),
 						(int) (Math.random() * this.getHeight()));
+				clearAdjactentCells(this.robots.get(robotNum).getLocation().x,
+						this.robots.get(robotNum).getLocation().y);
+				this.getGridNode(this.robots.get(robotNum).getLocation().x,
+						this.robots.get(robotNum).getLocation().y).setNodeType(NodeType.FREE);
 			}
 			this.robots.get(robotNum).coverAlgo.init();
-			
+
+		}
+	}
+
+
+	/**
+	 * Clears the four cells directly adjacent to the given grid coordinates
+	 * 
+	 * @param x
+	 *                the x coordinate
+	 * @param y
+	 *                the y coordinate
+	 */
+	private void clearAdjactentCells(int x, int y) {
+		if (this.isOnGrid(x + 1, y)) {
+			this.getGridNode(x + 1, y).setNodeType(NodeType.FREE);
+		}
+		if (this.isOnGrid(x - 1, y)) {
+			this.getGridNode(x - 1, y).setNodeType(NodeType.FREE);
+		}
+		if (this.isOnGrid(x, y + 1)) {
+			this.getGridNode(x, y + 1).setNodeType(NodeType.FREE);
+		}
+		if (this.isOnGrid(x, y - 1)) {
+			this.getGridNode(x, y - 1).setNodeType(NodeType.FREE);
 		}
 	}
 
@@ -224,7 +260,8 @@ public class GridEnvironment extends Environment {
 	 * 
 	 * @param x
 	 * @param y
-	 * @return a {@code GridNode}
+	 * @return a {@code GridNode}, or null if the given coordinates are not
+	 *         on the grid
 	 */
 	public GridNode getGridNode(int x, int y) {
 		if (isOnGrid(x, y)) {
@@ -267,7 +304,7 @@ public class GridEnvironment extends Environment {
 	 * @return true if more steps can be taken, false otherwise
 	 */
 	public boolean isFinished() {
-		return (this.allRobotsBroken() || this.isCovered());
+		return (this.allRobotsBroken() || this.isCovered() || this.MAX_STEPS_PER_RUN <= this.stepCount);
 	}
 
 
@@ -294,5 +331,6 @@ public class GridEnvironment extends Environment {
 				.getBooleanProperty("display.show_binary_coverage");
 		this.RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings
 				.getBooleanProperty("autorun.randomize_robot_start");
+		this.MAX_STEPS_PER_RUN = AdversarialCoverage.settings.getIntProperty("autorun.max_steps_per_run");
 	}
 }

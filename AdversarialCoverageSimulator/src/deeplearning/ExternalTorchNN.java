@@ -12,6 +12,8 @@ public class ExternalTorchNN extends NeuralNet {
 	String inFile;
 	PrintWriter outWriter = new PrintWriter(System.out);
 	Scanner inReader = new Scanner(System.in);
+	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	StringBuilder outMsg = new StringBuilder("");
 
 
 	public ExternalTorchNN(String outFile, String inFile) {
@@ -20,7 +22,13 @@ public class ExternalTorchNN extends NeuralNet {
 		try {
 			this.outWriter = new PrintWriter(new File(this.outFile));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			// s = new Scanner(new File(this.inFile));
+			this.br = new BufferedReader(new FileReader(this.inFile));
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
 	}
@@ -28,32 +36,28 @@ public class ExternalTorchNN extends NeuralNet {
 
 	@Override
 	public void feedForward(double[] inputs) {
-		this.outWriter.println("f");
+		this.outMsg.append("f\n");
 		for (int i = 0; i < inputs.length; i++) {
-			this.outWriter.printf("%.15f ", inputs[i]);
+			this.outMsg.append(String.format("%a ", inputs[i]));
 		}
-		this.outWriter.println();
+		
+		this.outMsg.append('\n');
+		this.outWriter.print(this.outMsg.toString());
 		this.outWriter.flush();
+		this.outMsg.setLength(0);
 	}
 
 
 	@Override
 	public double[] getOutputs() {
 		// Scanner s = new Scanner(System.in);
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		try {
-			// s = new Scanner(new File(this.inFile));
-			br = new BufferedReader(new FileReader(this.inFile));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+		
 		// Make an array with the same size as the last layer of the
 		// network
 		double[] outputs = new double[5];
 		Scanner s = null;
 		try {
-			String str = br.readLine();
+			String str = this.br.readLine();
 			if(str != null) {
 				s = new Scanner(str);
 			}
@@ -75,11 +79,26 @@ public class ExternalTorchNN extends NeuralNet {
 
 	@Override
 	public void backPropagateFromLastSample_RMSProp(double[] correctOutputs) {
-		this.outWriter.println("b");
+		
+		this.outMsg.append("b\n");
 		for (int i = 0; i < correctOutputs.length; i++) {
-			this.outWriter.printf("%.15f ", correctOutputs[i]);
+			this.outMsg.append(String.format("%a ", correctOutputs[i]));
 		}
-		this.outWriter.println();
+		this.outMsg.append('\n');
+		this.outWriter.print(this.outMsg.toString());
 		this.outWriter.flush();
+		this.outMsg.setLength(0);
+	}
+	
+	public void sendTransition(double[] correctOutputs) {
+		
+		this.outMsg.append("b\n");
+		for (int i = 0; i < correctOutputs.length; i++) {
+			this.outMsg.append(String.format("%a ", correctOutputs[i]));
+		}
+		this.outMsg.append('\n');
+		this.outWriter.print(this.outMsg.toString());
+		this.outWriter.flush();
+		this.outMsg.setLength(0);
 	}
 }

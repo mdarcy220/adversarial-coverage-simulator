@@ -17,12 +17,15 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	GridSensor sensor;
 	GridActuator actuator;
 	Random randgen = new Random();
+	StatePreprocessor preprocessor;
 	double greedyEpsilon = AdversarialCoverage.settings.getDoubleProperty("deepql.greedy_epsilon_start");
 	long stepNum = 0;
-	List<StateTransition> lastStates = new ArrayList<>();
-	final int STATE_SIZE = 75
-			+ (AdversarialCoverage.settings.getBooleanProperty("neuralnet.give_global_pos_and_size") ? 4
-					: 0);
+	//List<StateTransition> lastStates = new ArrayList<>();
+	StateTransition[] lastStates;
+	int VISION_RADIUS = AdversarialCoverage.settings.getIntProperty("deepql.nn_input.vision_radius");
+	boolean NN_INPUT_OBSTACLE_LAYER = AdversarialCoverage.settings
+			.getBooleanProperty("deepql.nn_input.obstacle_layer");
+	final int NN_INPUT_SIZE = calcStateSize();
 	int HISTORY_MAX = AdversarialCoverage.settings.getIntProperty("deepql.history_max");
 	double DISCOUNT_FACTOR = AdversarialCoverage.settings.getDoubleProperty("deepql.discountfactor");
 	double GREEDY_EPSILON_DECREMENT = AdversarialCoverage.settings
@@ -37,48 +40,24 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	int NUM_HIDDEN_LAYERS = AdversarialCoverage.settings.getIntProperty("neuralnet.num_hidden_layers");
 	final boolean GIVE_GLOBAL_POS_AND_SIZE = AdversarialCoverage.settings
 			.getBooleanProperty("neuralnet.give_global_pos_and_size");
+	long stateHistorySize = 0;
 
+	private int calcStateSize() {
+		int layersize = this.VISION_RADIUS * this.VISION_RADIUS;
+		int numLayers = 3 + (AdversarialCoverage.settings.getBooleanProperty("deepql.nn_input.obstacle_layer")
+				? 1 : 0);
+		int miscInputs = (AdversarialCoverage.settings.getBooleanProperty("neuralnet.give_global_pos_and_size")
+				? 4 : 0);
 
-	private double[] getPreprocessedState() {
-
-		double[] curState = new double[this.STATE_SIZE];
-		int xLowBound = Math.min(Math.max(this.sensor.getLocation().x - 3, 0),
-				(this.sensor.getGridWidth() - 5));
-		int yLowBound = Math.min(Math.max(this.sensor.getLocation().y - 3, 0),
-				(this.sensor.getGridHeight() - 5));
-		for (int x = 0; x < 5; x++) {
-			for (int y = 0; y < 5; y++) {
-				curState[x * 5 + y] = this.sensor.getDangerLevelAt(xLowBound + x, yLowBound + y) * 3.0;
-				curState[25 + x * 5 + y] = this.sensor.getCoverCountAt(xLowBound + x, yLowBound + y) < 1
-						? -1 : 1;
-				curState[50 + x * 5 + y] = 0;
-			}
-		}
-		curState[50 + (this.sensor.getLocation().x - xLowBound) * 5
-				+ (this.sensor.getLocation().y - yLowBound)] = 1;
-		if (this.GIVE_GLOBAL_POS_AND_SIZE) {
-			curState[this.STATE_SIZE - 4] = this.sensor.getLocation().x;
-			curState[this.STATE_SIZE - 3] = this.sensor.getLocation().y;
-			curState[this.STATE_SIZE - 2] = this.sensor.getGridWidth();
-			curState[this.STATE_SIZE - 1] = this.sensor.getGridHeight();
-		}
-
-		// Normalize the data
-		// The sum of squares should be around 27 (1 for danger levels +
-		// 25 for coverage + 1 for location)
-		double approxStdDev = Math.sqrt(27.0);
-		for (int i = 0; i < this.STATE_SIZE; i++) {
-			curState[i] /= approxStdDev;
-		}
-
-		return curState;
+		return (layersize * numLayers) + miscInputs;
 	}
 
 
 	public DeepQLGridCoverage(GridSensor sensor, GridActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
-
+		this.preprocessor = new StatePreprocessor(this.sensor);
+		this.lastStates = new StateTransition[this.HISTORY_MAX];
 	}
 
 
@@ -86,10 +65,10 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	public void init() {
 		if (this.nn == null) {
 			this.reloadSettings();
-			double[] state = this.getPreprocessedState();
-			StateTransition trans = new StateTransition(state);
-			trans.nextInput = state;
-			this.lastStates.add(trans);
+			//double[] state = this.preprocessor.getPreprocessedState();
+			//StateTransition trans = new StateTransition(state);
+			//trans.nextInput = state;
+			//this.lastStates.add(trans);
 
 			initNeuralNet();
 			printNeuralNetParams();
@@ -105,7 +84,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		System.out.printf("GREEDINESS_MAX=%E\n", 1.0 - this.GREEDY_EPSILON_MINIMUM);
 		System.out.printf("MINIBATCH_SIZE=%d\n", this.MINIBATCH_SIZE);
 		System.out.printf("DISCOUNT_FACTOR=%f\n", this.DISCOUNT_FACTOR);
-		System.out.printf("STATE_SIZE=%d\n", this.STATE_SIZE);
+		System.out.printf("STATE_SIZE=%d\n", this.NN_INPUT_SIZE);
 		System.out.printf("HISTORY_MAX=%d\n", this.HISTORY_MAX);
 		System.out.printf("ROBOTS_BREAKABLE=%b\n",
 				AdversarialCoverage.settings.getBooleanProperty("robots.breakable"));
@@ -117,7 +96,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		for (int i = 0; i < layerSizes.length - 1; i++) {
 			System.out.printf("%d, ", layerSizes[i]);
 		}
-		if(1 <= layerSizes.length) {
+		if (1 <= layerSizes.length) {
 			System.out.printf("%d", layerSizes[layerSizes.length - 1]);
 		}
 		System.out.printf("]\n");
@@ -131,13 +110,13 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 
 	@Override
 	public void step() {
-		double[] curState = getPreprocessedState();
-		double[] nnInput = new double[this.STATE_SIZE];
-		
-			for (int i = 0; i < this.STATE_SIZE; i++) {
-				nnInput[i] = curState[i];
-			}
-		
+		double[] curState = this.preprocessor.getPreprocessedState();
+		double[] nnInput = new double[this.NN_INPUT_SIZE];
+
+		for (int i = 0; i < this.NN_INPUT_SIZE; i++) {
+			nnInput[i] = curState[i];
+		}
+
 
 		StateTransition transition = new StateTransition(nnInput);
 		this.nn.feedForward(nnInput);
@@ -159,10 +138,10 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		}
 		transition.action = action;
 		takeAction(action);
-		curState = getPreprocessedState();
+		curState = this.preprocessor.getPreprocessedState();
 
-		double[] nnInput2 = new double[this.STATE_SIZE];
-		for (int i = 0; i < this.STATE_SIZE; i++) {
+		double[] nnInput2 = new double[this.NN_INPUT_SIZE];
+		for (int i = 0; i < this.NN_INPUT_SIZE; i++) {
 			nnInput2[i] = curState[i];
 		}
 		transition.nextInput = curState;
@@ -196,17 +175,18 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 			double squaredErrorSum = this.getSquaredErrorSum(correctOut[action], nnOutput[action]);
 			System.out.printf("Loss for minibatch %d: %f  (%.5f)\n", this.stepNum,
 					correctOut[action] - nnOutput[action], squaredErrorSum);
-					// if (squaredErrorSum < 0.00002) {
-
-			// }
 		}
-		this.lastStates.add(transition);
-		while (this.HISTORY_MAX < this.lastStates.size()) {
-			this.lastStates.remove(0);
+		//this.lastStates.add(transition);
+		//while (this.HISTORY_MAX < this.lastStates.size()) {
+		//	this.lastStates.remove(0);
+		//}
+		this.lastStates[(int) (this.stepNum % this.HISTORY_MAX)] = transition;
+		stateHistorySize = Math.min(this.HISTORY_MAX, this.stepNum);
+		
+		if(this.MINIBATCH_SIZE < this.stepNum) {
+			trainMinibatchFromHistory(this.MINIBATCH_SIZE);
 		}
-
-		trainMinibatchFromHistory(this.MINIBATCH_SIZE);
-
+		
 		if (this.stepNum % 50000 == 0) {
 			this.nn.LEARNING_RATE *= this.LEARNING_RATE_DECAY_FACTOR;
 			System.out.println(this.nn.exportToString());
@@ -233,10 +213,10 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 
 	private void trainMinibatchFromHistory(int batchSize) {
 		for (int i = 0; i < batchSize; i++) {
-			int sampleNum = this.randgen.nextInt(this.lastStates.size());
-			StateTransition sample = this.lastStates.get(sampleNum);
+			int sampleNum = this.randgen.nextInt((int) this.stateHistorySize);
+			StateTransition sample = this.lastStates[sampleNum];//this.lastStates.get(sampleNum);
 			this.nn.feedForward(sample.nextInput);
-			double nextQVal = this.nn.getOutputs()[sample.action];
+			double nextQVal = fastMax_DoubleArr5(this.nn.getOutputs());
 			this.nn.feedForward(sample.nnInput);
 			double[] nnOutput = this.nn.getOutputs();
 			double[] correctOut = new double[5];
@@ -258,6 +238,27 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		}
 
 	}
+	
+	/**
+	 * Quickly gets the value of the largest element in an array of 5 double values.
+	 * @return the largest double value in the 5-element array
+	 */
+	private double fastMax_DoubleArr5(double[] arr) {
+		double maxVal = arr[0];
+		if(maxVal < arr[1]) {
+			maxVal = arr[1];
+		}
+		if(maxVal < arr[2]) {
+			maxVal = arr[2];
+		}
+		if(maxVal < arr[3]) {
+			maxVal = arr[3];
+		}
+		if(maxVal < arr[4]) {
+			maxVal = arr[4];
+		}
+		return maxVal;
+	}
 
 
 	// Gets the sum of squared errors of the most recent output of the NN
@@ -269,7 +270,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	private void initNeuralNet() {
 		final String setupMode = AdversarialCoverage.settings.getStringProperty("deepql.nn_setup_mode");
 		if (setupMode.equalsIgnoreCase("native")) {
-			this.nn = new NeuralNet(new int[] { this.STATE_SIZE, 1 });
+			this.nn = new NeuralNet(new int[] { this.NN_INPUT_SIZE, 1 });
 			this.nn.removeLastLayer();
 			for (int i = 0; i < this.NUM_HIDDEN_LAYERS; i++) {
 				this.nn.addFullyConnectedLayer(this.HIDDEN_LAYER_SIZE,
@@ -281,8 +282,9 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 					nnLayerSizes[nnLayerSizes.length - 1] - 1);
 			this.nn.trainingType = this.NN_TRAINING_TYPE;
 		} else if (setupMode.equalsIgnoreCase("torch")) {
-			String prefix = AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.io_file_prefix");
-			this.nn = new ExternalTorchNN(prefix+"input2.dat", prefix+"output2.dat");
+			String prefix = AdversarialCoverage.settings
+					.getStringProperty("deepql.external_torch_nn.io_file_prefix");
+			this.nn = new ExternalTorchNN(prefix + "input2.dat", prefix + "output2.dat");
 			System.out.println("Using Torch neural network...");
 		} else {
 
@@ -326,6 +328,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	public void reloadSettings() {
 		this.actuator.reloadSettings();
 		this.sensor.reloadSettings();
+		this.preprocessor.reloadSettings();
 
 		this.DISCOUNT_FACTOR = AdversarialCoverage.settings.getDoubleProperty("deepql.discountfactor");
 		this.GREEDY_EPSILON_DECREMENT = AdversarialCoverage.settings

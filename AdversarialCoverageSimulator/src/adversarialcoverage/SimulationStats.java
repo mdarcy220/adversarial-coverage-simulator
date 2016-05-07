@@ -270,7 +270,9 @@ class RobotStats {
 		int y = this.robot.getLocation().y;
 
 		this.coverageProb *= (1.0 - this.env.getGridNode(x, y).getDangerProb());
-		this.survivability += this.coverageProb;
+		if(this.env.getGridNode(x, y).getCoverCount() <= 1) {
+			this.survivability += this.coverageProb;
+		}
 		this.pathLength++;
 	}
 

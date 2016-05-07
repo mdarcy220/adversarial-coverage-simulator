@@ -125,4 +125,9 @@ public class GridSensor extends Sensor {
 	public void reloadSettings() {
 		return;
 	}
+
+
+	public boolean isObstacle(int x, int y) {
+		return this.env.getGridNode(x, y).getNodeType() == NodeType.OBSTACLE;
+	}
 }

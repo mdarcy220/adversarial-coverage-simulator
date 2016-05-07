@@ -64,11 +64,13 @@ public class AdversarialCoverageSettings {
 	 */
 	public void setDefaults() {
 		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
-		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
-		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
-		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
-		this.setIntProperty("deepql.minibatch_size", 2);
+		this.setIntProperty("autorun.max_steps_per_run", Integer.MAX_VALUE-1);
 		this.setIntProperty("deepql.history_max", 100000);
+		this.setIntProperty("deepql.minibatch_size", 2);
+		this.setIntProperty("deepql.nn_input.vision_radius", 5);
+		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
+		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
+		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
 		this.setIntProperty("neuralnet.hidden_layer_size", 40);
 		this.setIntProperty("neuralnet.num_hidden_layers", 2);
 		this.setIntProperty("stats.multirun.batch_size", 100);
@@ -77,30 +79,31 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("autorun.finished.newgrid", true);
 		this.setBooleanProperty("autorun.finished.display_full_stats", false);
 		this.setBooleanProperty("autorun.randomize_robot_start", true);
+		this.setBooleanProperty("deepql.display.print_q_values", false);
+		this.setBooleanProperty("deepql.nn_input.obstacle_layer", true);
 		this.setBooleanProperty("display.show_binary_coverage", false);
 		this.setBooleanProperty("robots.breakable", true);
 		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
-		this.setBooleanProperty("deepql.display.print_q_values", false);
 		this.setBooleanProperty("neuralnet.give_global_pos_and_size", true);
 
-		this.setDoubleProperty("neuralnet.learning_rate", 0.1);
-		this.setDoubleProperty("neuralnet.momentum", 0.9);
-		this.setDoubleProperty("neuralnet.rms.decay_rate", 0.9);
 		this.setDoubleProperty("deepql.discountfactor", 0.9);
 		this.setDoubleProperty("deepql.greedy_epsilon_decrement", 0.0000005);
 		this.setDoubleProperty("deepql.greedy_epsilon_minimum", 0.1);
 		this.setDoubleProperty("deepql.greedy_epsilon_start", 1.0);
-		this.setDoubleProperty("deepql.learning_rate_decay_factor", 0.99);
+		this.setDoubleProperty("deepql.learning_rate_decay_factor", 1.0);
 		this.setDoubleProperty("deepql.reward.cover_again", -0.1);
 		this.setDoubleProperty("deepql.reward.cover_unique", 1.0);
 		this.setDoubleProperty("deepql.reward.death", -2.0);
 		this.setDoubleProperty("deepql.reward.full_coverage", 4.0);
+		this.setDoubleProperty("neuralnet.learning_rate", 0.1);
+		this.setDoubleProperty("neuralnet.momentum", 0.9);
+		this.setDoubleProperty("neuralnet.rms.decay_rate", 0.9);
 
+		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai03/prog/lua/scratch/");
+		this.setStringProperty("deepql.nn_setup_mode", "torch");
 		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
 		this.setStringProperty("neuralnet.loadfile", "");
 		this.setStringProperty("neuralnet.trainingtype", "rmsprop");
-		this.setStringProperty("deepql.nn_setup_mode", "torch");
-		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai03/prog/lua/scratch/");
 	}
 
 
