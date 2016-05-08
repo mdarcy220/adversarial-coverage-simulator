@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.Scanner;
+
+import adversarialcoverage.DeepQLGridCoverage.StateTransition;
+
 import java.io.BufferedReader;
 import java.io.*;
 
@@ -90,15 +93,33 @@ public class ExternalTorchNN extends NeuralNet {
 		this.outMsg.setLength(0);
 	}
 	
-	public void sendTransition(double[] correctOutputs) {
+	public void sendTransition(StateTransition trans) {
 		
-		this.outMsg.append("b\n");
-		for (int i = 0; i < correctOutputs.length; i++) {
-			this.outMsg.append(String.format("%a ", correctOutputs[i]));
+		this.outMsg.append("t\n");
+		
+		// Output the initial state
+		for (int i = 0; i < trans.nnInput.length; i++) {
+			this.outMsg.append(String.format("%a ", trans.nnInput[i]));
 		}
 		this.outMsg.append('\n');
+		
+		// Output the transition info
+		this.outMsg.append(String.format("%d %a %d \n", trans.action+1, trans.reward, trans.isTerminal ? 1 : 0));
+		
+		// Output the next state
+		for (int i = 0; i < trans.nextInput.length; i++) {
+			this.outMsg.append(String.format("%a ", trans.nextInput[i]));
+		}
+		this.outMsg.append('\n');
+		
 		this.outWriter.print(this.outMsg.toString());
 		this.outWriter.flush();
 		this.outMsg.setLength(0);
+	}
+	
+	
+	public void runTorchMinibatch() {
+		this.outWriter.print("m\n");
+		this.outWriter.flush();
 	}
 }

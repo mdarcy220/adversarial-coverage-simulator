@@ -81,6 +81,7 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("autorun.randomize_robot_start", true);
 		this.setBooleanProperty("deepql.display.print_q_values", false);
 		this.setBooleanProperty("deepql.nn_input.obstacle_layer", true);
+		this.setBooleanProperty("deepql.use_external_qlearner", true);
 		this.setBooleanProperty("display.show_binary_coverage", false);
 		this.setBooleanProperty("robots.breakable", true);
 		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
@@ -99,7 +100,7 @@ public class AdversarialCoverageSettings {
 		this.setDoubleProperty("neuralnet.momentum", 0.9);
 		this.setDoubleProperty("neuralnet.rms.decay_rate", 0.9);
 
-		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai03/prog/lua/scratch/");
+		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai04/midarcy/prog/lua/scratch/environments/betatester/");
 		this.setStringProperty("deepql.nn_setup_mode", "torch");
 		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
 		this.setStringProperty("neuralnet.loadfile", "");
