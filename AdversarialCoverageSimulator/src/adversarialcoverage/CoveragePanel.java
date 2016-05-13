@@ -6,24 +6,25 @@ class CoveragePanel extends JPanel {
 	private static final long serialVersionUID = -3413050706073789678L;
 
 	GridEnvironment env;
+	CoverageEngine engine;
 
 
-	public CoveragePanel(GridEnvironment env) {
+	public CoveragePanel(CoverageEngine engine) {
 		super();
 		setSize(500, 500);
-		this.env = env;
+		this.engine = engine;
 	}
 
 
 	@Override
 	public void paint(Graphics g) {
 		g.clearRect(0, 0, this.getWidth(), this.getHeight());
-		this.env.draw(g, this.getSize());
+		this.engine.env.draw(g, this.getSize());
 	}
 
 
-	public void setEnvironment(GridEnvironment env) {
-		this.env = env;
+	public void setEngine(CoverageEngine engine) {
+		this.engine = engine;
 	}
 
 

@@ -16,6 +16,7 @@ public class AdversarialCoverage {
 	CoverageWindow cw = null;
 	CoveragePanel mainPanel;
 	static SimulationStats stats;
+	CoverageEngine engine = null;
 
 	/**
 	 * Keeps track of whether the coverage simulation is running
@@ -31,7 +32,15 @@ public class AdversarialCoverage {
 	public AdversarialCoverage(String argsArr[]) {
 		args = new AdversarialCoverageArgs(argsArr);
 		settings = new AdversarialCoverageSettings();
-		resetCoverageEnvironment();
+		
+		this.engine = new CoverageEngine(new DisplayAdapter() {
+			@Override
+			public void refresh() {
+				AdversarialCoverage.this.mainPanel.repaint();
+			}
+		});
+		
+		this.engine.resetCoverageEnvironment();
 
 		if (!args.HEADLESS) {
 			this.cw = new CoverageWindow();
@@ -44,8 +53,7 @@ public class AdversarialCoverage {
 		} else {
 			System.out.println("WARNING: Headless environment support is very limited.");
 			if(args.USE_AUTOSTART) {
-				this.isRunning = true;
-				runCoverage();
+				this.engine.runCoverage();
 			}
 			System.exit(1);
 		}
@@ -65,14 +73,14 @@ public class AdversarialCoverage {
 			// handle exception
 		}
 
-		this.mainPanel = new CoveragePanel(this.env);
+		this.mainPanel = new CoveragePanel(this.engine);
 		// Set up the window
 		this.cw.setVisible(true);
 		this.mainPanel.setSize(500, 500);
 		this.mainPanel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				openGridNodeEditDialog(AdversarialCoverage.this.env.getGridNode(
+				openGridNodeEditDialog(AdversarialCoverage.this.engine.env.getGridNode(
 						AdversarialCoverage.this.mainPanel.getGridX(e.getX()),
 						AdversarialCoverage.this.mainPanel.getGridY(e.getY())));
 			}
@@ -118,7 +126,7 @@ public class AdversarialCoverage {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
 				settings.openSettingsDialog(AdversarialCoverage.this.cw);
-				AdversarialCoverage.this.env.reloadSettings();
+				AdversarialCoverage.this.engine.env.reloadSettings();
 			}
 		});
 		fileMenu.add(settingsDialogMenuItem);
@@ -129,7 +137,7 @@ public class AdversarialCoverage {
 		exportMapDialogMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				System.out.println(AdversarialCoverage.this.env.exportToString());
+				System.out.println(AdversarialCoverage.this.engine.env.exportToString());
 			}
 		});
 		fileMenu.add(exportMapDialogMenuItem);
@@ -149,11 +157,10 @@ public class AdversarialCoverage {
 		runCoverageMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				AdversarialCoverage.this.isRunning = true;
 				pauseCoverageMenuItem.setEnabled(true);
 				runCoverageMenuItem.setEnabled(false);
 				stepCoverageMenuItem.setEnabled(false);
-				runCoverage();
+				AdversarialCoverage.this.engine.runCoverage();;
 			}
 		});
 		runMenu.add(runCoverageMenuItem);
@@ -163,10 +170,10 @@ public class AdversarialCoverage {
 		pauseCoverageMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				AdversarialCoverage.this.isRunning = false;
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
+				AdversarialCoverage.this.engine.pauseCoverage();
 			}
 		});
 		runMenu.add(pauseCoverageMenuItem);
@@ -176,10 +183,7 @@ public class AdversarialCoverage {
 		stepCoverageMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				if (!AdversarialCoverage.this.env.isFinished()) {
-					AdversarialCoverage.this.env.step();
-				}
-				AdversarialCoverage.this.mainPanel.repaint();
+				AdversarialCoverage.this.engine.stepCoverage();
 			}
 		});
 		runMenu.add(stepCoverageMenuItem);
@@ -189,13 +193,10 @@ public class AdversarialCoverage {
 		restartCoverageMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				AdversarialCoverage.this.isRunning = false;
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				// resetCoverageEnvironment();
-				reinitializeCoverage();
-				AdversarialCoverage.this.mainPanel.repaint();
+				AdversarialCoverage.this.engine.restartCoverage();
 			}
 		});
 		runMenu.add(restartCoverageMenuItem);
@@ -205,12 +206,10 @@ public class AdversarialCoverage {
 		newCoverageMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				AdversarialCoverage.this.isRunning = false;
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				resetCoverageEnvironment();
-				AdversarialCoverage.this.mainPanel.repaint();
+				AdversarialCoverage.this.engine.newCoverage();
 			}
 		});
 		runMenu.add(newCoverageMenuItem);
@@ -219,8 +218,7 @@ public class AdversarialCoverage {
 		this.cw.setJMenuBar(menuBar);
 		
 		if(args.USE_AUTOSTART) {
-			this.isRunning = true;
-			runCoverage();
+			this.engine.runCoverage();
 		}
 	}
 
@@ -317,66 +315,6 @@ public class AdversarialCoverage {
 
 
 	/**
-	 * Sets up the environment using the settings
-	 */
-	public void resetCoverageEnvironment() {
-		this.env = new GridEnvironment(new Dimension(settings.getIntProperty("env.grid.width"),
-				settings.getIntProperty("env.grid.height")));
-
-
-		// Set up the coverage environment
-		genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
-
-
-		// Set up the robots
-		for (int i = 0; i < AdversarialCoverage.settings.getIntProperty("robots.count"); i++) {
-			GridRobot robot = new GridRobot(i, (int) (Math.random() * this.env.getWidth()),
-					(int) (Math.random() * this.env.getHeight()));
-			GridSensor sensor = new GridSensor(this.env, robot);
-			GridActuator actuator = new GridActuator(this.env, robot);
-			CoverageAlgorithm algo = new DeepQLGridCoverage(sensor, actuator);
-			robot.coverAlgo = algo;
-			this.env.addRobot(robot);
-		}
-		AdversarialCoverage.stats = new SimulationStats(this.env, this.env.getRobotList());
-
-		this.env.init();
-
-		if (this.mainPanel != null) {
-			this.mainPanel.setEnvironment(this.env);
-		}
-
-	}
-
-
-	/**
-	 * Creates a grid using the given danger values string.
-	 * 
-	 * @param dangerValStr
-	 *                the string to be used when generating the grid.
-	 */
-	private void genGridFromDangerValuesString(String dangerValStr) {
-		GridNodeGenerator nodegen = new GridNodeGenerator();
-		nodegen.useScanner(dangerValStr);
-		for (int x = 0; x < this.env.getWidth(); x++) {
-			for (int y = 0; y < this.env.getHeight(); y++) {
-				nodegen.genNext(this.env.getGridNode(x, y));
-			}
-		}
-	}
-
-
-	private void reinitializeCoverage() {
-		for (int x = 0; x < this.env.getWidth(); x++) {
-			for (int y = 0; y < this.env.getHeight(); y++) {
-				this.env.getGridNode(x, y).setCoverCount(0);
-			}
-		}
-		this.env.init();
-	}
-
-
-	/**
 	 * Loads settings from the given file.
 	 * 
 	 * @param file
@@ -403,7 +341,7 @@ public class AdversarialCoverage {
 	}
 
 
-	public void printStats(PrintStream ps) {
+	public static void printStats(PrintStream ps) {
 		ps.println("Name\tValue");
 
 		ps.printf("Avg. covers per free cell\t%f\n", AdversarialCoverage.stats.getAvgCoversPerFreeCell());
@@ -421,101 +359,6 @@ public class AdversarialCoverage {
 		ps.printf("Best whole area coverage probability\t%.6E\n",
 				AdversarialCoverage.stats.getMaxCoverageProb());
 	}
-
-
-	public void runCoverage() {
-		Thread t = new Thread() {
-			@Override
-			public void run() {
-				coverageLoop();
-			}
-		};
-		t.start();
-		if(args.HEADLESS) {
-			try {
-				t.join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		
-	}
-
-
-	public void coverageLoop() {
-		// Update settings
-		this.env.reloadSettings();
-
-		long statsBatchSize = AdversarialCoverage.settings.getIntProperty("stats.multirun.batch_size");
-		long delay = settings.getIntProperty("autorun.stepdelay");
-		boolean doRepaint = settings.getBooleanProperty("autorun.do_repaint");
-
-		while (this.isRunning) {
-			long time = System.currentTimeMillis();
-			step();
-			if (doRepaint && !args.HEADLESS) {
-				this.mainPanel.repaint();
-			}
-			if (this.env.isFinished() || !AdversarialCoverage.this.isRunning) {
-
-				if (this.env.isCovered()) {
-					System.out.printf("Covered the environment in %d steps.\n",
-							this.env.getStepCount());
-					AdversarialCoverage.stats.startNewRun();
-					if (AdversarialCoverage.stats.getRunsInCurrentBatch() % statsBatchSize == 0) {
-						System.out.printf("Average steps for last %d coverages: %f\n",
-								AdversarialCoverage.stats.getRunsInCurrentBatch(),
-								AdversarialCoverage.stats.getBatchAvgSteps());
-						AdversarialCoverage.stats.reset();
-					}
-				} else if (this.env.isFinished()) {
-					// System.out.println("All robots are
-					// broken and cannot continue");
-				}
-				if (this.env.isFinished()) {
-					if (settings.getBooleanProperty("autorun.finished.display_full_stats")) {
-						printStats(new PrintStream(System.out));
-					}
-					if (settings.getBooleanProperty("autorun.finished.newgrid")) {
-						for (GridRobot r : this.env.getRobotList()) {
-							r.setBroken(false);
-						}
-
-						genGridFromDangerValuesString(AdversarialCoverage.settings
-								.getStringProperty("env.grid.dangervalues"));
-						this.env.init();
-
-						if (this.mainPanel != null) {
-							this.mainPanel.setEnvironment(this.env);
-						}
-						if(!args.HEADLESS) {
-							this.mainPanel.repaint();
-						}
-					} else {
-						AdversarialCoverage.this.isRunning = false;
-					}
-				}
-
-			}
-			time = System.currentTimeMillis() - time;
-			if (time < delay) {
-				try {
-					Thread.sleep(delay - time);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	}
-
-
-	private void step() {
-		this.env.step();
-		stats.updateTimeStep();
-	}
-
 
 	public static void main(String[] argsArr) {
 		new AdversarialCoverage(argsArr);

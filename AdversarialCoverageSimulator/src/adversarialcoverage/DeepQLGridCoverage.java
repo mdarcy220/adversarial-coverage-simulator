@@ -136,7 +136,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		transition.reward = this.actuator.getLastReward();
 		transition.correctQVal = transition.reward;
 		transition.isTerminal = this.sensor.env.isFinished();
-		
+
 		if (this.stepNum % 500 == 0) {
 			if (!this.sensor.env.isFinished()) {
 				this.nn.feedForward(curState);
@@ -154,18 +154,15 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 				System.out.printf("\"correct\" q-value for %d: %f\n", action, transition.correctQVal);
 			}
 
-			double[] correctOut = new double[5];
-			for (int i = 0; i < nnOutput.length; i++) {
-				correctOut[i] = nnOutput[i];
-			}
-			correctOut[action] = transition.correctQVal;
-			double squaredErrorSum = this.getSquaredErrorSum(correctOut[action], nnOutput[action]);
-			System.out.printf("Loss for minibatch %d: %f  (%.5f)\n", this.stepNum, correctOut[action] - nnOutput[action],
+			double squaredErrorSum = this.getSquaredErrorSum(transition.correctQVal, nnOutput[action]);
+			System.out.printf("Loss for minibatch %d: %f  (%.6f)\n", this.stepNum, transition.correctQVal - nnOutput[action],
 					squaredErrorSum);
 		}
-
-		this.lastStates[(int) (this.stepNum % this.HISTORY_MAX)] = transition;
-		this.stateHistorySize = Math.min(this.HISTORY_MAX, this.stepNum);
+		
+		if (!this.USING_EXTERNAL_QLEARNER) {
+			this.lastStates[(int) (this.stepNum % this.HISTORY_MAX)] = transition;
+			this.stateHistorySize = Math.min(this.HISTORY_MAX, this.stepNum);
+		}
 
 		if (this.USING_EXTERNAL_QLEARNER && this.nn instanceof ExternalTorchNN) {
 			((ExternalTorchNN) this.nn).sendTransition(transition);

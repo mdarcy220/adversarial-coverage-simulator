@@ -65,8 +65,8 @@ public class AdversarialCoverageSettings {
 	public void setDefaults() {
 		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
 		this.setIntProperty("autorun.max_steps_per_run", Integer.MAX_VALUE-1);
-		this.setIntProperty("deepql.history_max", 100000);
-		this.setIntProperty("deepql.minibatch_size", 2);
+		this.setIntProperty("deepql.history_max", 1000);
+		this.setIntProperty("deepql.minibatch_size", 20);
 		this.setIntProperty("deepql.nn_input.vision_radius", 5);
 		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
 		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
@@ -101,7 +101,7 @@ public class AdversarialCoverageSettings {
 		this.setDoubleProperty("neuralnet.rms.decay_rate", 0.9);
 
 		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai04/midarcy/prog/lua/scratch/environments/betatester/");
-		this.setStringProperty("deepql.nn_setup_mode", "torch");
+		this.setStringProperty("deepql.nn_setup_mode", "native");
 		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
 		this.setStringProperty("neuralnet.loadfile", "");
 		this.setStringProperty("neuralnet.trainingtype", "rmsprop");
