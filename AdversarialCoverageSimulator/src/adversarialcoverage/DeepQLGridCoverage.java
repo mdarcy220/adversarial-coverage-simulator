@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 import deeplearning.NeuralNet;
+import deeplearning.StatePreprocessor;
 import deeplearning.NeuralNet.TrainingType;
 import deeplearning.ActivationFunction;
 import deeplearning.ExternalTorchNN;

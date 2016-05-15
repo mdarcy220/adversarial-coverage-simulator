@@ -5,9 +5,9 @@ package adversarialcoverage;
  * @author Mike D'Arcy
  *
  */
-class Coordinate {
-	int x;
-	int y;
+public class Coordinate {
+	public int x;
+	public int y;
 
 
 	/**

@@ -39,9 +39,9 @@ public class GridNodeGenerator {
 
 	private void resetNodeParameters() {
 		this.dangerMin = 0.0;
-		this.dangerMax = 1.0;
-		this.obstacleProb = 0.33;
-		this.dangerNodeProb = 0.33;
+		this.dangerMax = 0.0;
+		this.obstacleProb = 0.0;
+		this.dangerNodeProb = 0.0;
 		this.coverCountStart = 0;
 		this.repeatCount = 0;
 	}

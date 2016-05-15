@@ -1,5 +1,5 @@
 package adversarialcoverage;
-public class GridActuator extends Actuator {
+public class GridActuator {
 	/**
 	 * The environment in which this actuator exists
 	 */

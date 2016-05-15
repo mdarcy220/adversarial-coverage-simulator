@@ -12,8 +12,8 @@ import java.io.BufferedReader;
 import java.io.*;
 
 public class ExternalTorchNN extends NeuralNet {
-	String outFile;
-	String inFile;
+	String outFilename;
+	String inFilename;
 	PrintWriter outWriter = new PrintWriter(System.out);
 	Scanner inReader = new Scanner(System.in);
 	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -21,19 +21,19 @@ public class ExternalTorchNN extends NeuralNet {
 
 
 	public ExternalTorchNN(String outFile, String inFile) {
-		this.outFile = outFile;
-		this.inFile = inFile;
+		this.outFilename = outFile;
+		this.inFilename = inFile;
+
 		try {
-			this.outWriter = new PrintWriter(new File(this.outFile));
+			this.outWriter = new PrintWriter(new File(this.outFilename));
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			System.err.printf("Failed to find file %s. Using STDOUT instead.\n", this.outFilename);
 		}
 
 		try {
-			// s = new Scanner(new File(this.inFile));
-			this.br = new BufferedReader(new FileReader(this.inFile));
+			this.br = new BufferedReader(new FileReader(this.inFilename));
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			System.err.printf("Failed to find file %s. Using STDIN instead.\n", this.inFilename);
 		}
 	}
 
@@ -73,7 +73,7 @@ public class ExternalTorchNN extends NeuralNet {
 		if (s == null) {
 			return outputs;
 		}
-		
+
 		try {
 			for (int i = 0; i < outputs.length; i++) {
 				outputs[i] = s.nextDouble();
@@ -84,7 +84,8 @@ public class ExternalTorchNN extends NeuralNet {
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e1) {
-				System.err.println("Sleeping Thread was interrupted.");;
+				System.err.println("Sleeping Thread was interrupted.");
+				;
 			}
 		}
 

@@ -6,7 +6,7 @@ package adversarialcoverage;
  * @author Mike D'Arcy
  *
  */
-public class GridSensor extends Sensor {
+public class GridSensor {
 	GridRobot robot;
 	GridEnvironment env;
 

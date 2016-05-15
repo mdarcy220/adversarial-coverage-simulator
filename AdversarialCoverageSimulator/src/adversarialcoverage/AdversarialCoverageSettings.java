@@ -39,15 +39,13 @@ public class AdversarialCoverageSettings {
 	private Map<String, String> settingsMap = new HashMap<>();
 	private Map<String, SettingType> settingTypes = new HashMap<>();
 	/**
-	 * Error information that can be used to check whether an operation
-	 * failed
+	 * Error information that can be used to check whether an operation failed
 	 */
 	Error lastError = Error.NO_ERROR;
 
 
 	/**
-	 * Creates a new {@code AdversarialCoverageSettings} with the default
-	 * settings set
+	 * Creates a new {@code AdversarialCoverageSettings} with the default settings set
 	 */
 	public AdversarialCoverageSettings() {
 		// Set up defaults
@@ -64,15 +62,16 @@ public class AdversarialCoverageSettings {
 	 */
 	public void setDefaults() {
 		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
-		this.setIntProperty("autorun.max_steps_per_run", Integer.MAX_VALUE-1);
-		this.setIntProperty("deepql.history_max", 1000);
-		this.setIntProperty("deepql.minibatch_size", 20);
+		this.setIntProperty("autorun.max_steps_per_run", Integer.MAX_VALUE - 1);
+		this.setIntProperty("deepql.history_max", 1);
+		this.setIntProperty("deepql.minibatch_size", 0);
 		this.setIntProperty("deepql.nn_input.vision_radius", 5);
 		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
 		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
-		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
 		this.setIntProperty("neuralnet.hidden_layer_size", 40);
+		this.setIntProperty("neuralnet.input_size_sqrt", 30);
 		this.setIntProperty("neuralnet.num_hidden_layers", 2);
+		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
 		this.setIntProperty("stats.multirun.batch_size", 100);
 
 		this.setBooleanProperty("autorun.do_repaint", false);
@@ -83,9 +82,10 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("deepql.nn_input.obstacle_layer", true);
 		this.setBooleanProperty("deepql.use_external_qlearner", true);
 		this.setBooleanProperty("display.show_binary_coverage", false);
+		this.setBooleanProperty("env.clear_adjacent_cells_on_init", true);
+		this.setBooleanProperty("neuralnet.give_global_pos_and_size", true);
 		this.setBooleanProperty("robots.breakable", true);
 		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
-		this.setBooleanProperty("neuralnet.give_global_pos_and_size", true);
 
 		this.setDoubleProperty("deepql.discountfactor", 0.9);
 		this.setDoubleProperty("deepql.greedy_epsilon_decrement", 0.0000005);
@@ -115,18 +115,21 @@ public class AdversarialCoverageSettings {
 	 *                the file to export to
 	 * @throws FileNotFoundException
 	 */
-	public void exportToFile(File file) throws FileNotFoundException {
-		PrintWriter pw = new PrintWriter(file);
-		System.out.println("Set: " + this.exportToString());
-		pw.println(this.exportToString());
-		pw.flush();
-		pw.close();
+	public void exportToFile(File file) {
+		try (PrintWriter pw = new PrintWriter(file)) {
+			System.out.println("Set: " + this.exportToString());
+			pw.println(this.exportToString());
+			pw.flush();
+			pw.close();
+		} catch (FileNotFoundException e) {
+			System.err.println("Failed to write settings to file. File not found.");
+		}
 	}
 
 
 	/**
-	 * Convert the settings into string form, with one setting per line, in
-	 * the format:
+	 * Convert the settings into string form, with one setting per line, in the
+	 * format:
 	 * 
 	 * <pre>
 	 * settingName = settingValue
@@ -146,8 +149,8 @@ public class AdversarialCoverageSettings {
 
 
 	/**
-	 * Get a boolean property. If an error is encountered, the method
-	 * returns false and sets the lastError appropriately.
+	 * Get a boolean property. If an error is encountered, the method returns false
+	 * and sets the lastError appropriately.
 	 * 
 	 * @param key
 	 *                the property name
@@ -287,8 +290,7 @@ public class AdversarialCoverageSettings {
 			settingName = input.next();
 			String equalSign = input.next().trim();
 			if (!equalSign.equals("=")) {
-				System.err.println("Bad format for setting: " + settingName + " (Expected '=', found "
-						+ equalSign + ")");
+				System.err.println("Bad format for setting: " + settingName + " (Expected '=', found " + equalSign + ")");
 				continue;
 			}
 			String value = input.nextLine().trim();
@@ -299,8 +301,7 @@ public class AdversarialCoverageSettings {
 				this.setIntProperty(settingName, Integer.parseInt(value));
 			} else if (this.getSettingType(settingName) == AdversarialCoverageSettings.SettingType.DOUBLE) {
 				this.setDoubleProperty(settingName, Double.parseDouble(value));
-			} else if (this.getSettingType(
-					settingName) == AdversarialCoverageSettings.SettingType.BOOLEAN) {
+			} else if (this.getSettingType(settingName) == AdversarialCoverageSettings.SettingType.BOOLEAN) {
 				if (value.equalsIgnoreCase("true")) {
 					this.setBooleanProperty(settingName, true);
 				} else if (value.equalsIgnoreCase("false")) {
@@ -347,19 +348,16 @@ public class AdversarialCoverageSettings {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
 				for (String settingName : textfields.keySet()) {
-					SettingType type = AdversarialCoverageSettings.this.settingTypes
-							.get(settingName);
+					SettingType type = AdversarialCoverageSettings.this.settingTypes.get(settingName);
 					String newValStr = textfields.get(settingName).getText();
 					if (type == SettingType.STRING) {
-						AdversarialCoverageSettings.this.settingsMap.put(settingName,
-								newValStr);
+						AdversarialCoverageSettings.this.settingsMap.put(settingName, newValStr);
 					} else if (type == SettingType.INT) {
 						try {
 							int value = Integer.parseInt(newValStr);
 							setIntProperty(settingName, value);
 						} catch (NumberFormatException e) {
-							System.err.println("Failed to parse value for integer setting: "
-									+ settingName);
+							System.err.println("Failed to parse value for integer setting: " + settingName);
 						}
 					} else if (type == SettingType.BOOLEAN) {
 						if (newValStr.equalsIgnoreCase("true")) {
@@ -367,16 +365,14 @@ public class AdversarialCoverageSettings {
 						} else if (newValStr.equalsIgnoreCase("false")) {
 							setBooleanProperty(settingName, false);
 						} else {
-							System.err.println("Failed to parse value for boolean setting: "
-									+ settingName);
+							System.err.println("Failed to parse value for boolean setting: " + settingName);
 						}
 					} else if (type == SettingType.DOUBLE) {
 						try {
 							double value = Double.parseDouble(newValStr);
 							setDoubleProperty(settingName, value);
 						} catch (NumberFormatException e) {
-							System.err.println("Failed to parse value for integer setting: "
-									+ settingName);
+							System.err.println("Failed to parse value for integer setting: " + settingName);
 						}
 					}
 				}
@@ -481,18 +477,17 @@ public class AdversarialCoverageSettings {
 		 */
 		NULL_KEY,
 		/**
-		 * A key that did not reference any valid property name was
-		 * passed to a function
+		 * A key that did not reference any valid property name was passed to a
+		 * function
 		 */
 		NO_SUCH_PROPERTY,
 		/**
-		 * The type of the setting did not match the expected setting
-		 * type
+		 * The type of the setting did not match the expected setting type
 		 */
 		WRONG_SETTING_TYPE,
 		/**
-		 * The correct setting type could not be produced from the
-		 * stored String value
+		 * The correct setting type could not be produced from the stored String
+		 * value
 		 */
 		BAD_FORMAT
 	}

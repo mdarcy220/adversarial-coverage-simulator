@@ -7,17 +7,32 @@ public class CoverageEngine {
 
 	private boolean isRunning = false;
 	private DisplayAdapter display = null;
-	GridEnvironment env = null;
+	private GridEnvironment env = null;
 
 
 	public CoverageEngine(DisplayAdapter display) {
 		this.display = display;
 		this.init();
 	}
+	
+	
+	public CoverageEngine() {
+		this(new DisplayAdapter() {
+			@Override
+			public void refresh() {
+				// Do nothing
+			}
+		});
+	}
 
 
 	public void init() {
 
+	}
+	
+	
+	public GridEnvironment getEnv() {
+		return this.env;
 	}
 
 
@@ -25,7 +40,7 @@ public class CoverageEngine {
 		if (!this.env.isFinished()) {
 			this.env.step();
 		}
-		updateDisplay();
+		refreshDisplay();
 	}
 
 
@@ -44,14 +59,14 @@ public class CoverageEngine {
 		this.isRunning = false;
 		// resetCoverageEnvironment();
 		reinitializeCoverage();
-		updateDisplay();
+		refreshDisplay();
 	}
 
 
 	public void newCoverage() {
 		this.isRunning = false;
 		this.resetCoverageEnvironment();
-		updateDisplay();
+		refreshDisplay();
 	}
 
 
@@ -59,8 +74,13 @@ public class CoverageEngine {
 	 * Updates the display, which may be a GUI window, or in a headless environment, a
 	 * terminal.
 	 */
-	public void updateDisplay() {
+	public void refreshDisplay() {
 		this.display.refresh();
+	}
+
+
+	public void setDisplay(DisplayAdapter display) {
+		this.display = display;
 	}
 
 
@@ -134,7 +154,7 @@ public class CoverageEngine {
 			long time = System.currentTimeMillis();
 			this.step();
 			if (doRepaint && !AdversarialCoverage.args.HEADLESS) {
-				updateDisplay();
+				refreshDisplay();
 			}
 			if (this.env.isFinished()) {
 				handleCoverageCompletion();
@@ -175,7 +195,7 @@ public class CoverageEngine {
 			genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
 			this.env.init();
 
-			updateDisplay();
+			refreshDisplay();
 
 		} else {
 			this.isRunning = false;

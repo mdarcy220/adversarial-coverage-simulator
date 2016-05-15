@@ -1,4 +1,7 @@
-package adversarialcoverage;
+package deeplearning;
+
+import adversarialcoverage.AdversarialCoverage;
+import adversarialcoverage.GridSensor;
 
 public class StatePreprocessor {
 

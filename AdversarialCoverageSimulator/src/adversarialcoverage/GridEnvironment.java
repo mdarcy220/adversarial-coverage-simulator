@@ -1,21 +1,17 @@
 package adversarialcoverage;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GridEnvironment extends Environment {
-	private GridNode[][] grid;
-	private Dimension gridSize = new Dimension();
-	private List<GridRobot> robots;
+public class GridEnvironment {
+	public GridNode[][] grid;
+	public Dimension gridSize = new Dimension();
+	public List<GridRobot> robots;
 	private int stepCount = 0;
 	public int squaresLeft = 0;
-	private boolean SHOW_BINARY_COVERAGE = AdversarialCoverage.settings
-			.getBooleanProperty("display.show_binary_coverage");
-	private boolean RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings
-			.getBooleanProperty("autorun.randomize_robot_start");
+	private boolean RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings.getBooleanProperty("autorun.randomize_robot_start");
+	private boolean CLEAR_ADJACENT_CELLS_ON_INIT = AdversarialCoverage.settings.getBooleanProperty("env.clear_adjacent_cells_on_init");
 	private int MAX_STEPS_PER_RUN = AdversarialCoverage.settings.getIntProperty("autorun.max_steps_per_run");
 
 
@@ -37,66 +33,13 @@ public class GridEnvironment extends Environment {
 
 
 	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void draw(Graphics g, Dimension windowSize) {
-		// Get the cell size
-		Dimension cellSize = new Dimension(windowSize.width / this.gridSize.width,
-				windowSize.height / this.gridSize.height);
-
-		// Draw the grid
-		for (int x = 0; x < this.gridSize.width; x++) {
-			for (int y = 0; y < this.gridSize.height; y++) {
-				int alpha = (int) (255 * 2 * this.grid[x][y].dangerProb);
-				if (255 < alpha) {
-					alpha = 255;
-				}
-				g.setColor(new Color(255, 80, 255, alpha));
-				g.fillRect(x * cellSize.width, y * cellSize.height, cellSize.width, cellSize.height);
-				g.setColor(Color.BLACK);
-				if (this.grid[x][y].getNodeType() == NodeType.OBSTACLE) {
-					g.fillRect(x * cellSize.width, y * cellSize.height, cellSize.width,
-							cellSize.height);
-				}
-				if (0 < this.grid[x][y].getCoverCount()) {
-					g.setColor(new Color(0, 64, 0));
-				} else {
-					g.setColor(new Color(255, 20, 40));
-				}
-
-				if (this.SHOW_BINARY_COVERAGE) {
-					g.drawString(this.grid[x][y].getCoverCount() < 1 ? "NO" : "YES",
-							x * cellSize.width, (y + 1) * cellSize.height);
-				} else {
-					g.drawString("" + this.grid[x][y].getCoverCount(), x * cellSize.width,
-							(y + 1) * cellSize.height);
-				}
-				g.setColor(Color.BLACK);
-
-				g.drawRect(x * cellSize.width, y * cellSize.height, cellSize.width, cellSize.height);
-			}
-		}
-
-		// Draw the robots
-		g.setColor(Color.darkGray);
-		for (GridRobot r : this.robots) {
-			g.setColor(new Color(40 * r.getId(), 40 * (6 - r.getId()), 100));
-			g.fillOval(r.getLocation().x * cellSize.width, r.getLocation().y * cellSize.height,
-					cellSize.width, cellSize.height);
-
-		}
-	}
-
-
-	/**
 	 * Initialize all the robots in the environment
 	 */
 	public void init() {
 		this.squaresLeft = this.gridSize.width * this.gridSize.height;
-		for(int x = 0; x < this.gridSize.width; x++) {
-			for(int y = 0; y < this.gridSize.height; y++) {
-				if(this.getGridNode(x, y).getNodeType() == NodeType.OBSTACLE) {
+		for (int x = 0; x < this.gridSize.width; x++) {
+			for (int y = 0; y < this.gridSize.height; y++) {
+				if (this.getGridNode(x, y).getNodeType() == NodeType.OBSTACLE) {
 					this.squaresLeft--;
 				}
 			}
@@ -104,12 +47,18 @@ public class GridEnvironment extends Environment {
 		this.stepCount = 1;
 		for (int robotNum = 0; robotNum < this.robots.size(); robotNum++) {
 			if (this.RANDOMIZE_ROBOT_LOCATION_ON_INIT) {
-				this.robots.get(robotNum).setLocation((int) (Math.random() * this.getWidth()),
-						(int) (Math.random() * this.getHeight()));
-				clearAdjactentCells(this.robots.get(robotNum).getLocation().x,
-						this.robots.get(robotNum).getLocation().y);
-				this.getGridNode(this.robots.get(robotNum).getLocation().x,
-						this.robots.get(robotNum).getLocation().y).setNodeType(NodeType.FREE);
+				Coordinate location = new Coordinate(-1, -1);
+				while (location.x == -1 || this.getGridNode(location.x, location.y).getNodeType() == NodeType.OBSTACLE) {
+					location.x = (int) (Math.random() * this.getWidth());
+					location.y = (int) (Math.random() * this.getHeight());
+				}
+				this.robots.get(robotNum).setLocation(location.x, location.y);
+				if (this.CLEAR_ADJACENT_CELLS_ON_INIT) {
+					clearAdjactentCells(this.robots.get(robotNum).getLocation().x, this.robots.get(robotNum).getLocation().y);
+				}
+				
+				this.getGridNode(this.robots.get(robotNum).getLocation().x, this.robots.get(robotNum).getLocation().y)
+						.setNodeType(NodeType.FREE);
 			}
 			this.robots.get(robotNum).coverAlgo.init();
 
@@ -247,8 +196,8 @@ public class GridEnvironment extends Environment {
 	 *                the x coordinate
 	 * @param y
 	 *                the y coordinate
-	 * @return true if the coordinates are within the size of this
-	 *         environment's grid, false otherwise
+	 * @return true if the coordinates are within the size of this environment's grid,
+	 *         false otherwise
 	 */
 	public boolean isOnGrid(int x, int y) {
 		return (0 <= x && x < this.getWidth() && 0 <= y && y < this.getHeight());
@@ -260,8 +209,8 @@ public class GridEnvironment extends Environment {
 	 * 
 	 * @param x
 	 * @param y
-	 * @return a {@code GridNode}, or null if the given coordinates are not
-	 *         on the grid
+	 * @return a {@code GridNode}, or null if the given coordinates are not on the
+	 *         grid
 	 */
 	public GridNode getGridNode(int x, int y) {
 		if (isOnGrid(x, y)) {
@@ -274,8 +223,7 @@ public class GridEnvironment extends Environment {
 	/**
 	 * Checks if every grid space has been covered at least once
 	 * 
-	 * @return true if the graph has been covered at least once, false
-	 *         otherwise
+	 * @return true if the graph has been covered at least once, false otherwise
 	 */
 	public boolean isCovered() {
 		return this.squaresLeft <= 0;
@@ -297,9 +245,8 @@ public class GridEnvironment extends Environment {
 
 
 	/**
-	 * Checks whether a terminal state has been reached. This could happen
-	 * if the environment is covered or if there are no robots left (i.e.
-	 * they all failed).
+	 * Checks whether a terminal state has been reached. This could happen if the
+	 * environment is covered or if there are no robots left (i.e. they all failed).
 	 * 
 	 * @return true if more steps can be taken, false otherwise
 	 */
@@ -327,10 +274,8 @@ public class GridEnvironment extends Environment {
 		for (Robot r : this.robots) {
 			r.reloadSettings();
 		}
-		this.SHOW_BINARY_COVERAGE = AdversarialCoverage.settings
-				.getBooleanProperty("display.show_binary_coverage");
-		this.RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings
-				.getBooleanProperty("autorun.randomize_robot_start");
+		this.RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings.getBooleanProperty("autorun.randomize_robot_start");
 		this.MAX_STEPS_PER_RUN = AdversarialCoverage.settings.getIntProperty("autorun.max_steps_per_run");
+		this.CLEAR_ADJACENT_CELLS_ON_INIT = AdversarialCoverage.settings.getBooleanProperty("env.clear_adjacent_cells_on_init");
 	}
 }
