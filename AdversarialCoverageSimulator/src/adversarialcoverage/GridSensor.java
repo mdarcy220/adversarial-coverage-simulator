@@ -1,7 +1,8 @@
 package adversarialcoverage;
+
 /**
- * A sensor for grids. It can detect the entire grid (including danger level,
- * the number of times each space was covered, etc) and the robot's location
+ * A sensor for grids. It can detect the entire grid (including danger level, the number
+ * of times each space was covered, etc) and the robot's location
  * 
  * @author Mike D'Arcy
  *
@@ -15,8 +16,7 @@ public class GridSensor {
 	 * Constructs a sensor for the given environment and robot
 	 * 
 	 * @param env
-	 *                the environment that this sensor will get observations
-	 *                from
+	 *                the environment that this sensor will get observations from
 	 * @param robot
 	 *                the robot that has this sensor
 	 */
@@ -33,6 +33,28 @@ public class GridSensor {
 	 */
 	public Coordinate getLocation() {
 		return new Coordinate(this.robot.getLocation().x, this.robot.getLocation().y);
+	}
+
+
+	/**
+	 * @return the x coordinate of the robot
+	 */
+	public int getX() {
+		return this.robot.getLocation().x;
+	}
+
+
+	/**
+	 * 
+	 * @return the y coordinate of the robot
+	 */
+	public int getY() {
+		return this.robot.getLocation().y;
+	}
+
+
+	public boolean nodeExists(int x, int y) {
+		return this.env.isOnGrid(x, y);
 	}
 
 
@@ -74,7 +96,8 @@ public class GridSensor {
 	public int getCoverCountAt(int x, int y) {
 		return this.env.getGridNode(x, y).getCoverCount();
 	}
-	
+
+
 	public boolean robotIsBroken() {
 		return this.robot.isBroken();
 	}

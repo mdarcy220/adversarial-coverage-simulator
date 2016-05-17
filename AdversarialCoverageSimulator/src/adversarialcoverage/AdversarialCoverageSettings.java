@@ -28,10 +28,6 @@ import javax.swing.JTextField;
  *
  */
 public class AdversarialCoverageSettings {
-	final private int DEFAULT_GRID_WIDTH = 5;
-	final private int DEFAULT_GRID_HEIGHT = 5;
-	final private int DEFAULT_AUTORUN_STEP_DELAY = 0;
-	final private int DEFAULT_NUM_ROBOTS = 1;
 
 	final private String BOOLEAN_TRUE_STRING = "true";
 	final private String BOOLEAN_FALSE_STRING = "false";
@@ -61,17 +57,16 @@ public class AdversarialCoverageSettings {
 	 * Sets all settings to the default values
 	 */
 	public void setDefaults() {
-		this.setIntProperty("autorun.stepdelay", this.DEFAULT_AUTORUN_STEP_DELAY);
+		this.setIntProperty("autorun.stepdelay", 0);
 		this.setIntProperty("autorun.max_steps_per_run", Integer.MAX_VALUE - 1);
 		this.setIntProperty("deepql.history_max", 1);
 		this.setIntProperty("deepql.minibatch_size", 0);
 		this.setIntProperty("deepql.nn_input.vision_radius", 5);
-		this.setIntProperty("env.grid.height", this.DEFAULT_GRID_HEIGHT);
-		this.setIntProperty("env.grid.width", this.DEFAULT_GRID_WIDTH);
-		this.setIntProperty("neuralnet.hidden_layer_size", 40);
-		this.setIntProperty("neuralnet.input_size_sqrt", 30);
+		this.setIntProperty("env.grid.height", 5);
+		this.setIntProperty("env.grid.width", 5);
+		this.setIntProperty("neuralnet.hidden_layer_size", 30);
 		this.setIntProperty("neuralnet.num_hidden_layers", 2);
-		this.setIntProperty("robots.count", this.DEFAULT_NUM_ROBOTS);
+		this.setIntProperty("robots.count", 1);
 		this.setIntProperty("stats.multirun.batch_size", 100);
 
 		this.setBooleanProperty("autorun.do_repaint", false);
@@ -82,13 +77,13 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("deepql.nn_input.obstacle_layer", true);
 		this.setBooleanProperty("deepql.use_external_qlearner", true);
 		this.setBooleanProperty("display.show_binary_coverage", false);
-		this.setBooleanProperty("env.clear_adjacent_cells_on_init", true);
-		this.setBooleanProperty("neuralnet.give_global_pos_and_size", true);
+		this.setBooleanProperty("env.clear_adjacent_cells_on_init", false);
+		this.setBooleanProperty("neuralnet.give_global_pos_and_size", false);
 		this.setBooleanProperty("robots.breakable", true);
 		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
 
 		this.setDoubleProperty("deepql.discountfactor", 0.9);
-		this.setDoubleProperty("deepql.greedy_epsilon_decrement", 0.0000005);
+		this.setDoubleProperty("deepql.greedy_epsilon_decrement", 5E-7);
 		this.setDoubleProperty("deepql.greedy_epsilon_minimum", 0.1);
 		this.setDoubleProperty("deepql.greedy_epsilon_start", 1.0);
 		this.setDoubleProperty("deepql.learning_rate_decay_factor", 1.0);

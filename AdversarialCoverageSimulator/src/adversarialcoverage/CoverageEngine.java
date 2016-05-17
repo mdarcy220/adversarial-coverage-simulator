@@ -130,20 +130,11 @@ public class CoverageEngine {
 			}
 		};
 		t.start();
-		if (AdversarialCoverage.args.HEADLESS) {
-			try {
-				t.join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
 
 	}
 
 
-	public void coverageLoop() {
+	private void coverageLoop() {
 		// Update settings
 		this.env.reloadSettings();
 
@@ -225,6 +216,11 @@ public class CoverageEngine {
 	private void step() {
 		this.env.step();
 		AdversarialCoverage.stats.updateTimeStep();
+	}
+
+
+	public String isRunning() {
+		return (new Boolean(this.isRunning)).toString();
 	}
 
 }

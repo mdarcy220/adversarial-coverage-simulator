@@ -8,7 +8,6 @@ public class AdversarialCoverage {
 	public static AdversarialCoverageArgs args = null;
 	public static AdversarialCoverageSettings settings = null;
 	GridEnvironment env = null;
-	GUIDisplay cw = null;
 	static SimulationStats stats;
 	private CoverageEngine engine = null;
 
@@ -32,20 +31,18 @@ public class AdversarialCoverage {
 		this.engine.resetCoverageEnvironment();
 
 		if (!args.HEADLESS) {
-			this.cw = new GUIDisplay();
-			this.engine.setDisplay(this.cw);
-			createAndShowGUI();
+			GUIDisplay gd = new GUIDisplay();
+			gd.setup(this.engine);
+			this.engine.setDisplay(gd);
 		} else {
 			System.out.println("WARNING: Headless environment support is very limited.");
+			TerminalDisplay td = new TerminalDisplay(this.engine);
+			td.setup();
+			this.engine.setDisplay(td);
 			if (args.USE_AUTOSTART) {
 				this.engine.runCoverage();
 			}
 		}
-	}
-
-
-	private void createAndShowGUI() {
-		AdversarialCoverage.this.cw.setup(AdversarialCoverage.this.engine);
 	}
 
 

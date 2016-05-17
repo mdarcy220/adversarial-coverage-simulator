@@ -19,6 +19,7 @@ import adversarialcoverage.NodeType;
 public class GUIDisplay implements DisplayAdapter {
 	private CoveragePanel mainPanel;
 	private JFrame frame = null;
+	private CoverageEngine engine = null;
 
 
 	public GUIDisplay() {
@@ -30,6 +31,8 @@ public class GUIDisplay implements DisplayAdapter {
 
 
 	public void setup(final CoverageEngine engine) {
+		this.engine = engine;
+		
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (UnsupportedLookAndFeelException e) {
@@ -42,7 +45,7 @@ public class GUIDisplay implements DisplayAdapter {
 			// handle exception
 		}
 
-		this.mainPanel = new CoveragePanel(engine);
+		this.mainPanel = new CoveragePanel(this.engine);
 		// Set up the window
 		this.frame.setVisible(true);
 		this.mainPanel.setSize(500, 500);
