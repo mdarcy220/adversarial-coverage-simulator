@@ -7,24 +7,20 @@ public class AdversarialCoverage {
 
 	public static AdversarialCoverageArgs args = null;
 	public static AdversarialCoverageSettings settings = null;
+	public static Logger logger = null;
+	
 	GridEnvironment env = null;
 	static SimulationStats stats;
 	private CoverageEngine engine = null;
 
-	/**
-	 * Keeps track of whether the coverage simulation is running
-	 */
-	boolean isRunning = false;
-
-	/**
-	 * Whether the user has quit the coverage
-	 */
-	boolean hasQuit = false;
-
 
 	public AdversarialCoverage(String argsArr[]) {
+		// Set up args and settings first
 		args = new AdversarialCoverageArgs(argsArr);
 		settings = new AdversarialCoverageSettings();
+		
+		// Set up the logger
+		logger = new Logger();
 
 		this.engine = new CoverageEngine();
 
@@ -39,9 +35,6 @@ public class AdversarialCoverage {
 			TerminalDisplay td = new TerminalDisplay(this.engine);
 			td.setup();
 			this.engine.setDisplay(td);
-			if (args.USE_AUTOSTART) {
-				this.engine.runCoverage();
-			}
 		}
 	}
 

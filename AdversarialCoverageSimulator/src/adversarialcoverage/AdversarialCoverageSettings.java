@@ -57,12 +57,16 @@ public class AdversarialCoverageSettings {
 	 * Sets all settings to the default values
 	 */
 	public void setDefaults() {
-		this.setIntProperty("autorun.stepdelay", 0);
 		this.setIntProperty("autorun.max_steps_per_run", Integer.MAX_VALUE - 1);
+		this.setIntProperty("autorun.stepdelay", 0);
 		this.setIntProperty("deepql.history_max", 1);
 		this.setIntProperty("deepql.minibatch_size", 0);
 		this.setIntProperty("deepql.nn_input.vision_radius", 5);
 		this.setIntProperty("env.grid.height", 5);
+		this.setIntProperty("env.grid.maxheight", 5);
+		this.setIntProperty("env.grid.maxwidth", 5);
+		this.setIntProperty("env.grid.minheight", 5);
+		this.setIntProperty("env.grid.minwidth", 5);
 		this.setIntProperty("env.grid.width", 5);
 		this.setIntProperty("neuralnet.hidden_layer_size", 30);
 		this.setIntProperty("neuralnet.num_hidden_layers", 2);
@@ -78,7 +82,10 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("deepql.use_external_qlearner", true);
 		this.setBooleanProperty("display.show_binary_coverage", false);
 		this.setBooleanProperty("env.clear_adjacent_cells_on_init", false);
+		this.setBooleanProperty("env.grid.force_square", true);
+		this.setBooleanProperty("env.variable_grid_size", true);
 		this.setBooleanProperty("neuralnet.give_global_pos_and_size", false);
+		this.setBooleanProperty("neuralnet.torch.recurrent.sequenced_minibatch", false);
 		this.setBooleanProperty("robots.breakable", true);
 		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
 
@@ -96,8 +103,11 @@ public class AdversarialCoverageSettings {
 		this.setDoubleProperty("neuralnet.rms.decay_rate", 0.9);
 
 		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai04/midarcy/prog/lua/scratch/environments/betatester/");
+		this.setStringProperty("deepql.external_torch_nn.nninput_file_name", "input2.dat");
+		this.setStringProperty("deepql.external_torch_nn.nnoutput_file_name", "output2.dat");
 		this.setStringProperty("deepql.nn_setup_mode", "native");
 		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
+		this.setStringProperty("logging.logfile", "");
 		this.setStringProperty("neuralnet.loadfile", "");
 		this.setStringProperty("neuralnet.trainingtype", "rmsprop");
 	}
@@ -133,7 +143,22 @@ public class AdversarialCoverageSettings {
 	 */
 	public String exportToString() {
 		StringBuilder exportStr = new StringBuilder("");
-		for (String s : this.settingsMap.keySet()) {
+		String[] settingNames = getSortedSettingNames();
+		for (String s : settingNames) {
+			exportStr.append(s);
+			exportStr.append(" = ");
+			exportStr.append(this.settingsMap.get(s));
+			exportStr.append('\n');
+		}
+		return exportStr.toString();
+	}
+
+
+	public String exportToCommandString() {
+		StringBuilder exportStr = new StringBuilder("");
+		String[] settingNames = getSortedSettingNames();
+		for (String s : settingNames) {
+			exportStr.append(":set ");
 			exportStr.append(s);
 			exportStr.append(" = ");
 			exportStr.append(this.settingsMap.get(s));
@@ -312,6 +337,14 @@ public class AdversarialCoverageSettings {
 	}
 
 
+	public String[] getSortedSettingNames() {
+		String[] settingNames = new String[this.settingsMap.keySet().size()];
+		this.settingsMap.keySet().toArray(settingNames);
+		Arrays.sort(settingNames);
+		return settingNames;
+	}
+
+
 	public void openSettingsDialog(Frame parent) {
 		System.out.println("Opening settings dialog...");
 		final JDialog sd = new JDialog(parent, "Settings");
@@ -324,9 +357,7 @@ public class AdversarialCoverageSettings {
 
 		final Map<String, JTextField> textfields = new HashMap<>();
 
-		String[] settingNames = new String[this.settingsMap.keySet().size()];
-		this.settingsMap.keySet().toArray(settingNames);
-		Arrays.sort(settingNames);
+		String[] settingNames = getSortedSettingNames();
 
 		for (String settingName : settingNames) {
 			JLabel settingLabel = new JLabel(settingName);
@@ -409,7 +440,36 @@ public class AdversarialCoverageSettings {
 
 
 	/**
-	 * Sets an integer property
+	 * Sets a boolean property based on the given string. If the value string is
+	 * "true", ignoring case, the boolean will be set to true. If it is "false",
+	 * ignoring case, the boolean will be false. If it is anything else, no value will
+	 * be set and the lastError will be set to <code>Error.BAD_FORMAT</code>.
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	public void setBooleanProperty(String key, String value) {
+		try {
+			boolean boolValue = false;
+			if (value.equalsIgnoreCase("true")) {
+				boolValue = true;
+			} else if (value.equalsIgnoreCase("false")) {
+				boolValue = false;
+			} else {
+				this.lastError = Error.BAD_FORMAT;
+				return;
+			}
+			this.setBooleanProperty(key, boolValue);
+		} catch (NumberFormatException e) {
+			this.lastError = Error.BAD_FORMAT;
+		} catch (NullPointerException e) {
+			this.lastError = Error.NULL_VALUE;
+		}
+	}
+
+
+	/**
+	 * Sets a double property
 	 * 
 	 * @param key
 	 *                the name of the property
@@ -418,10 +478,30 @@ public class AdversarialCoverageSettings {
 	 */
 	public void setDoubleProperty(String key, double value) {
 		if (key == null) {
+			this.lastError = Error.NULL_KEY;
 			return;
 		}
 		this.settingsMap.put(key, (new Double(value)).toString());
 		this.settingTypes.put(key, SettingType.DOUBLE);
+	}
+
+
+	/**
+	 * Sets a double property
+	 * 
+	 * @param key
+	 *                the name of the property
+	 * @param value
+	 *                the value to set
+	 */
+	public void setDoubleProperty(String key, String value) {
+		try {
+			this.setDoubleProperty(key, Double.parseDouble(value));
+		} catch (NumberFormatException e) {
+			this.lastError = Error.BAD_FORMAT;
+		} catch (NullPointerException e) {
+			this.lastError = Error.NULL_VALUE;
+		}
 	}
 
 
@@ -435,10 +515,30 @@ public class AdversarialCoverageSettings {
 	 */
 	public void setIntProperty(String key, int value) {
 		if (key == null) {
+			this.lastError = Error.NULL_KEY;
 			return;
 		}
 		this.settingsMap.put(key, (new Integer(value)).toString());
 		this.settingTypes.put(key, SettingType.INT);
+	}
+
+
+	/**
+	 * Sets an integer property
+	 * 
+	 * @param key
+	 *                the name of the property
+	 * @param value
+	 *                the value to set
+	 */
+	public void setIntProperty(String key, String value) {
+		try {
+			this.setIntProperty(key, Integer.parseInt(value));
+		} catch (NumberFormatException e) {
+			this.lastError = Error.BAD_FORMAT;
+		} catch (NullPointerException e) {
+			this.lastError = Error.NULL_VALUE;
+		}
 	}
 
 
@@ -451,10 +551,39 @@ public class AdversarialCoverageSettings {
 		this.settingTypes.put(key, SettingType.STRING);
 	}
 
+
+	public void setAuto(String key, String value) {
+		if (key == null) {
+			this.lastError = Error.NULL_KEY;
+			return;
+		}
+		if (!this.hasProperty(key)) {
+			this.setStringProperty(key, value);
+			return;
+		}
+
+		SettingType type = this.getSettingType(key);
+		switch (type) {
+		case INT:
+			this.setIntProperty(key, value);
+			break;
+		case DOUBLE:
+			this.setDoubleProperty(key, value);
+			break;
+		case BOOLEAN:
+			this.setBooleanProperty(key, value);
+			break;
+		case STRING: // FALLTHROUGH
+		default:
+			this.setStringProperty(key, value);
+		}
+	}
+
 	/**
 	 * Errors that can occur when performing operations on settings.
 	 * <li>{@link #NO_ERROR}</li>
 	 * <li>{@link #NULL_KEY}</li>
+	 * <li>{@link #NULL_VALUE}</li>
 	 * <li>{@link #NO_SUCH_PROPERTY}</li>
 	 * <li>{@link #WRONG_SETTING_TYPE}</li>
 	 * <li>{@link #BAD_FORMAT}</li>
@@ -471,6 +600,10 @@ public class AdversarialCoverageSettings {
 		 * A null key was passed to a function.
 		 */
 		NULL_KEY,
+		/**
+		 * A null value was passed to a function.
+		 */
+		NULL_VALUE,
 		/**
 		 * A key that did not reference any valid property name was passed to a
 		 * function
@@ -496,4 +629,6 @@ public class AdversarialCoverageSettings {
 	enum SettingType {
 		INT, DOUBLE, STRING, BOOLEAN
 	}
+
+
 }

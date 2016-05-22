@@ -155,11 +155,12 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 				System.out.printf("\"correct\" q-value for %d: %f\n", action, transition.correctQVal);
 			}
 
-			double squaredErrorSum = this.getSquaredErrorSum(transition.correctQVal, nnOutput[action]);
-			System.out.printf("Loss for minibatch %d: %f  (%.6f)\n", this.stepNum, transition.correctQVal - nnOutput[action],
-					squaredErrorSum);
+			// double squaredErrorSum =
+			// this.getSquaredErrorSum(transition.correctQVal,
+			// nnOutput[action]);
+			System.out.printf("Loss for minibatch %d: %f\n", this.stepNum, transition.correctQVal - nnOutput[action]);
 		}
-		
+
 		if (!this.USING_EXTERNAL_QLEARNER) {
 			this.lastStates[(int) (this.stepNum % this.HISTORY_MAX)] = transition;
 			this.stateHistorySize = Math.min(this.HISTORY_MAX, this.stepNum);
@@ -248,9 +249,9 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 
 
 	// Gets the sum of squared errors of the most recent output of the NN
-	private double getSquaredErrorSum(double correctOutput, double givenOutput) {
-		return (correctOutput - givenOutput) * (correctOutput - givenOutput);
-	}
+	// private double getSquaredErrorSum(double correctOutput, double givenOutput) {
+	// return (correctOutput - givenOutput) * (correctOutput - givenOutput);
+	// }
 
 
 	private void initNeuralNet() {
@@ -267,7 +268,9 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 			this.nn.trainingType = this.NN_TRAINING_TYPE;
 		} else if (setupMode.equalsIgnoreCase("torch")) {
 			String prefix = AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.io_file_prefix");
-			this.nn = new ExternalTorchNN(prefix + "input2.dat", prefix + "output2.dat");
+			this.nn = new ExternalTorchNN(
+					prefix + AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.nninput_file_name"),
+					prefix + AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.nnoutput_file_name"));
 			System.out.println("Using Torch neural network...");
 		} else {
 

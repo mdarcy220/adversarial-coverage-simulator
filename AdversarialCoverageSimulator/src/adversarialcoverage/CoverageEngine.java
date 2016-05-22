@@ -14,8 +14,8 @@ public class CoverageEngine {
 		this.display = display;
 		this.init();
 	}
-	
-	
+
+
 	public CoverageEngine() {
 		this(new DisplayAdapter() {
 			@Override
@@ -29,8 +29,8 @@ public class CoverageEngine {
 	public void init() {
 
 	}
-	
-	
+
+
 	public GridEnvironment getEnv() {
 		return this.env;
 	}
@@ -103,8 +103,8 @@ public class CoverageEngine {
 
 
 		// Set up the coverage environment
-		genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
-
+		//genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
+		this.env.regenerateGrid();
 
 		// Set up the robots
 		for (int i = 0; i < AdversarialCoverage.settings.getIntProperty("robots.count"); i++) {
@@ -135,6 +135,7 @@ public class CoverageEngine {
 
 
 	private void coverageLoop() {
+
 		// Update settings
 		this.env.reloadSettings();
 
@@ -182,8 +183,10 @@ public class CoverageEngine {
 			for (GridRobot r : this.env.getRobotList()) {
 				r.setBroken(false);
 			}
+			
+			if(AdversarialCoverage.settings.getBooleanProperty("env.variable_grid_size"))
 
-			genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
+			this.env.regenerateGrid();
 			this.env.init();
 
 			refreshDisplay();
@@ -192,24 +195,6 @@ public class CoverageEngine {
 			this.isRunning = false;
 		}
 		AdversarialCoverage.stats.startNewRun();
-	}
-
-
-	/**
-	 * Creates a grid using the given danger values string.
-	 * 
-	 * @param dangerValStr
-	 *                the string to be used when generating the grid.
-	 */
-	private void genGridFromDangerValuesString(String dangerValStr) {
-		GridNodeGenerator nodegen = new GridNodeGenerator();
-		nodegen.useScanner(dangerValStr);
-		for (int x = 0; x < this.env.getWidth(); x++) {
-			for (int y = 0; y < this.env.getHeight(); y++) {
-				nodegen.genNext(this.env.getGridNode(x, y));
-			}
-		}
-		nodegen = null;
 	}
 
 

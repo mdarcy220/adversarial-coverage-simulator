@@ -1,20 +1,20 @@
 package adversarialcoverage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
 public class GridNodeGenerator {
-	// Generation parameters
-	double dangerMin = 0.0;
-	double dangerMax = 1.0;
-	double obstacleProb = 0.33;
-	double dangerNodeProb = 0.33;
-	int coverCountStart = 0;
-	int repeatCount = 0;
-	String paramStr = "";
-	boolean stringEmpty = true;
-	private Scanner scan;
-	Random randgen = new Random();
+
+	private Random randgen = new Random();
+
+	private List<List<GridNodeTemplate>> maps = new ArrayList<>();
+	private int mapNum = 0;
+	private int mapNodeNum = 0;
+	private int timesRepeated = 0;
+
+	private String genStr = "";
 
 
 	/**
@@ -31,67 +31,202 @@ public class GridNodeGenerator {
 	public void reset() {
 		this.randgen.setSeed(System.nanoTime());
 		this.resetNodeParameters();
-		this.paramStr = "";
-		this.stringEmpty = true;
-		this.scan = new Scanner(this.paramStr);
+		this.genStr = "";
+		this.compileParamsFromString(this.genStr);
+	}
+
+
+	public String getGeneratorString() {
+		return this.genStr;
 	}
 
 
 	private void resetNodeParameters() {
-		this.dangerMin = 0.0;
-		this.dangerMax = 0.0;
-		this.obstacleProb = 0.0;
-		this.dangerNodeProb = 0.0;
-		this.coverCountStart = 0;
-		this.repeatCount = 0;
+		this.timesRepeated = 0;
+	}
+
+
+	public void setGeneratorString(String genStr) {
+		this.genStr = genStr;
+		this.compileParamsFromString(this.genStr);
+	}
+
+
+	private void compileParamsFromString(String paramStr) {
+		this.maps.clear();
+
+		Scanner paramScanner = new Scanner(paramStr);
+		List<GridNodeTemplate> curMap = compileMapFromScanner(paramScanner);
+
+		while (curMap != null) {
+			this.maps.add(curMap);
+			curMap = compileMapFromScanner(paramScanner);
+		}
+
+		// if no input is given, default to a generic all-free map
+		if (this.maps.size() == 0) {
+			curMap = new ArrayList<>();
+			curMap.add(new GridNodeTemplate());
+			this.maps.add(curMap);
+		}
+
+		paramScanner.close();
+	}
+
+
+	private List<GridNodeTemplate> compileMapFromScanner(Scanner paramScanner) {
+		if (!paramScanner.hasNext()) {
+			return null;
+		}
+
+		List<GridNodeTemplate> curMap = new ArrayList<>();
+		GridNodeTemplate curNode = compileGridNodeTemplateFromScanner(paramScanner);
+
+		while (curNode != null && !curNode.isLastInMap) {
+			curMap.add(curNode);
+			curNode = compileGridNodeTemplateFromScanner(paramScanner);
+		}
+
+		if (curNode != null && curNode.isLastInMap) {
+			curMap.add(curNode);
+		}
+
+
+		return curMap;
+	}
+
+
+	private GridNodeTemplate compileGridNodeTemplateFromScanner(Scanner paramScanner) {
+		if (!paramScanner.hasNext()) {
+			return null;
+		}
+		GridNodeTemplate curNode = new GridNodeTemplate();
+		boolean hasAllParams = false;
+		while (!hasAllParams) {
+			hasAllParams = loadNextTemplateParam(paramScanner, curNode);
+		}
+
+		return curNode;
+	}
+
+
+	private boolean loadNextTemplateParam(Scanner paramScanner, GridNodeTemplate curNode) {
+		String strVal = paramScanner.next().trim();
+		if (strVal.charAt(0) != '@') {
+			boolean hasError = false;
+			double nodeDangerLevel = 0.0;
+			try {
+				nodeDangerLevel = Double.parseDouble(strVal);
+			} catch (NumberFormatException e) {
+				hasError = true;
+			}
+			if (!hasError) {
+				curNode.dangerMax = nodeDangerLevel;
+				curNode.dangerMin = nodeDangerLevel;
+				curNode.dangerNodeProb = 1.0;
+				curNode.obstacleProb = 0.0;
+			} else {
+				System.err.println("Error parsing grid generator string.");
+			}
+			return true;
+		}
+		if (strVal.length() < 2) {
+			System.err.println("Problem parsing input.");
+			return false;
+		}
+
+		char code = strVal.charAt(1);
+		if (code == 'r') {
+
+			if (3 <= strVal.length() && strVal.charAt(2) == 'o' && paramScanner.hasNextDouble()) {
+				curNode.obstacleProb = paramScanner.nextDouble();
+			}
+			if (4 <= strVal.length() && strVal.charAt(3) == 'd' && paramScanner.hasNextDouble()) {
+				curNode.dangerNodeProb = paramScanner.nextDouble();
+			}
+			if (paramScanner.hasNextDouble()) {
+				curNode.dangerMin = paramScanner.nextDouble();
+			}
+			if (paramScanner.hasNextDouble()) {
+				curNode.dangerMax = paramScanner.nextDouble();
+			}
+			return true;
+
+		} else if (code == 'o' && paramScanner.hasNextDouble()) {
+			curNode.obstacleProb = paramScanner.nextDouble();
+		} else if (code == 'm' && paramScanner.hasNextInt()) {
+			curNode.repeatCount = paramScanner.nextInt();
+		} else if (code == 'd' && paramScanner.hasNextDouble()) {
+			curNode.dangerNodeProb = paramScanner.nextDouble();
+		}
+
+		if (strVal.equals("@lastInMap")) {
+			curNode.isLastInMap = true;
+		}
+
+		return false;
+	}
+
+
+	public void setRandomMap() {
+		this.mapNum = this.randgen.nextInt(this.maps.size());
+		this.mapNodeNum = 0;
+		this.timesRepeated = 0;
 	}
 
 
 	/**
-	 * Uses the given {@code String} to fetch parameters for generating
-	 * nodes, until no more parameter sets can be fetched. After exhausting
-	 * the parameters from the string, the last parameters scanned will be
-	 * used.
-	 * 
-	 * @param scan
-	 */
-	public void useScanner(String str) {
-		this.stringEmpty = false;
-		this.paramStr = str;
-		this.scan = new Scanner(this.paramStr);
-	}
-
-
-	/**
-	 * Checks if the scanner is still useable to get more parameters
-	 * 
-	 * @return
-	 */
-	public boolean stringEmpty() {
-		return this.stringEmpty;
-	}
-
-
-	/**
-	 * Sets the parameters of the given grid node using the parameters
-	 * stored.
+	 * Sets the parameters of the given grid node using the parameters stored.
 	 * 
 	 * @return
 	 */
 	public void genNext(GridNode node) {
-		if (this.repeatCount <= 0) {
-			loadNextParameterSet();
-		} else {
-			this.repeatCount--;
+		GridNodeTemplate curNode = this.maps.get(this.mapNum).get(this.mapNodeNum);
+		curNode.applyToGridNode(node, this.randgen);
+		this.timesRepeated++;
+		if (curNode.repeatCount <= this.timesRepeated) {
+			if ((this.mapNodeNum + 1) < this.maps.get(this.mapNum).size()) {
+				this.mapNodeNum++;
+			}
+			this.timesRepeated = 0;
 		}
+	}
 
-		double rand = this.randgen.nextDouble();
+}
+
+
+class GridNodeTemplate {
+	public double dangerMin = 0.0;
+	public double dangerMax = 0.0;
+	public double dangerNodeProb = 0.0;
+	public double obstacleProb = 0.0;
+
+	public int coverCountStart = 0;
+	public int repeatCount = 1;
+
+	public boolean isLastInMap = false;
+
+
+	public GridNodeTemplate() {
+
+	}
+
+
+	/**
+	 * Applies this template to the given grid node.
+	 * 
+	 * @param node
+	 *                the grid node to apply this template to
+	 * @param randgen
+	 *                a random number source to use for evaluating probabilities
+	 */
+	public void applyToGridNode(GridNode node, Random randgen) {
+		double rand = randgen.nextDouble();
 		if (rand < this.obstacleProb) {
 			node.setNodeType(NodeType.OBSTACLE);
 		} else if ((rand - this.obstacleProb) < this.dangerNodeProb) {
 			node.setNodeType(NodeType.FREE);
-			node.setDangerProb(
-					this.randgen.nextDouble() * (this.dangerMax - this.dangerMin) + this.dangerMin);
+			node.setDangerProb(randgen.nextDouble() * (this.dangerMax - this.dangerMin) + this.dangerMin);
 		} else {
 			node.setNodeType(NodeType.FREE);
 			node.setDangerProb(0.0);
@@ -99,91 +234,5 @@ public class GridNodeGenerator {
 
 
 		node.setCoverCount(this.coverCountStart);
-	}
-
-
-	/**
-	 * If a parameter {@code String} is available, loads the next set of
-	 * parameters from it.
-	 */
-	private void loadNextParameterSet() {
-		if (!this.stringEmpty && this.scan.hasNext()) {
-			this.resetNodeParameters();
-		}
-		while (!this.stringEmpty && loadNextParameter() == false) {
-			; // Do nothing
-		}
-	}
-
-
-	/**
-	 * 
-	 * @return true if a danger level has bee found (and this the end of the
-	 *         parameter set has been reached), false otherwise
-	 */
-	private boolean loadNextParameter() {
-		if (this.stringEmpty || !this.scan.hasNext()) {
-			this.stringEmpty = true;
-			return false;
-		}
-		String strVal = this.scan.next().trim();
-		if (strVal.charAt(0) != '@') {
-			boolean hasError = false;
-			double val = 0.0;
-			try {
-				val = Double.parseDouble(strVal);
-			} catch (NumberFormatException e) {
-				hasError = true;
-			}
-			if (!hasError) {
-				double nodeDangerLevel = val;
-				this.dangerMax = nodeDangerLevel;
-				this.dangerMin = nodeDangerLevel;
-				this.dangerNodeProb = 1.0;
-				this.obstacleProb = 0.0;
-			} else {
-				System.err.println("Error.");
-			}
-			return true;
-		}
-		if (strVal.length() < 2) {
-			System.err.println("Problem parsing input.");
-			this.stringEmpty = true;
-			return false;
-		}
-
-		char code = strVal.charAt(1);
-		if (code == 'r') {
-			if (3 <= strVal.length() && strVal.charAt(2) == 'o' && this.scan.hasNextDouble()) {
-				this.obstacleProb = this.scan.nextDouble();
-			}
-			if (4 <= strVal.length() && strVal.charAt(3) == 'd' && this.scan.hasNextDouble()) {
-				this.dangerNodeProb = this.scan.nextDouble();
-			}
-			if (this.scan.hasNextDouble()) {
-				this.dangerMin = this.scan.nextDouble();
-			}
-			if (this.scan.hasNextDouble()) {
-				this.dangerMax = this.scan.nextDouble();
-			} else {
-				this.stringEmpty = true;
-			}
-			return true;
-		} else if (code == 'o') {
-			if (this.scan.hasNextDouble()) {
-				this.obstacleProb = this.scan.nextDouble();
-			}
-		} else if (code == 'm') {
-			if (this.scan.hasNextInt()) {
-				this.repeatCount = this.scan.nextInt();
-			} else {
-				this.stringEmpty = true;
-			}
-		} else if (code == 'd') {
-			if (this.scan.hasNextDouble()) {
-				this.dangerNodeProb = this.scan.nextDouble();
-			}
-		}
-		return false;
 	}
 }

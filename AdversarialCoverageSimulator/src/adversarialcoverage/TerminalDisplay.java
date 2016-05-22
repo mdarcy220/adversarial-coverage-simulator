@@ -50,14 +50,15 @@ public class TerminalDisplay implements DisplayAdapter {
 				System.out.println(getCommandList());
 			}
 		});
-		
+
 		this.registerCommand(":quit", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				// Do nothing. This is here so the :help command shows :quit
+				// Do nothing. This is here so the :help command shows
+				// :quit
 			}
 		});
-		
+
 		this.registerCommand(":pause", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
@@ -78,14 +79,14 @@ public class TerminalDisplay implements DisplayAdapter {
 				TerminalDisplay.this.engine.runCoverage();
 			}
 		});
-		
+
 		this.registerCommand(":restart", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
 				TerminalDisplay.this.engine.restartCoverage();
 			}
 		});
-		
+
 		this.registerCommand(":new", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
@@ -99,39 +100,57 @@ public class TerminalDisplay implements DisplayAdapter {
 				System.out.printf("isRunning = %s\n", TerminalDisplay.this.engine.isRunning());
 			}
 		});
+
+		this.registerCommand(":set", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 2) {
+					return;
+				}
+				AdversarialCoverage.settings.setAuto(args[0], args[1]);
+				TerminalDisplay.this.engine.getEnv().reloadSettings();
+			}
+		});
+
+		this.registerCommand(":showsettings", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (0 < args.length && args[0].equals("ascommands")) {
+					System.out.println(AdversarialCoverage.settings.exportToCommandString());
+				} else {
+					System.out.println(AdversarialCoverage.settings.exportToString());
+				}
+			}
+		});
 	}
 
 
 	private void runInputLoop() {
 		Scanner inReader = new Scanner(System.in);
 		while (true) {
-			String line = "";
-			line = inReader.nextLine().trim();
-			Scanner lineScanner = new Scanner(line);
-			if (!lineScanner.hasNext()) {
+			List<String> argList = splitCmdStr(inReader.nextLine());
+			if (argList.size() == 0) {
 				continue;
 			}
-			String command = lineScanner.next();
-			List<String> argsList = new ArrayList<>();
-			while (lineScanner.hasNext()) {
-				argsList.add(lineScanner.next());
-			}
-			lineScanner.close();
 
+			String command = argList.get(0);
 			if (command.equals(":quit")) {
 				this.engine.pauseCoverage();
 				break;
 			}
-			String[] args = new String[argsList.size()];
-			argsList.toArray(args);
-			handleCommand(command, args);
+
+			String[] args = new String[argList.size() - 1];
+			for (int i = 1; i < argList.size(); i++) {
+				args[i - 1] = argList.get(i);
+			}
+			executeCommand(command, args);
 
 		}
 		inReader.close();
 	}
 
 
-	private void handleCommand(String commandName, String[] args) {
+	private void executeCommand(String commandName, String[] args) {
 		TerminalCommand cmd = this.commandList.get(commandName);
 		if (cmd != null) {
 			cmd.execute(args);
@@ -153,6 +172,78 @@ public class TerminalDisplay implements DisplayAdapter {
 			cmdList.append('\n');
 		}
 		return cmdList.toString();
+	}
+
+
+	private List<String> splitCmdStr(String cmdStr) {
+		if (cmdStr == null || cmdStr.length() == 0) {
+			return new ArrayList<>();
+		}
+
+		List<String> argList = new ArrayList<>();
+		StringBuilder curArg = new StringBuilder("");
+
+		int pos = 0;
+		boolean inQuote = false;
+
+		while (pos < cmdStr.length()) {
+			char curChar = cmdStr.charAt(pos);
+
+			if (curChar == '\\') {
+
+				if ((pos + 1) < cmdStr.length()) {
+					curArg.append(escapeChar(cmdStr.charAt(pos + 1)));
+				} else {
+					// Reached end of string
+					curArg.append(curChar);
+				}
+				pos++;
+
+			} else if (isQuoteChar(curChar)) {
+
+				inQuote = !inQuote;
+
+			} else if (inQuote || (!Character.isWhitespace(curChar))) {
+
+				curArg.append(curChar);
+
+			} else if (Character.isWhitespace(curChar) && (0 < curArg.length())) {
+
+				argList.add(curArg.toString());
+				curArg.setLength(0);
+
+			}
+
+			pos++;
+		}
+		
+		if(0 < curArg.length()) {
+			argList.add(curArg.toString());
+			curArg.setLength(0);
+		}
+
+		return argList;
+	}
+
+
+	private char escapeChar(char c) {
+		switch (c) {
+		case 'n':
+			return '\n';
+		case 'r':
+			return '\r';
+		case 't':
+			return '\t';
+		case 'b':
+			return '\b';
+		default:
+			return c;
+		}
+	}
+
+
+	private boolean isQuoteChar(char c) {
+		return (c == '\'' || c == '"');
 	}
 
 

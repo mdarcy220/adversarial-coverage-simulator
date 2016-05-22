@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
+import adversarialcoverage.AdversarialCoverage;
 import adversarialcoverage.DeepQLGridCoverage.StateTransition;
 
 import java.io.BufferedReader;
@@ -133,7 +134,11 @@ public class ExternalTorchNN extends NeuralNet {
 
 
 	public void runTorchMinibatch() {
-		this.outWriter.print("m\n");
+		if (AdversarialCoverage.settings.getBooleanProperty("neuralnet.torch.recurrent.sequenced_minibatch")) {
+			this.outWriter.print("mr\n");
+		} else {
+			this.outWriter.print("m\n");
+		}
 		this.outWriter.flush();
 	}
 }

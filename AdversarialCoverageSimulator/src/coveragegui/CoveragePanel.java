@@ -39,27 +39,29 @@ class CoveragePanel extends JPanel {
 
 
 	private void draw(Graphics g, Dimension windowSize) {
-		// Get the cell size
-		Dimension cellSize = new Dimension(windowSize.width / this.engine.getEnv().gridSize.width,
-				windowSize.height / this.engine.getEnv().gridSize.height);
+		synchronized (this.engine.getEnv()) {
+			// Get the cell size
+			Dimension cellSize = new Dimension(windowSize.width / this.engine.getEnv().gridSize.width,
+					windowSize.height / this.engine.getEnv().gridSize.height);
 
-		// Draw the grid
-		g.translate(-cellSize.width, -cellSize.height);
-		for (int x = 0; x < this.engine.getEnv().gridSize.width; x++) {
-			g.translate(cellSize.width, 0);
-			for (int y = 0; y < this.engine.getEnv().gridSize.height; y++) {
-				g.translate(0, cellSize.height);
-				drawGridCell(this.engine.getEnv().grid[x][y], g, cellSize);
+			// Draw the grid
+			g.translate(-cellSize.width, -cellSize.height);
+			for (int x = 0; x < this.engine.getEnv().gridSize.width; x++) {
+				g.translate(cellSize.width, 0);
+				for (int y = 0; y < this.engine.getEnv().gridSize.height; y++) {
+					g.translate(0, cellSize.height);
+					drawGridCell(this.engine.getEnv().grid[x][y], g, cellSize);
+				}
+				g.translate(0, -this.engine.getEnv().gridSize.height * cellSize.height);
 			}
-			g.translate(0, -this.engine.getEnv().gridSize.height * cellSize.height);
-		}
-		g.translate(-(this.engine.getEnv().gridSize.width - 1) * cellSize.width, cellSize.height);
+			g.translate(-(this.engine.getEnv().gridSize.width - 1) * cellSize.width, cellSize.height);
 
-		// Draw the robots
-		g.setColor(Color.darkGray);
-		for (GridRobot r : this.engine.getEnv().robots) {
-			g.setColor(new Color((37 * r.getId()) % 256, (53 * (r.getId() + 9)) % 256, (71 * r.getId()) % 256));
-			g.fillOval(r.getLocation().x * cellSize.width, r.getLocation().y * cellSize.height, cellSize.width, cellSize.height);
+			// Draw the robots
+			g.setColor(Color.darkGray);
+			for (GridRobot r : this.engine.getEnv().robots) {
+				g.setColor(new Color((37 * r.getId()) % 256, (53 * (r.getId() + 9)) % 256, (71 * r.getId()) % 256));
+				g.fillOval(r.getLocation().x * cellSize.width, r.getLocation().y * cellSize.height, cellSize.width, cellSize.height);
+			}
 		}
 	}
 
