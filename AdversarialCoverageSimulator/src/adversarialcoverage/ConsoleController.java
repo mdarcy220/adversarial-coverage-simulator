@@ -1,23 +1,29 @@
 package adversarialcoverage;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class TerminalDisplay implements DisplayAdapter {
+import coveragegui.GUIDisplay;
+
+public class ConsoleController {
 	private CoverageEngine engine = null;
 	private Thread inputThread = null;
 	private Map<String, TerminalCommand> commandList = new HashMap<>();
+	private boolean hasQuitInput = false;
+	private boolean useEcho = false;
 
 
-	public TerminalDisplay() {
+	public ConsoleController() {
 		this(null);
 	}
 
 
-	public TerminalDisplay(CoverageEngine engine) {
+	public ConsoleController(CoverageEngine engine) {
 		this.engine = engine;
 		this.inputThread = new Thread() {
 			@Override
@@ -25,6 +31,7 @@ public class TerminalDisplay implements DisplayAdapter {
 				runInputLoop();
 			}
 		};
+		this.registerDefaultCommands();
 	}
 
 
@@ -33,17 +40,24 @@ public class TerminalDisplay implements DisplayAdapter {
 	}
 
 
-	public void setup() {
-		this.registerDefaultCommands();
+	public void start() {
 		this.inputThread.start();
 		if (AdversarialCoverage.args.USE_AUTOSTART) {
 			this.engine.runCoverage();
 		}
-
 	}
 
 
 	private void registerDefaultCommands() {
+		this.registerCommand(":quit", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				ConsoleController.this.engine.pauseCoverage();
+				ConsoleController.this.engine.kill();
+				ConsoleController.this.hasQuitInput = true;
+			}
+		});
+
 		this.registerCommand(":help", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
@@ -51,53 +65,60 @@ public class TerminalDisplay implements DisplayAdapter {
 			}
 		});
 
-		this.registerCommand(":quit", new TerminalCommand() {
+		this.registerCommand(":setecho", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				// Do nothing. This is here so the :help command shows
-				// :quit
+				if (args.length < 1) {
+					return;
+				}
+
+				if (args[0].equals("on")) {
+					ConsoleController.this.useEcho = true;
+				} else if (args[0].equals("off")) {
+					ConsoleController.this.useEcho = false;
+				}
 			}
 		});
 
 		this.registerCommand(":pause", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				TerminalDisplay.this.engine.pauseCoverage();
+				ConsoleController.this.engine.pauseCoverage();
 			}
 		});
 
 		this.registerCommand(":step", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				TerminalDisplay.this.engine.stepCoverage();
+				ConsoleController.this.engine.stepCoverage();
 			}
 		});
 
 		this.registerCommand(":run", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				TerminalDisplay.this.engine.runCoverage();
+				ConsoleController.this.engine.runCoverage();
 			}
 		});
 
 		this.registerCommand(":restart", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				TerminalDisplay.this.engine.restartCoverage();
+				ConsoleController.this.engine.restartCoverage();
 			}
 		});
 
 		this.registerCommand(":new", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				TerminalDisplay.this.engine.newCoverage();
+				ConsoleController.this.engine.newCoverage();
 			}
 		});
 
 		this.registerCommand(":showstate", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				System.out.printf("isRunning = %s\n", TerminalDisplay.this.engine.isRunning());
+				System.out.printf("isRunning = %s\n", ConsoleController.this.engine.isRunning());
 			}
 		});
 
@@ -108,7 +129,7 @@ public class TerminalDisplay implements DisplayAdapter {
 					return;
 				}
 				AdversarialCoverage.settings.setAuto(args[0], args[1]);
-				TerminalDisplay.this.engine.getEnv().reloadSettings();
+				ConsoleController.this.engine.getEnv().reloadSettings();
 			}
 		});
 
@@ -122,31 +143,70 @@ public class TerminalDisplay implements DisplayAdapter {
 				}
 			}
 		});
+
+		this.registerCommand(":setdisplay", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				DisplayAdapter display = null;
+				if (args[0].equals("gui")) {
+					GUIDisplay gd = new GUIDisplay();
+					gd.setup(ConsoleController.this.engine);
+					display = gd;
+				} else if (args[0].equals("none")) {
+					display = null;
+				}
+				ConsoleController.this.engine.setDisplay(display);
+			}
+		});
+
+		this.registerCommand(":runfile", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				loadCommandFile(args[0]);
+			}
+		});
+
 	}
 
 
 	private void runInputLoop() {
 		Scanner inReader = new Scanner(System.in);
-		while (true) {
-			List<String> argList = splitCmdStr(inReader.nextLine());
-			if (argList.size() == 0) {
-				continue;
-			}
-
-			String command = argList.get(0);
-			if (command.equals(":quit")) {
-				this.engine.pauseCoverage();
-				break;
-			}
-
-			String[] args = new String[argList.size() - 1];
-			for (int i = 1; i < argList.size(); i++) {
-				args[i - 1] = argList.get(i);
-			}
-			executeCommand(command, args);
-
+		while (!this.hasQuitInput) {
+			handleLine(inReader.nextLine());
 		}
 		inReader.close();
+	}
+
+
+	/**
+	 * Parses a line of text into a command, and then executes the command.
+	 * 
+	 * @param line
+	 *                the line of input to parse and execute
+	 */
+	private void handleLine(String line) {
+		List<String> argList = splitCmdStr(line);
+		if (argList.size() == 0) {
+			return;
+		}
+
+		if (this.useEcho) {
+			System.out.println(line);
+		}
+
+		String command = argList.get(0);
+
+		String[] args = new String[argList.size() - 1];
+		for (int i = 1; i < argList.size(); i++) {
+			args[i - 1] = argList.get(i);
+		}
+		executeCommand(command, args);
 	}
 
 
@@ -185,6 +245,7 @@ public class TerminalDisplay implements DisplayAdapter {
 
 		int pos = 0;
 		boolean inQuote = false;
+		boolean hasArg = false;
 
 		while (pos < cmdStr.length()) {
 			char curChar = cmdStr.charAt(pos);
@@ -197,27 +258,31 @@ public class TerminalDisplay implements DisplayAdapter {
 					// Reached end of string
 					curArg.append(curChar);
 				}
+				hasArg = true;
 				pos++;
 
 			} else if (isQuoteChar(curChar)) {
 
 				inQuote = !inQuote;
+				hasArg = true;
 
 			} else if (inQuote || (!Character.isWhitespace(curChar))) {
 
 				curArg.append(curChar);
+				hasArg = true;
 
-			} else if (Character.isWhitespace(curChar) && (0 < curArg.length())) {
+			} else if (Character.isWhitespace(curChar) && (hasArg || 0 < curArg.length())) {
 
 				argList.add(curArg.toString());
 				curArg.setLength(0);
+				hasArg = false;
 
 			}
 
 			pos++;
 		}
-		
-		if(0 < curArg.length()) {
+
+		if (hasArg || 0 < curArg.length()) {
 			argList.add(curArg.toString());
 			curArg.setLength(0);
 		}
@@ -247,9 +312,19 @@ public class TerminalDisplay implements DisplayAdapter {
 	}
 
 
-	@Override
-	public void refresh() {
-		// TODO: Print text-based grid representation
+	public void loadCommandFile(String filename) {
+		Scanner fileScanner = new Scanner("");
+		try {
+			fileScanner = new Scanner(new File(filename));
+		} catch (FileNotFoundException e) {
+			System.err.printf("The file \"%s\" was not found or could not be opened.\n", filename);
+		}
+
+		while (fileScanner.hasNextLine()) {
+			handleLine(fileScanner.nextLine());
+		}
+
+		fileScanner.close();
 	}
 
 }

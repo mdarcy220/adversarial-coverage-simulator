@@ -23,19 +23,26 @@ public class AdversarialCoverage {
 		logger = new Logger();
 
 		this.engine = new CoverageEngine();
-
 		this.engine.resetCoverageEnvironment();
-
+		
+		ConsoleController cc = new ConsoleController(this.engine);
+		if(!args.RC_FILE.equals("")) {
+			cc.loadCommandFile(args.RC_FILE);
+		}
+		cc.start();
+		
+		
 		if (!args.HEADLESS) {
 			GUIDisplay gd = new GUIDisplay();
 			gd.setup(this.engine);
 			this.engine.setDisplay(gd);
 		} else {
 			System.out.println("WARNING: Headless environment support is very limited.");
-			TerminalDisplay td = new TerminalDisplay(this.engine);
-			td.setup();
-			this.engine.setDisplay(td);
+			// TerminalDisplay td = new TerminalDisplay(this.engine);
+			//this.engine.setDisplay(td);
 		}
+		
+		
 	}
 
 

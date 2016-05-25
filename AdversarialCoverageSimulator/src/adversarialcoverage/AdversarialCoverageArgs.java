@@ -13,6 +13,7 @@ public class AdversarialCoverageArgs {
 	public long MAX_STEPS = Long.MAX_VALUE;
 
 	public String SETTINGS_FILE = null;
+	public String RC_FILE = "";
 
 
 	public AdversarialCoverageArgs() {
@@ -40,6 +41,9 @@ public class AdversarialCoverageArgs {
 				argNum++;
 				this.MAX_STEPS = Long.parseLong(this.origArgs[argNum]);
 				this.HAS_MAX_STEPS = true;
+			}else if (this.origArgs[argNum].equals("--rcfile")) {
+				argNum++;
+				this.RC_FILE = this.origArgs[argNum];
 			}
 
 			argNum++;

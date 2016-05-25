@@ -83,7 +83,7 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("display.show_binary_coverage", false);
 		this.setBooleanProperty("env.clear_adjacent_cells_on_init", false);
 		this.setBooleanProperty("env.grid.force_square", true);
-		this.setBooleanProperty("env.variable_grid_size", true);
+		this.setBooleanProperty("env.variable_grid_size", false);
 		this.setBooleanProperty("neuralnet.give_global_pos_and_size", false);
 		this.setBooleanProperty("neuralnet.torch.recurrent.sequenced_minibatch", false);
 		this.setBooleanProperty("robots.breakable", true);
@@ -160,9 +160,9 @@ public class AdversarialCoverageSettings {
 		for (String s : settingNames) {
 			exportStr.append(":set ");
 			exportStr.append(s);
-			exportStr.append(" = ");
+			exportStr.append(" \"");
 			exportStr.append(this.settingsMap.get(s));
-			exportStr.append('\n');
+			exportStr.append("\"\n");
 		}
 		return exportStr.toString();
 	}

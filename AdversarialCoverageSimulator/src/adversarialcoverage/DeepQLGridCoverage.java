@@ -60,39 +60,8 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 	public void init() {
 		if (this.nn == null) {
 			this.reloadSettings();
-
 			initNeuralNet();
-			printNeuralNetParams();
 		}
-	}
-
-
-	private void printNeuralNetParams() {
-		System.out.printf("LEARNING_RATE=%f\n", this.nn.LEARNING_RATE);
-		System.out.printf("MOMENTUM_FACTOR=%f\n", this.nn.MOMENTUM_GAMMA);
-		System.out.printf("GREEDINESS=%f\n", (1.0 - this.greedyEpsilon));
-		System.out.printf("GREEDINESS_INCREMENT=%E\n", this.GREEDY_EPSILON_DECREMENT);
-		System.out.printf("GREEDINESS_MAX=%E\n", 1.0 - this.GREEDY_EPSILON_MINIMUM);
-		System.out.printf("MINIBATCH_SIZE=%d\n", this.MINIBATCH_SIZE);
-		System.out.printf("DISCOUNT_FACTOR=%f\n", this.DISCOUNT_FACTOR);
-		System.out.printf("STATE_SIZE=%d\n", this.NN_INPUT_SIZE);
-		System.out.printf("HISTORY_MAX=%d\n", this.HISTORY_MAX);
-		System.out.printf("ROBOTS_BREAKABLE=%b\n", AdversarialCoverage.settings.getBooleanProperty("robots.breakable"));
-		System.out.printf("GRID_GENERATOR_STRING=%s\n", AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
-
-		System.out.printf("NEURAL_NET_LAYERS=[");
-		int[] layerSizes = this.nn.getLayerSizes();
-		for (int i = 0; i < layerSizes.length - 1; i++) {
-			System.out.printf("%d, ", layerSizes[i]);
-		}
-		if (1 <= layerSizes.length) {
-			System.out.printf("%d", layerSizes[layerSizes.length - 1]);
-		}
-		System.out.printf("]\n");
-
-		System.out.printf("NEURAL_NET_TRAINER=%s\n", this.nn.trainingType == TrainingType.RMSPROP ? "RMSProp" : "Momentum");
-
-		System.out.println("----------------");
 	}
 
 
@@ -155,9 +124,6 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 				System.out.printf("\"correct\" q-value for %d: %f\n", action, transition.correctQVal);
 			}
 
-			// double squaredErrorSum =
-			// this.getSquaredErrorSum(transition.correctQVal,
-			// nnOutput[action]);
 			System.out.printf("Loss for minibatch %d: %f\n", this.stepNum, transition.correctQVal - nnOutput[action]);
 		}
 
@@ -246,12 +212,6 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 		}
 		return maxVal;
 	}
-
-
-	// Gets the sum of squared errors of the most recent output of the NN
-	// private double getSquaredErrorSum(double correctOutput, double givenOutput) {
-	// return (correctOutput - givenOutput) * (correctOutput - givenOutput);
-	// }
 
 
 	private void initNeuralNet() {

@@ -30,9 +30,16 @@ public class GUIDisplay implements DisplayAdapter {
 	}
 
 
+	@Override
+	public void dispose() {
+		this.frame.setVisible(false);
+		this.frame.dispose();
+	}
+
+
 	public void setup(final CoverageEngine engine) {
 		this.engine = engine;
-		
+
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (UnsupportedLookAndFeelException e) {
@@ -42,7 +49,7 @@ public class GUIDisplay implements DisplayAdapter {
 		} catch (InstantiationException e) {
 			System.err.println("Failed to instantiate native look and feel.");
 		} catch (IllegalAccessException e) {
-			// handle exception
+			System.err.println("Setting native look and feel triggered IllegalAccessException.");
 		}
 
 		this.mainPanel = new CoveragePanel(this.engine);
@@ -102,6 +109,16 @@ public class GUIDisplay implements DisplayAdapter {
 			}
 		});
 		fileMenu.add(exportMapDialogMenuItem);
+		
+		final JMenuItem switchToHeadlessMenuItem = new JMenuItem("Go headless");
+		switchToHeadlessMenuItem.setToolTipText("Close this GUI and use headless mode (reopen the gui with \":setdisplay gui\")");
+		switchToHeadlessMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				engine.setDisplay(null);
+			}
+		});
+		fileMenu.add(switchToHeadlessMenuItem);
 
 		menuBar.add(fileMenu);
 

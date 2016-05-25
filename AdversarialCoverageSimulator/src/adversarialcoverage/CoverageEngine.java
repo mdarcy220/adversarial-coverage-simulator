@@ -8,21 +8,28 @@ public class CoverageEngine {
 	private boolean isRunning = false;
 	private DisplayAdapter display = null;
 	private GridEnvironment env = null;
+	private static final DisplayAdapter EmptyDisplayAdapter = new DisplayAdapter() {
+		@Override
+		public void refresh() {
+			// Do nothing
+		}
+
+
+		@Override
+		public void dispose() {
+			// Do nothing
+		}
+	};
 
 
 	public CoverageEngine(DisplayAdapter display) {
-		this.display = display;
+		this.setDisplay(display);
 		this.init();
 	}
 
 
 	public CoverageEngine() {
-		this(new DisplayAdapter() {
-			@Override
-			public void refresh() {
-				// Do nothing
-			}
-		});
+		this(CoverageEngine.EmptyDisplayAdapter);
 	}
 
 
@@ -80,7 +87,19 @@ public class CoverageEngine {
 
 
 	public void setDisplay(DisplayAdapter display) {
-		this.display = display;
+		// Careful with these if statements
+
+		// If the OLD display is not null
+		if (this.display != null) {
+			this.display.dispose();
+		}
+
+		// If the NEW display is not null
+		if (display != null) {
+			this.display = display;
+		} else {
+			this.display = CoverageEngine.EmptyDisplayAdapter;
+		}
 	}
 
 
@@ -103,7 +122,7 @@ public class CoverageEngine {
 
 
 		// Set up the coverage environment
-		//genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
+		// genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
 		this.env.regenerateGrid();
 
 		// Set up the robots
@@ -183,10 +202,10 @@ public class CoverageEngine {
 			for (GridRobot r : this.env.getRobotList()) {
 				r.setBroken(false);
 			}
-			
-			if(AdversarialCoverage.settings.getBooleanProperty("env.variable_grid_size"))
 
-			this.env.regenerateGrid();
+			if (AdversarialCoverage.settings.getBooleanProperty("env.variable_grid_size"))
+
+				this.env.regenerateGrid();
 			this.env.init();
 
 			refreshDisplay();
@@ -206,6 +225,12 @@ public class CoverageEngine {
 
 	public String isRunning() {
 		return (new Boolean(this.isRunning)).toString();
+	}
+
+
+	public void kill() {
+		this.isRunning = false;
+		this.display.dispose();
 	}
 
 }
