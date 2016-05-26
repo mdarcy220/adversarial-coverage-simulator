@@ -152,8 +152,8 @@ public class ConsoleController {
 				}
 				DisplayAdapter display = null;
 				if (args[0].equals("gui")) {
-					GUIDisplay gd = new GUIDisplay();
-					gd.setup(ConsoleController.this.engine);
+					GUIDisplay gd = new GUIDisplay(ConsoleController.this.engine);
+					gd.setup();
 					display = gd;
 				} else if (args[0].equals("none")) {
 					display = null;

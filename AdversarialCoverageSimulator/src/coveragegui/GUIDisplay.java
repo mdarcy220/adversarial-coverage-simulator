@@ -17,12 +17,13 @@ import adversarialcoverage.GridNode;
 import adversarialcoverage.NodeType;
 
 public class GUIDisplay implements DisplayAdapter {
-	private CoveragePanel mainPanel;
+	private CoveragePanel mainPanel = null;
 	private JFrame frame = null;
 	private CoverageEngine engine = null;
 
 
-	public GUIDisplay() {
+	public GUIDisplay(final CoverageEngine engine) {
+		this.engine = engine;
 		this.frame = new JFrame("Adversarial Coverage Simulator");
 		// initialize the window
 		this.frame.setSize(500, 400);
@@ -37,9 +38,22 @@ public class GUIDisplay implements DisplayAdapter {
 	}
 
 
-	public void setup(final CoverageEngine engine) {
-		this.engine = engine;
+	public void setup() {
+		this.setNativeLookAndFeel();
 
+		this.mainPanel = this.createMainPanel();
+		this.frame.add(this.mainPanel);
+
+		JMenuBar menuBar = new JMenuBar();
+		this.setupFileMenu(menuBar);
+		this.setupRunMenu(menuBar);
+		this.frame.setJMenuBar(menuBar);
+
+		this.frame.setVisible(true);
+	}
+
+
+	private void setNativeLookAndFeel() {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (UnsupportedLookAndFeelException e) {
@@ -51,24 +65,32 @@ public class GUIDisplay implements DisplayAdapter {
 		} catch (IllegalAccessException e) {
 			System.err.println("Setting native look and feel triggered IllegalAccessException.");
 		}
+	}
 
-		this.mainPanel = new CoveragePanel(this.engine);
-		// Set up the window
-		this.frame.setVisible(true);
-		this.mainPanel.setSize(500, 500);
-		this.mainPanel.addMouseListener(new MouseAdapter() {
+
+	private CoveragePanel createMainPanel() {
+		final CoveragePanel panel = new CoveragePanel(this.engine);
+		panel.setSize(500, 500);
+		panel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				openGridNodeEditDialog(engine.getEnv().getGridNode(GUIDisplay.this.mainPanel.getGridX(e.getX()),
-						GUIDisplay.this.mainPanel.getGridY(e.getY())));
+				openGridNodeEditDialog(
+						GUIDisplay.this.engine.getEnv().getGridNode(panel.getGridX(e.getX()), panel.getGridY(e.getY())));
 			}
 		});
-		this.frame.add(this.mainPanel);
-		JMenuBar menuBar = new JMenuBar();
+		return panel;
+	}
 
+
+	private void setupFileMenu(JMenuBar menuBar) {
 		// File menu
-		JMenu fileMenu = new JMenu("File");
+		final JMenu fileMenu = new JMenu("File");
 		final JMenuItem exportSettingsMenuItem = new JMenuItem("Export...");
+		final JMenuItem loadSettingsMenuItem = new JMenuItem("Load settings from file...");
+		final JMenuItem settingsDialogMenuItem = new JMenuItem("Settings...");
+		final JMenuItem exportMapDialogMenuItem = new JMenuItem("Export grid...");
+		final JMenuItem switchToHeadlessMenuItem = new JMenuItem("Go headless");
+
 		exportSettingsMenuItem.setToolTipText("Load program settings from a file");
 		exportSettingsMenuItem.addActionListener(new ActionListener() {
 			@Override
@@ -78,7 +100,6 @@ public class GUIDisplay implements DisplayAdapter {
 		});
 		fileMenu.add(exportSettingsMenuItem);
 
-		final JMenuItem loadSettingsMenuItem = new JMenuItem("Load settings from file...");
 		loadSettingsMenuItem.setToolTipText("Load program settings from a file");
 		loadSettingsMenuItem.addActionListener(new ActionListener() {
 			@Override
@@ -88,42 +109,41 @@ public class GUIDisplay implements DisplayAdapter {
 		});
 		fileMenu.add(loadSettingsMenuItem);
 
-		final JMenuItem settingsDialogMenuItem = new JMenuItem("Settings...");
 		settingsDialogMenuItem.setToolTipText("Open the settings editor dialog");
 		settingsDialogMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
 				AdversarialCoverage.settings.openSettingsDialog(GUIDisplay.this.frame);
-				engine.getEnv().reloadSettings();
+				GUIDisplay.this.engine.getEnv().reloadSettings();
 			}
 		});
 		fileMenu.add(settingsDialogMenuItem);
 
-
-		final JMenuItem exportMapDialogMenuItem = new JMenuItem("Export grid...");
 		exportMapDialogMenuItem.setToolTipText("Export the current grid as a parsable input string");
 		exportMapDialogMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				System.out.println(engine.getEnv().exportToString());
+				System.out.println(GUIDisplay.this.engine.getEnv().exportToString());
 			}
 		});
 		fileMenu.add(exportMapDialogMenuItem);
-		
-		final JMenuItem switchToHeadlessMenuItem = new JMenuItem("Go headless");
+
 		switchToHeadlessMenuItem.setToolTipText("Close this GUI and use headless mode (reopen the gui with \":setdisplay gui\")");
 		switchToHeadlessMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				engine.setDisplay(null);
+				GUIDisplay.this.engine.setDisplay(null);
 			}
 		});
 		fileMenu.add(switchToHeadlessMenuItem);
 
 		menuBar.add(fileMenu);
+	}
 
+
+	private void setupRunMenu(JMenuBar menuBar) {
 		// Run menu
-		JMenu runMenu = new JMenu("Run");
+		final JMenu runMenu = new JMenu("Run");
 		final JMenuItem runCoverageMenuItem = new JMenuItem("Autorun");
 		final JMenuItem pauseCoverageMenuItem = new JMenuItem("Stop");
 		final JMenuItem stepCoverageMenuItem = new JMenuItem("Step");
@@ -138,7 +158,7 @@ public class GUIDisplay implements DisplayAdapter {
 				pauseCoverageMenuItem.setEnabled(true);
 				runCoverageMenuItem.setEnabled(false);
 				stepCoverageMenuItem.setEnabled(false);
-				engine.runCoverage();
+				GUIDisplay.this.engine.runCoverage();
 				;
 			}
 		});
@@ -152,7 +172,7 @@ public class GUIDisplay implements DisplayAdapter {
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				engine.pauseCoverage();
+				GUIDisplay.this.engine.pauseCoverage();
 			}
 		});
 		runMenu.add(pauseCoverageMenuItem);
@@ -162,7 +182,7 @@ public class GUIDisplay implements DisplayAdapter {
 		stepCoverageMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				engine.stepCoverage();
+				GUIDisplay.this.engine.stepCoverage();
 			}
 		});
 		runMenu.add(stepCoverageMenuItem);
@@ -175,7 +195,7 @@ public class GUIDisplay implements DisplayAdapter {
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				engine.restartCoverage();
+				GUIDisplay.this.engine.restartCoverage();
 			}
 		});
 		runMenu.add(restartCoverageMenuItem);
@@ -188,17 +208,12 @@ public class GUIDisplay implements DisplayAdapter {
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				engine.newCoverage();
+				GUIDisplay.this.engine.newCoverage();
 			}
 		});
 		runMenu.add(newCoverageMenuItem);
 
 		menuBar.add(runMenu);
-		this.frame.setJMenuBar(menuBar);
-
-		if (AdversarialCoverage.args.USE_AUTOSTART) {
-			engine.runCoverage();
-		}
 	}
 
 

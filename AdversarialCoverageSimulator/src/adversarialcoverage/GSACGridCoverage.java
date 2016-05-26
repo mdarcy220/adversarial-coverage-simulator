@@ -1,4 +1,5 @@
 package adversarialcoverage;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,8 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A coverage algorithm that uses the GSAC coverage path algorithm created by
- * Roi Yehoshua and Noa Agmon.
+ * A coverage algorithm that uses the GSAC coverage path algorithm created by Roi Yehoshua
+ * and Noa Agmon.
  * 
  * @author Mike D'Arcy
  *
@@ -31,7 +32,6 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 
 	@Override
 	public void init() {
-		//System.out.printf("Robot at (%d, %d)\n", sensor.getLocation().x, sensor.getLocation().y);
 		this.stepNum = 0;
 		this.coveragePath = createGSACCoveragePath(createGraph(), this.sensor.getCurrentNode());
 	}
@@ -82,8 +82,7 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 		Iterator<GridNode> iter = unvisited.iterator();
 		while (iter.hasNext()) {
 			GridNode node = iter.next();
-			if (node.getNodeType() == NodeType.OBSTACLE
-					|| (node.getX() == startNode.getX() && node.getY() == startNode.getY())) {
+			if (node.getNodeType() == NodeType.OBSTACLE || (node.getX() == startNode.getX() && node.getY() == startNode.getY())) {
 				iter.remove();
 			}
 		}
@@ -114,7 +113,6 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 			unvisited.removeAll(curPath);
 			// Don't include the start node, or else it will be
 			// added twice
-			// curPath.remove(0);
 			path.addAll(curPath);
 
 			curNode = path.get(path.size() - 1);
@@ -126,25 +124,6 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 	}
 
 
-//	private double getPathCost(List<GridNode> path) {
-//		double cost = 0.0;
-//		for (int i = 1; i < path.size(); i++) {
-//			cost += path.get(i).getCost();
-//		}
-//		return cost;
-//	}
-//
-//
-//	private boolean allGraphNodesCovered(GridNodeGraph graph) {
-//		for (GridNode node : graph.getAllNodes()) {
-//			if (node.coverCount <= 0) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-
-
 	private GridNodeGraph createGraph() {
 		GridNodeGraph graph = new GridNodeGraph();
 		// Create a temporary grid to avoid duplicating nodes
@@ -153,7 +132,7 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 			for (int y = 0; y < this.sensor.getGridHeight(); y++) {
 				grid[x][y] = this.sensor.getNodeAt(x, y);
 				if (0.0 < grid[x][y].getDangerProb()) {
-					grid[x][y].setCost((this.sensor.getGridWidth() * this.sensor.getGridHeight())*grid[x][y].getDangerProb());
+					grid[x][y].setCost((this.sensor.getGridWidth() * this.sensor.getGridHeight()) * grid[x][y].getDangerProb());
 				} else {
 					grid[x][y].setCost(1.0 / (this.sensor.getGridWidth() * this.sensor.getGridHeight()));
 				}
@@ -192,7 +171,8 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 		}
 		return graph;
 	}
-	
+
+
 	@Override
 	public void reloadSettings() {
 		this.sensor.reloadSettings();
@@ -229,8 +209,7 @@ class DijkstraGraph {
 	public List<GridNode> getPathToNode(GridNode target) {
 		List<GridNode> path = new ArrayList<>();
 
-		for (GridNode curNode = target; this.prevNodes.get(curNode) != null; curNode = this.prevNodes
-				.get(curNode)) {
+		for (GridNode curNode = target; this.prevNodes.get(curNode) != null; curNode = this.prevNodes.get(curNode)) {
 			path.add(curNode);
 		}
 
@@ -292,8 +271,8 @@ class DijkstraGraph {
 
 
 /**
- * A graph whoose nodes are grid nodes. This type of graph is generally used to
- * represent a grid.
+ * A graph whoose nodes are grid nodes. This type of graph is generally used to represent
+ * a grid.
  * 
  * @author Mike D'Arcy
  *

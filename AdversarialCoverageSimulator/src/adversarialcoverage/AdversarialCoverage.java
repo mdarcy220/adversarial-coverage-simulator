@@ -8,7 +8,7 @@ public class AdversarialCoverage {
 	public static AdversarialCoverageArgs args = null;
 	public static AdversarialCoverageSettings settings = null;
 	public static Logger logger = null;
-	
+
 	GridEnvironment env = null;
 	static SimulationStats stats;
 	private CoverageEngine engine = null;
@@ -18,31 +18,30 @@ public class AdversarialCoverage {
 		// Set up args and settings first
 		args = new AdversarialCoverageArgs(argsArr);
 		settings = new AdversarialCoverageSettings();
-		
+
 		// Set up the logger
 		logger = new Logger();
 
 		this.engine = new CoverageEngine();
 		this.engine.resetCoverageEnvironment();
-		
+
 		ConsoleController cc = new ConsoleController(this.engine);
-		if(!args.RC_FILE.equals("")) {
+		if (!args.RC_FILE.equals("")) {
 			cc.loadCommandFile(args.RC_FILE);
 		}
 		cc.start();
-		
-		
+
+
 		if (!args.HEADLESS) {
-			GUIDisplay gd = new GUIDisplay();
-			gd.setup(this.engine);
+			GUIDisplay gd = new GUIDisplay(this.engine);
+			gd.setup();
 			this.engine.setDisplay(gd);
-		} else {
-			System.out.println("WARNING: Headless environment support is very limited.");
-			// TerminalDisplay td = new TerminalDisplay(this.engine);
-			//this.engine.setDisplay(td);
 		}
-		
-		
+
+		if (args.USE_AUTOSTART) {
+			this.engine.runCoverage();
+		}
+
 	}
 
 

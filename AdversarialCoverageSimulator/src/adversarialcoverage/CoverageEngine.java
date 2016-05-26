@@ -64,7 +64,6 @@ public class CoverageEngine {
 
 	public void restartCoverage() {
 		this.isRunning = false;
-		// resetCoverageEnvironment();
 		reinitializeCoverage();
 		refreshDisplay();
 	}
@@ -122,7 +121,6 @@ public class CoverageEngine {
 
 
 		// Set up the coverage environment
-		// genGridFromDangerValuesString(AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues"));
 		this.env.regenerateGrid();
 
 		// Set up the robots
@@ -203,9 +201,7 @@ public class CoverageEngine {
 				r.setBroken(false);
 			}
 
-			if (AdversarialCoverage.settings.getBooleanProperty("env.variable_grid_size"))
-
-				this.env.regenerateGrid();
+			this.env.regenerateGrid();
 			this.env.init();
 
 			refreshDisplay();

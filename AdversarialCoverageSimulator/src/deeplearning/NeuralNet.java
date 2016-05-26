@@ -55,8 +55,7 @@ public class NeuralNet {
 
 		// Use linear activation for the output layer
 		for (int i = 0; i < this.layers.get(this.layers.size() - 1).size(); i++) {
-			this.layers.get(this.layers.size() - 1)
-					.get(i).activeFunc = ActivationFunction.LINEAR_ACTIVATION;
+			this.layers.get(this.layers.size() - 1).get(i).activeFunc = ActivationFunction.LINEAR_ACTIVATION;
 		}
 	}
 
@@ -104,12 +103,10 @@ public class NeuralNet {
 			} else if (tok.equals("n")) {
 				nConnections++;
 			} else if (tok.equals("r")) {
-				curNeuron.addInput(this.layers.get(layerNum - 1).get(nConnections),
-						NeuralNet.randgen.nextDouble() * 0.01);
+				curNeuron.addInput(this.layers.get(layerNum - 1).get(nConnections), NeuralNet.randgen.nextDouble() * 0.01);
 				nConnections++;
 			} else {
-				curNeuron.addInput(this.layers.get(layerNum - 1).get(nConnections),
-						Double.parseDouble(tok));
+				curNeuron.addInput(this.layers.get(layerNum - 1).get(nConnections), Double.parseDouble(tok));
 				nConnections++;
 			}
 
@@ -118,14 +115,13 @@ public class NeuralNet {
 		scan.close();
 		// Use linear activation for the output layer
 		for (int i = 0; i < this.layers.get(this.layers.size() - 1).size(); i++) {
-			this.layers.get(this.layers.size() - 1)
-					.get(i).activeFunc = ActivationFunction.LINEAR_ACTIVATION;
+			this.layers.get(this.layers.size() - 1).get(i).activeFunc = ActivationFunction.LINEAR_ACTIVATION;
 		}
 	}
 
 
 	public String exportToString() {
-		if(this.layers.size() == 0) {
+		if (this.layers.size() == 0) {
 			return "Torch network.";
 		}
 		StringBuilder sb = new StringBuilder("");
@@ -222,9 +218,9 @@ public class NeuralNet {
 
 
 	/**
-	 * Returns an int array, with each element representing the number of
-	 * neurons in the corresponding layer of the net. the 0th element
-	 * corresponds to the input layer.
+	 * Returns an int array, with each element representing the number of neurons in
+	 * the corresponding layer of the net. the 0th element corresponds to the input
+	 * layer.
 	 * 
 	 * @return
 	 */
@@ -315,10 +311,8 @@ public class NeuralNet {
 		double[] realOutputs = this.getOutputs();
 		List<Neuron> outputNeurons = this.layers.get(this.layers.size() - 1);
 		for (int i = 0; i < outputNeurons.size(); i++) {
-			outputNeurons.get(i)
-					.setErrorTerm(-(correctOutputs[i] - realOutputs[i])
-							* outputNeurons.get(i).activeFunc.activationDerivative(
-									outputNeurons.get(i).getWeightedSumOfInputs()));
+			outputNeurons.get(i).setErrorTerm(-(correctOutputs[i] - realOutputs[i])
+					* outputNeurons.get(i).activeFunc.activationDerivative(outputNeurons.get(i).getWeightedSumOfInputs()));
 			outputNeurons.get(i).backPropagate(this.MOMENTUM_GAMMA);
 		}
 		for (int i = this.layers.size() - 2; 0 < i; i--) {
@@ -340,10 +334,8 @@ public class NeuralNet {
 		double[] realOutputs = this.getOutputs();
 		List<Neuron> outputNeurons = this.layers.get(this.layers.size() - 1);
 		for (int i = 0; i < outputNeurons.size(); i++) {
-			outputNeurons.get(i)
-					.setErrorTerm(-(correctOutputs[i] - realOutputs[i])
-							* outputNeurons.get(i).activeFunc.activationDerivative(
-									outputNeurons.get(i).getWeightedSumOfInputs()));
+			outputNeurons.get(i).setErrorTerm(-(correctOutputs[i] - realOutputs[i])
+					* outputNeurons.get(i).activeFunc.activationDerivative(outputNeurons.get(i).getWeightedSumOfInputs()));
 			outputNeurons.get(i).backPropagate_RMSProp();
 		}
 		for (int i = this.layers.size() - 2; 0 < i; i--) {
@@ -448,8 +440,8 @@ public class NeuralNet {
 		 */
 		double errorTerm = 0.0;
 		/**
-		 * The weighted sum of error terms of the neurons in the next
-		 * layer (used for back-propagation)
+		 * The weighted sum of error terms of the neurons in the next layer (used
+		 * for back-propagation)
 		 */
 		double weightedErrorSum = 0.0;
 
@@ -476,8 +468,7 @@ public class NeuralNet {
 		public void normalizeWeights() {
 			double inverseInputSizeSqrt = 1.0 / Math.sqrt(this.inputWeights.size());
 			for (int i = 0; i < this.inputWeights.size(); i++) {
-				this.inputWeights.get(i).value = inverseInputSizeSqrt
-						* (2 * NeuralNet.randgen.nextDouble() - 1);
+				this.inputWeights.get(i).value = inverseInputSizeSqrt * (2 * NeuralNet.randgen.nextDouble() - 1);
 			}
 		}
 
@@ -491,13 +482,10 @@ public class NeuralNet {
 			for (int i = 0; i < this.deltaWeights.length; i++) {
 				double oldWeight = this.inputWeights.get(i).value;
 				double newWeight = oldWeight - this.deltaWeights[i];
-				// double newWeight = oldWeight -
-				// LEARNING_RATE*this.deltaWeights[i]-0.001*oldWeight;
 				this.inputWeights.get(i).value = newWeight;
 				this.deltaWeights[i] = 0.0;
 				if (Double.isNaN(this.inputWeights.get(i).value)) {
-					this.inputWeights.get(i).value = randgen.nextDouble()
-							/ this.inputWeights.size();
+					this.inputWeights.get(i).value = randgen.nextDouble() / this.inputWeights.size();
 					System.out.println("ERROR: Weight is NaN. Aborting...");
 					System.exit(1);
 				}
@@ -512,13 +500,11 @@ public class NeuralNet {
 				double oldWeight = this.inputWeights.get(i).value;
 				this.rmsprop_cache[i] = NeuralNet.this.RMS_DECAY_RATE * this.rmsprop_cache[i]
 						+ (1 - NeuralNet.this.RMS_DECAY_RATE) * (avgDelta * avgDelta);
-				double newWeight = oldWeight - NeuralNet.this.LEARNING_RATE * avgDelta
-						/ (Math.sqrt(this.rmsprop_cache[i]) + 1e-3);
+				double newWeight = oldWeight - NeuralNet.this.LEARNING_RATE * avgDelta / (Math.sqrt(this.rmsprop_cache[i]) + 1e-3);
 				this.inputWeights.get(i).value = newWeight;
 				this.deltaWeights[i] = 0.0;
 				if (Double.isNaN(this.inputWeights.get(i).value)) {
-					this.inputWeights.get(i).value = randgen.nextDouble()
-							/ this.inputWeights.size();
+					this.inputWeights.get(i).value = randgen.nextDouble() / this.inputWeights.size();
 					System.out.println("ERROR: Weight is NaN. Aborting...");
 					System.exit(1);
 				}
@@ -530,13 +516,11 @@ public class NeuralNet {
 		public void applyWeightDeltasWithoutMomentum() {
 			for (int i = 0; i < this.deltaWeights.length; i++) {
 				double oldWeight = this.inputWeights.get(i).value;
-				double newWeight = oldWeight
-						- NeuralNet.this.LEARNING_RATE * (this.deltaWeights[i] / this.nSamples);
+				double newWeight = oldWeight - NeuralNet.this.LEARNING_RATE * (this.deltaWeights[i] / this.nSamples);
 				this.inputWeights.get(i).value = newWeight;
 				this.deltaWeights[i] = 0.0;
 				if (Double.isNaN(this.inputWeights.get(i).value)) {
-					this.inputWeights.get(i).value = randgen.nextDouble()
-							/ this.inputWeights.size();
+					this.inputWeights.get(i).value = randgen.nextDouble() / this.inputWeights.size();
 					System.out.println("ERROR: Weight is NaN. Aborting...");
 					System.exit(1);
 				}
@@ -546,20 +530,17 @@ public class NeuralNet {
 
 
 		/**
-		 * Propagates the error term from this neuron backward to other
-		 * connected neurons.
+		 * Propagates the error term from this neuron backward to other connected
+		 * neurons.
 		 */
 		public void backPropagate() {
 			for (int i = 0; i < this.inputNeurons.size(); i++) {
 				Neuron n = this.inputNeurons.get(i);
-				n.setWeightedErrorSum(n.getWeightedErrorSum()
-						+ (this.errorTerm * this.inputWeights.get(i).value));
+				n.setWeightedErrorSum(n.getWeightedErrorSum() + (this.errorTerm * this.inputWeights.get(i).value));
 
 
 				double newWeight = this.inputWeights.get(i).value;
 				newWeight -= NeuralNet.this.LEARNING_RATE * (+0.000 * newWeight);
-				// this.inputWeights.set(i, new
-				// Double(newWeight));
 				this.deltaWeights[i] += this.errorTerm * n.getOutputValue();
 			}
 			this.nSamples++;
@@ -569,8 +550,7 @@ public class NeuralNet {
 		public void backPropagate(double gamma) {
 			for (int i = 0; i < this.inputNeurons.size(); i++) {
 				Neuron n = this.inputNeurons.get(i);
-				n.setWeightedErrorSum(n.getWeightedErrorSum()
-						+ (this.errorTerm * this.inputWeights.get(i).value));
+				n.setWeightedErrorSum(n.getWeightedErrorSum() + (this.errorTerm * this.inputWeights.get(i).value));
 
 				this.deltaWeights[i] = gamma * this.deltaWeights[i]
 						+ NeuralNet.this.LEARNING_RATE * (this.errorTerm * n.getOutputValue());
@@ -582,8 +562,7 @@ public class NeuralNet {
 		public void backPropagate_RMSProp() {
 			for (int i = 0; i < this.inputNeurons.size(); i++) {
 				Neuron n = this.inputNeurons.get(i);
-				n.setWeightedErrorSum(n.getWeightedErrorSum()
-						+ (this.errorTerm * this.inputWeights.get(i).value));
+				n.setWeightedErrorSum(n.getWeightedErrorSum() + (this.errorTerm * this.inputWeights.get(i).value));
 
 				double gradient = this.errorTerm * n.getOutputValue();
 				this.deltaWeights[i] += gradient;
@@ -598,9 +577,9 @@ public class NeuralNet {
 
 
 		/**
-		 * Returns the output value of this neuron. The output value is
-		 * no recalculated when calling this function. To recalculate
-		 * the output, see {@code recalcOutput}.
+		 * Returns the output value of this neuron. The output value is no
+		 * recalculated when calling this function. To recalculate the output, see
+		 * {@code recalcOutput}.
 		 * 
 		 * @see #recalcOutput
 		 */
@@ -620,14 +599,13 @@ public class NeuralNet {
 
 
 		public void recalcErrorTerm() {
-			this.errorTerm = this.weightedErrorSum
-					* this.activeFunc.activationDerivative(this.weightedInputSum);
+			this.errorTerm = this.weightedErrorSum * this.activeFunc.activationDerivative(this.weightedInputSum);
 		}
 
 
 		/**
-		 * Recalculates this neuron's internally stored output value
-		 * based on its input weights and input neurons
+		 * Recalculates this neuron's internally stored output value based on its
+		 * input weights and input neurons
 		 */
 		public void recalcOutput() {
 			// If there are no inputs, output shouldn't change
@@ -637,19 +615,13 @@ public class NeuralNet {
 
 			this.recalcWeightedSumOfInputs();
 			this.outputValue = this.activeFunc.activationValue(this.getWeightedSumOfInputs());
-			// if (this.outputValue < 0.5) {
-			// this.outputValue = 0.1;
-			// } else {
-			// this.outputValue = 1;
-			// }
 		}
 
 
 		public void recalcWeightedSumOfInputs() {
 			this.weightedInputSum = 0.0;
 			for (int i = 0; i < this.inputNeurons.size(); i++) {
-				this.weightedInputSum += this.inputNeurons.get(i).getOutputValue()
-						* this.inputWeights.get(i).value;
+				this.weightedInputSum += this.inputNeurons.get(i).getOutputValue() * this.inputWeights.get(i).value;
 			}
 		}
 
@@ -661,8 +633,8 @@ public class NeuralNet {
 
 
 		/**
-		 * Manually set the output of this neuron, rather than
-		 * calculating it from inputs.
+		 * Manually set the output of this neuron, rather than calculating it from
+		 * inputs.
 		 * 
 		 * @param value
 		 *                the value to set

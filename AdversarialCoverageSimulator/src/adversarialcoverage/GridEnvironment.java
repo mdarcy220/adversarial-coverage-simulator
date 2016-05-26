@@ -51,7 +51,7 @@ public class GridEnvironment {
 		this.squaresLeft = this.gridSize.width * this.gridSize.height;
 		for (int x = 0; x < this.gridSize.width; x++) {
 			for (int y = 0; y < this.gridSize.height; y++) {
-				if (this.getGridNode(x, y).getNodeType() == NodeType.OBSTACLE) {
+				if (this.getGridNode(x, y).getNodeType() == NodeType.OBSTACLE || 0 < this.getGridNode(x, y).getCoverCount()) {
 					this.squaresLeft--;
 				}
 			}
@@ -286,15 +286,6 @@ public class GridEnvironment {
 	 */
 	public boolean isCovered() {
 		return this.squaresLeft <= 0;
-		// for (int x = 0; x < this.getWidth(); x++) {
-		// for (int y = 0; y < this.getHeight(); y++) {
-		// if (this.grid[x][y].getCoverCount() < 1
-		// && this.grid[x][y].getNodeType() != NodeType.OBSTACLE) {
-		// return false;
-		// }
-		// }
-		// }
-		// return true;
 	}
 
 
