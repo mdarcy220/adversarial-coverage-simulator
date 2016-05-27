@@ -133,6 +133,26 @@ public class ConsoleController {
 			}
 		});
 
+		this.registerCommand(":get", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				System.out.print(AdversarialCoverage.settings.getPropertyAsString(args[0]));
+			}
+		});
+
+		this.registerCommand(":print", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				System.out.print(args[0]);
+			}
+		});
+
 		this.registerCommand(":showsettings", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {

@@ -284,6 +284,27 @@ public class AdversarialCoverageSettings {
 	}
 
 
+	/**
+	 * Gets a property as its internal string value, even if the property is not of
+	 * type string.
+	 * 
+	 * @param key
+	 *                the key for the property
+	 * @return the property value as a string
+	 */
+	public String getPropertyAsString(String key) {
+		if (key == null) {
+			this.lastError = Error.NULL_KEY;
+			return null;
+		} else if (!this.hasProperty(key)) {
+			this.lastError = Error.NO_SUCH_PROPERTY;
+			return null;
+		}
+		
+		return this.settingsMap.get(key);
+	}
+
+
 	public boolean hasProperty(String key) {
 		return this.settingsMap.containsKey(key);
 	}

@@ -132,7 +132,7 @@ public class DeepQLGridCoverage extends CoverageAlgorithm {
 			this.stateHistorySize = Math.min(this.HISTORY_MAX, this.stepNum);
 		}
 
-		if (this.USING_EXTERNAL_QLEARNER && this.nn instanceof ExternalTorchNN) {
+		if (this.USING_EXTERNAL_QLEARNER && (this.nn instanceof ExternalTorchNN)) {
 			((ExternalTorchNN) this.nn).sendTransition(transition);
 			((ExternalTorchNN) this.nn).runTorchMinibatch();
 		} else if (this.MINIBATCH_SIZE < this.stepNum) {
