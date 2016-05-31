@@ -109,9 +109,14 @@ public class StatePreprocessor {
 		int numLayers = 3 + (AdversarialCoverage.settings.getBooleanProperty("deepql.nn_input.obstacle_layer") ? 1 : 0);
 		int miscInputs = (AdversarialCoverage.settings.getBooleanProperty("neuralnet.give_global_pos_and_size") ? 4 : 0);
 
-			return (layersize * numLayers) + miscInputs;
+		return (layersize * numLayers) + miscInputs;
 
 
+	}
+
+
+	public int getNNInputSize() {
+		return this.NN_INPUT_SIZE;
 	}
 
 

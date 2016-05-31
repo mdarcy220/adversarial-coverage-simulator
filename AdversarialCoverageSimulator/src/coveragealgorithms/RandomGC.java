@@ -1,12 +1,26 @@
-package adversarialcoverage;
+package coveragealgorithms;
 
-public class RandomGridCoverage extends CoverageAlgorithm {
+import adversarialcoverage.GridActuator;
+import adversarialcoverage.GridNode;
+import adversarialcoverage.GridSensor;
+import adversarialcoverage.Node;
+import adversarialcoverage.NodeType;
+
+/**
+ * A coverage algorithm that covers the grid using an e-greedy policy, moving either
+ * randomly or taking the action with highest immediate reward (i.e., looking only one
+ * step into the future).
+ * 
+ * @author Mike D'Arcy
+ *
+ */
+public class RandomGC extends GridCoverageAlgorithm {
 	GridSensor sensor;
 	GridActuator actuator;
 	long stepNum = 0;
 
 
-	public RandomGridCoverage(GridSensor sensor, GridActuator actuator) {
+	public RandomGC(GridSensor sensor, GridActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 	}
@@ -52,6 +66,8 @@ public class RandomGridCoverage extends CoverageAlgorithm {
 		takeAction(direction);
 		this.stepNum++;
 	}
+
+
 	private void takeAction(int actionNum) {
 		if (actionNum == 0) {
 			this.actuator.moveRight();

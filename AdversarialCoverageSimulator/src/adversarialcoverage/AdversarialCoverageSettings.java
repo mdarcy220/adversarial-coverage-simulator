@@ -68,6 +68,7 @@ public class AdversarialCoverageSettings {
 		this.setIntProperty("env.grid.minheight", 5);
 		this.setIntProperty("env.grid.minwidth", 5);
 		this.setIntProperty("env.grid.width", 5);
+		this.setIntProperty("logging.deepql.loss_sampling_interval", 500);
 		this.setIntProperty("neuralnet.hidden_layer_size", 30);
 		this.setIntProperty("neuralnet.num_hidden_layers", 2);
 		this.setIntProperty("robots.count", 1);
@@ -86,6 +87,7 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("env.variable_grid_size", false);
 		this.setBooleanProperty("neuralnet.give_global_pos_and_size", false);
 		this.setBooleanProperty("neuralnet.torch.recurrent.sequenced_minibatch", false);
+		this.setBooleanProperty("neuralnet.torch.use_partial_transitions", false);
 		this.setBooleanProperty("robots.breakable", true);
 		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
 

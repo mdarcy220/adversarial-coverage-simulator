@@ -1,4 +1,4 @@
-package adversarialcoverage;
+package coveragealgorithms;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import adversarialcoverage.Coordinate;
+import adversarialcoverage.GridActuator;
+import adversarialcoverage.GridNode;
+import adversarialcoverage.GridSensor;
+import adversarialcoverage.NodeType;
+
 /**
  * A coverage algorithm that uses the GSAC coverage path algorithm created by Roi Yehoshua
  * and Noa Agmon.
@@ -15,7 +21,7 @@ import java.util.Set;
  * @author Mike D'Arcy
  *
  */
-public class GSACGridCoverage extends CoverageAlgorithm {
+public class GSACGC extends GridCoverageAlgorithm {
 
 	GridSensor sensor;
 	GridActuator actuator;
@@ -24,7 +30,7 @@ public class GSACGridCoverage extends CoverageAlgorithm {
 	private int stepNum = 0;
 
 
-	public GSACGridCoverage(GridSensor sensor, GridActuator actuator) {
+	public GSACGC(GridSensor sensor, GridActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 	}

@@ -3,6 +3,9 @@ package adversarialcoverage;
 import java.awt.Dimension;
 import java.io.PrintStream;
 
+import coveragealgorithms.GridCoverageAlgorithm;
+import coveragealgorithms.DQLGC;
+
 public class CoverageEngine {
 
 	private boolean isRunning = false;
@@ -128,7 +131,7 @@ public class CoverageEngine {
 			GridRobot robot = new GridRobot(i, (int) (Math.random() * this.env.getWidth()), (int) (Math.random() * this.env.getHeight()));
 			GridSensor sensor = new GridSensor(this.env, robot);
 			GridActuator actuator = new GridActuator(this.env, robot);
-			CoverageAlgorithm algo = new DeepQLGridCoverage(sensor, actuator);
+			GridCoverageAlgorithm algo = new DQLGC(sensor, actuator);
 			robot.coverAlgo = algo;
 			this.env.addRobot(robot);
 		}

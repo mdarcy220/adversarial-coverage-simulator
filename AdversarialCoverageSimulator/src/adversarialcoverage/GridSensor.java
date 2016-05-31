@@ -133,6 +133,11 @@ public class GridSensor {
 	public boolean isOnGrid(int x, int y) {
 		return this.env.isOnGrid(x, y);
 	}
+	
+	
+	public boolean isFinished() {
+		return this.env.isFinished();
+	}
 
 
 	/**

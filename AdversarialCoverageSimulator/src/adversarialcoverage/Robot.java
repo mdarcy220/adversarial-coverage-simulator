@@ -1,8 +1,10 @@
 package adversarialcoverage;
 import java.awt.image.BufferedImage;
 
+import coveragealgorithms.GridCoverageAlgorithm;
+
 public abstract class Robot {
-	CoverageAlgorithm coverAlgo;
+	GridCoverageAlgorithm coverAlgo;
 	BufferedImage sprite;
 	/**
 	 * The uniqueId is used to differentiate this robot from other robots in the environment

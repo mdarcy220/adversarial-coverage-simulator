@@ -7,11 +7,18 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 
 import adversarialcoverage.AdversarialCoverage;
-import adversarialcoverage.DeepQLGridCoverage.StateTransition;
+import coveragealgorithms.DQLGC.StateTransition;
 
 import java.io.BufferedReader;
 import java.io.*;
 
+/**
+ * A Neural Network class, implemented with an external program that can be communicated
+ * with via a pipe.
+ * 
+ * @author Mike D"Arcy
+ *
+ */
 public class ExternalTorchNN extends NeuralNet {
 	String outFilename;
 	String inFilename;
@@ -108,15 +115,20 @@ public class ExternalTorchNN extends NeuralNet {
 	}
 
 
-	public void sendTransition(StateTransition trans) {
+	public void sendTransition(StateTransition trans, boolean allowPartial) {
 
-		this.outMsg.append("t\n");
+		if (allowPartial) {
+			this.outMsg.append("t_nostartstate\n");
+		} else {
+			this.outMsg.append("t\n");
 
-		// Output the initial state
-		for (int i = 0; i < trans.nnInput.length; i++) {
-			this.outMsg.append(String.format("%a ", trans.nnInput[i]));
+			// Output the initial state
+			for (int i = 0; i < trans.nnInput.length; i++) {
+				this.outMsg.append(String.format("%a ", trans.nnInput[i]));
+			}
+
+			this.outMsg.append('\n');
 		}
-		this.outMsg.append('\n');
 
 		// Output the transition info
 		this.outMsg.append(String.format("%d %a %d \n", trans.action + 1, trans.reward, trans.isTerminal ? 1 : 0));

@@ -1,4 +1,7 @@
 package adversarialcoverage;
+
+import coveragealgorithms.GridCoverageAlgorithm;
+
 /**
  * A robot spcialized for grid environments.
  * 
@@ -53,7 +56,7 @@ public class GridRobot extends Robot {
 	 * 
 	 * @param algo
 	 */
-	public void setCoverageAlgorithm(CoverageAlgorithm algo) {
+	public void setCoverageAlgorithm(GridCoverageAlgorithm algo) {
 		this.coverAlgo = algo;
 	}
 
