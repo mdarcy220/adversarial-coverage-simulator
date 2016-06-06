@@ -17,22 +17,25 @@ public class StatePreprocessor {
 	public StatePreprocessor(GridSensor sensor) {
 		this.sensor = sensor;
 	}
-
-
+	
+	
 	public double[] getPreprocessedState() {
+		return this.getPreprocessedState(new double[this.NN_INPUT_SIZE]);
+	}
+
+
+	public double[] getPreprocessedState(double[] stateBuffer) {
 		switch (this.visiontype) {
 		case CENTERED_ALWAYS:
 			return null;
 		case CENTERED_SNAP_TO_EDGES: // FALLTHROUGH
 		default:
-			return getPreprocessedState_centered_snap_to_edges();
+			return getPreprocessedState_centered_snap_to_edges(stateBuffer);
 		}
 	}
 
 
-	private double[] getPreprocessedState_centered_snap_to_edges() {
-
-		double[] curState = new double[this.NN_INPUT_SIZE];
+	private double[] getPreprocessedState_centered_snap_to_edges(double[] stateBuf) {
 		// Ordering of statements is very important for these lowBound variables.
 		// We need them to be 0 if the vision size is greater than the grid size
 		int xLowBound = Math.min(this.sensor.getGridWidth() - 1, this.sensor.getLocation().x + (this.VISION_SIZE / 2))
@@ -51,43 +54,43 @@ public class StatePreprocessor {
 				boolean cellExists = this.sensor.nodeExists(gridX, gridY);
 				if (cellExists) {
 					// Danger level layer
-					curState[cellNum] = this.sensor.getDangerLevelAt(gridX, gridY) * 3.0;
+					stateBuf[cellNum] = this.sensor.getDangerLevelAt(gridX, gridY) * 3.0;
 
 					// Cover count layer
-					curState[layerSize + cellNum] = this.sensor.getCoverCountAt(gridX, gridY) < 1 ? -1 : 1;
+					stateBuf[layerSize + cellNum] = this.sensor.getCoverCountAt(gridX, gridY) < 1 ? -1 : 1;
 
 					// Robot position layer
-					curState[(2 * layerSize) + cellNum] = 0;
+					stateBuf[(2 * layerSize) + cellNum] = 0;
 
 					// Obstacle layer
 					if (this.NN_INPUT_OBSTACLE_LAYER) {
-						curState[(3 * layerSize) + cellNum] = this.sensor.isObstacle(gridX, gridY) ? 1.0 : -1.0;
+						stateBuf[(3 * layerSize) + cellNum] = this.sensor.isObstacle(gridX, gridY) ? 1.0 : -1.0;
 					}
 				} else {
 					// Danger level layer
-					curState[cellNum] = 0;
+					stateBuf[cellNum] = 0;
 
 					// Cover count layer
-					curState[layerSize + cellNum] = 0;
+					stateBuf[layerSize + cellNum] = 0;
 
 					// Robot position layer
-					curState[(2 * layerSize) + cellNum] = 0;
+					stateBuf[(2 * layerSize) + cellNum] = 0;
 
 					// Obstacle layer
 					if (this.NN_INPUT_OBSTACLE_LAYER) {
-						curState[(3 * layerSize) + cellNum] = 1.0;
+						stateBuf[(3 * layerSize) + cellNum] = 1.0;
 					}
 				}
 			}
 		}
 
-		curState[(2 * layerSize) + ((this.sensor.getLocation().x - xLowBound) * this.VISION_SIZE)
+		stateBuf[(2 * layerSize) + ((this.sensor.getLocation().x - xLowBound) * this.VISION_SIZE)
 				+ (this.sensor.getLocation().y - yLowBound)] = 1;
 		if (this.GIVE_GLOBAL_POS_AND_SIZE) {
-			curState[this.NN_INPUT_SIZE - 4] = this.sensor.getLocation().x;
-			curState[this.NN_INPUT_SIZE - 3] = this.sensor.getLocation().y;
-			curState[this.NN_INPUT_SIZE - 2] = this.sensor.getGridWidth();
-			curState[this.NN_INPUT_SIZE - 1] = this.sensor.getGridHeight();
+			stateBuf[this.NN_INPUT_SIZE - 4] = this.sensor.getLocation().x;
+			stateBuf[this.NN_INPUT_SIZE - 3] = this.sensor.getLocation().y;
+			stateBuf[this.NN_INPUT_SIZE - 2] = this.sensor.getGridWidth();
+			stateBuf[this.NN_INPUT_SIZE - 1] = this.sensor.getGridHeight();
 		}
 
 		if (this.attemptToNormalize) {
@@ -96,11 +99,21 @@ public class StatePreprocessor {
 			// 25 for coverage + 1 for location)
 			double approxStdDev = Math.sqrt(27.0);
 			for (int i = 0; i < this.NN_INPUT_SIZE; i++) {
-				curState[i] /= approxStdDev;
+				stateBuf[i] /= approxStdDev;
 			}
 		}
 
-		return curState;
+		return stateBuf;
+	}
+	
+	
+	public double[] createEmptyStateBuffer() {
+		return new double[this.NN_INPUT_SIZE];
+	}
+
+
+	public void setShouldNormalize(boolean shouldNormalize) {
+		this.attemptToNormalize = shouldNormalize;
 	}
 
 

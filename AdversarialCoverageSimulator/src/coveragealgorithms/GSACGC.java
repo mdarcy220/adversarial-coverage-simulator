@@ -21,7 +21,7 @@ import adversarialcoverage.NodeType;
  * @author Mike D'Arcy
  *
  */
-public class GSACGC extends GridCoverageAlgorithm {
+public class GSACGC implements GridCoverageAlgorithm {
 
 	GridSensor sensor;
 	GridActuator actuator;

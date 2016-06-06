@@ -118,7 +118,7 @@ public class ConsoleController {
 		this.registerCommand(":showstate", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
-				System.out.printf("isRunning = %s\n", ConsoleController.this.engine.isRunning());
+				System.out.printf("isRunning = %s\n", ConsoleController.this.engine.isRunning() ? "true" : "false");
 			}
 		});
 
@@ -240,7 +240,7 @@ public class ConsoleController {
 	}
 
 
-	private void registerCommand(String command, TerminalCommand action) {
+	public void registerCommand(String command, TerminalCommand action) {
 		this.commandList.put(command, action);
 	}
 

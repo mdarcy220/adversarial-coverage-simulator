@@ -14,7 +14,7 @@ import adversarialcoverage.NodeType;
  * @author Mike D'Arcy
  *
  */
-public class RandomGC extends GridCoverageAlgorithm {
+public class RandomGC implements GridCoverageAlgorithm {
 	GridSensor sensor;
 	GridActuator actuator;
 	long stepNum = 0;
@@ -95,6 +95,13 @@ public class RandomGC extends GridCoverageAlgorithm {
 
 	private GridNode getNodeRelative(int dx, int dy) {
 		return this.sensor.getNodeAt(this.sensor.getLocation().x + dx, this.sensor.getLocation().y + dy);
+	}
+
+
+	@Override
+	public void reloadSettings() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

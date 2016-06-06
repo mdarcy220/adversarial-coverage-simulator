@@ -1,14 +1,14 @@
 package coveragealgorithms;
 
-public abstract class GridCoverageAlgorithm {
 
-	public abstract void init();
+public interface GridCoverageAlgorithm {
 
-
-	public abstract void step();
+	public void init();
 
 
-	public void reloadSettings() {
+	public void step();
 
-	}
+
+	public void reloadSettings();
+
 }

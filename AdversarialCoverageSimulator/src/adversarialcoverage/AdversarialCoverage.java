@@ -8,6 +8,7 @@ public class AdversarialCoverage {
 	public static AdversarialCoverageArgs args = null;
 	public static AdversarialCoverageSettings settings = null;
 	public static Logger logger = null;
+	private ConsoleController controller = null;
 
 	GridEnvironment env = null;
 	static SimulationStats stats;
@@ -25,11 +26,11 @@ public class AdversarialCoverage {
 		this.engine = new CoverageEngine();
 		this.engine.resetCoverageEnvironment();
 
-		ConsoleController cc = new ConsoleController(this.engine);
+		this.controller = new ConsoleController(this.engine);
 		if (!args.RC_FILE.equals("")) {
-			cc.loadCommandFile(args.RC_FILE);
+			this.controller.loadCommandFile(args.RC_FILE);
 		}
-		cc.start();
+		this.controller.start();
 
 
 		if (!args.HEADLESS) {
@@ -38,10 +39,15 @@ public class AdversarialCoverage {
 			this.engine.setDisplay(gd);
 		}
 
-		if (args.USE_AUTOSTART) {
+		if (args.USE_AUTOSTART && !this.engine.isRunning()) {
 			this.engine.runCoverage();
 		}
 
+	}
+
+
+	public void registerControllerCommand(String cmdName, TerminalCommand cmd) {
+		this.controller.registerCommand(cmdName, cmd);
 	}
 
 

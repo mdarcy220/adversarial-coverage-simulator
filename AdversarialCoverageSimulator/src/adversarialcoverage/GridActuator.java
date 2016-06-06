@@ -1,4 +1,5 @@
 package adversarialcoverage;
+
 public class GridActuator {
 	/**
 	 * The environment in which this actuator exists
@@ -9,6 +10,7 @@ public class GridActuator {
 	 */
 	private GridRobot robot;
 	private double lastReward = 0.0;
+	private int lastActionId = -1;
 	private double COVER_UNIQUE_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.cover_unique");
 	private double COVER_AGAIN_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.cover_again");
 	private double DEATH_REWARD = AdversarialCoverage.settings.getDoubleProperty("deepql.reward.death");
@@ -36,6 +38,7 @@ public class GridActuator {
 	public void moveRight() {
 		Coordinate newLoc = new Coordinate(this.robot.getLocation().x + 1, this.robot.getLocation().y);
 		moveTo(newLoc);
+		this.lastActionId = 0;
 	}
 
 
@@ -45,6 +48,7 @@ public class GridActuator {
 	public void moveLeft() {
 		Coordinate newLoc = new Coordinate(this.robot.getLocation().x - 1, this.robot.getLocation().y);
 		moveTo(newLoc);
+		this.lastActionId = 2;
 	}
 
 
@@ -54,6 +58,7 @@ public class GridActuator {
 	public void moveUp() {
 		Coordinate newLoc = new Coordinate(this.robot.getLocation().x, this.robot.getLocation().y + 1);
 		moveTo(newLoc);
+		this.lastActionId = 1;
 	}
 
 
@@ -63,6 +68,7 @@ public class GridActuator {
 	public void moveDown() {
 		Coordinate newLoc = new Coordinate(this.robot.getLocation().x, this.robot.getLocation().y - 1);
 		moveTo(newLoc);
+		this.lastActionId = 3;
 	}
 
 
@@ -73,13 +79,12 @@ public class GridActuator {
 		}
 
 		// Move, if possible
-		if (this.env.isOnGrid(newLoc.x, newLoc.y)
-				&& this.env.getGridNode(newLoc.x, newLoc.y).getNodeType() != NodeType.OBSTACLE
+		if (this.env.isOnGrid(newLoc.x, newLoc.y) && this.env.getGridNode(newLoc.x, newLoc.y).getNodeType() != NodeType.OBSTACLE
 				&& this.env.getRobotsByLocation(newLoc.x, newLoc.y).size() == 0) {
 			this.robot.setLocation(newLoc.x, newLoc.y);
 		}
 
-		coverCurrentNode();
+		this.processCoveringCurrentNode();
 	}
 
 
@@ -87,31 +92,63 @@ public class GridActuator {
 	 * Don't move, just cover the current node again.
 	 */
 	public void coverCurrentNode() {
+		this.processCoveringCurrentNode();
+		this.lastActionId = 4;
+	}
+
+
+	private void processCoveringCurrentNode() {
 		double rand = Math.random();
 
-		if (rand < this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()
-				&& this.ROBOTS_BREAKABLE) {
+		if (rand < this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb() && this.ROBOTS_BREAKABLE) {
 			this.env.getRobotById(this.robot.getId()).setBroken(true);
 			this.lastReward = this.DEATH_REWARD;
 			return;
 		}
-		
+
 		int coverCount = this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getCoverCount();
-		if(coverCount == 0) {
+		if (coverCount == 0) {
 			this.env.squaresLeft--;
 		}
 		this.lastReward = coverCount < 1 ? this.COVER_UNIQUE_REWARD : this.COVER_AGAIN_REWARD;
-		//this.lastReward -= this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb();
-		if(this.env.isCovered()) {
+		// this.lastReward -= this.env.getGridNode(this.robot.getLocation().x,
+		// this.robot.getLocation().y).getDangerProb();
+		if (this.env.isCovered()) {
 			this.lastReward = this.FULL_COVERAGE_REWARD;
 		}
-		//this.lastReward -= this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()*10;
+		// this.lastReward -= this.env.getGridNode(this.robot.getLocation().x,
+		// this.robot.getLocation().y).getDangerProb()*10;
 		this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).incrementCoverCount();
 		AdversarialCoverage.stats.updateCellCovered(this.robot);
 	}
-	
+
+
+	public void takeActionById(int actionNum) {
+		if (actionNum == 0) {
+			this.moveRight();
+		} else if (actionNum == 1) {
+			this.moveUp();
+		} else if (actionNum == 2) {
+			this.moveLeft();
+		} else if (actionNum == 3) {
+			this.moveDown();
+		} else if (actionNum == 4) {
+			this.coverCurrentNode();
+		} else {
+			this.coverCurrentNode();
+		}
+	}
+
+
+	public int getLastActionId() {
+		return this.lastActionId;
+	}
+
+
 	/**
-	 * Get the reward value from the most recent action (usually useful for MDP-based coverage algorithms)
+	 * Get the reward value from the most recent action (usually useful for MDP-based
+	 * coverage algorithms)
+	 * 
 	 * @return
 	 */
 	public double getLastReward() {

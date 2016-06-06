@@ -3,8 +3,7 @@ package adversarialcoverage;
 import java.awt.Dimension;
 import java.io.PrintStream;
 
-import coveragealgorithms.GridCoverageAlgorithm;
-import coveragealgorithms.DQLGC;
+import coveragealgorithms.*;
 
 public class CoverageEngine {
 
@@ -129,16 +128,47 @@ public class CoverageEngine {
 		// Set up the robots
 		for (int i = 0; i < AdversarialCoverage.settings.getIntProperty("robots.count"); i++) {
 			GridRobot robot = new GridRobot(i, (int) (Math.random() * this.env.getWidth()), (int) (Math.random() * this.env.getHeight()));
-			GridSensor sensor = new GridSensor(this.env, robot);
-			GridActuator actuator = new GridActuator(this.env, robot);
-			GridCoverageAlgorithm algo = new DQLGC(sensor, actuator);
-			robot.coverAlgo = algo;
+			robot.coverAlgo = this.createNewCoverageAlgoInstance(robot);
 			this.env.addRobot(robot);
 		}
 		AdversarialCoverage.stats = new SimulationStats(this.env, this.env.getRobotList());
 
 		this.env.init();
 
+	}
+
+
+	private GridCoverageAlgorithm createNewCoverageAlgoInstance(GridRobot robot) {
+		GridSensor sensor = new GridSensor(this.env, robot);
+		GridActuator actuator = new GridActuator(this.env, robot);
+
+		String coverageAlgoName = AdversarialCoverage.settings.getStringProperty("coverage.algorithm_name");
+		String metaCoverageAlgoName = "";
+
+		GridCoverageAlgorithm algo = null;
+
+		if (coverageAlgoName.indexOf('+') != -1) {
+			metaCoverageAlgoName = coverageAlgoName.substring(0, coverageAlgoName.indexOf('+')).trim();
+			coverageAlgoName = coverageAlgoName.substring(coverageAlgoName.indexOf('+') + 1).trim();
+		}
+
+		if (coverageAlgoName.equalsIgnoreCase("DQLGC")) {
+			algo = new DQLGC(sensor, actuator);
+		} else if (coverageAlgoName.equalsIgnoreCase("RandomGC")) {
+			algo = new RandomGC(sensor, actuator);
+		} else if (coverageAlgoName.equalsIgnoreCase("GSACGC")) {
+			algo = new GSACGC(sensor, actuator);
+		} else {
+			algo = new DQLGC(sensor, actuator);
+		}
+
+		if (!metaCoverageAlgoName.isEmpty()) {
+			if (metaCoverageAlgoName.equalsIgnoreCase("ExternalDQLGC")) {
+				algo = new ExternalDQLGC(sensor, actuator, algo);
+			}
+		}
+
+		return algo;
 	}
 
 
@@ -222,8 +252,8 @@ public class CoverageEngine {
 	}
 
 
-	public String isRunning() {
-		return (new Boolean(this.isRunning)).toString();
+	public boolean isRunning() {
+		return this.isRunning;
 	}
 
 

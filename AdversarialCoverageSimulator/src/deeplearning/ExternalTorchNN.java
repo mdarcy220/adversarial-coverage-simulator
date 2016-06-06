@@ -7,7 +7,6 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 
 import adversarialcoverage.AdversarialCoverage;
-import coveragealgorithms.DQLGC.StateTransition;
 
 import java.io.BufferedReader;
 import java.io.*;

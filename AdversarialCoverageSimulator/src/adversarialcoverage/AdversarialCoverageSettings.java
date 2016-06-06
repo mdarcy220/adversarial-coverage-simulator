@@ -104,6 +104,7 @@ public class AdversarialCoverageSettings {
 		this.setDoubleProperty("neuralnet.momentum", 0.9);
 		this.setDoubleProperty("neuralnet.rms.decay_rate", 0.9);
 
+		this.setStringProperty("coverage.algorithm_name", "DQLGC");
 		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai04/midarcy/prog/lua/scratch/environments/betatester/");
 		this.setStringProperty("deepql.external_torch_nn.nninput_file_name", "input2.dat");
 		this.setStringProperty("deepql.external_torch_nn.nnoutput_file_name", "output2.dat");

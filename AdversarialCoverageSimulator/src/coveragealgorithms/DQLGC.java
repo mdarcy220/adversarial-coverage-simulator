@@ -10,6 +10,7 @@ import adversarialcoverage.GridActuator;
 import adversarialcoverage.GridSensor;
 import deeplearning.NeuralNet;
 import deeplearning.StatePreprocessor;
+import deeplearning.StateTransition;
 import deeplearning.NeuralNet.TrainingType;
 import deeplearning.ActivationFunction;
 import deeplearning.ExternalTorchNN;
@@ -21,7 +22,7 @@ import deeplearning.ExternalTorchNN;
  * @author Mike D'Arcy
  *
  */
-public class DQLGC extends GridCoverageAlgorithm {
+public class DQLGC implements GridCoverageAlgorithm {
 	private NeuralNet nn = null;
 	private GridSensor sensor;
 	private GridActuator actuator;
@@ -46,8 +47,6 @@ public class DQLGC extends GridCoverageAlgorithm {
 			&& AdversarialCoverage.settings.getBooleanProperty("deepql.use_external_qlearner");
 	private boolean EXTERNALNN_ALLOW_PARTIAL_TRANSITIONS = AdversarialCoverage.settings.getBooleanProperty("neuralnet.torch.use_partial_transitions");
 	private int LOSS_SAMPLING_RATE = AdversarialCoverage.settings.getIntProperty("logging.deepql.loss_sampling_interval");
-	
-	
 	
 	private long stateHistorySize = 0;
 
@@ -113,7 +112,7 @@ public class DQLGC extends GridCoverageAlgorithm {
 			action = maxIndex;
 		}
 		transition.action = action;
-		takeAction(action);
+		this.actuator.takeActionById(action);
 		curState = this.preprocessor.getPreprocessedState();
 		transition.nextInput = curState;
 
@@ -280,21 +279,6 @@ public class DQLGC extends GridCoverageAlgorithm {
 	}
 
 
-	private void takeAction(int actionNum) {
-		if (actionNum == 0) {
-			this.actuator.moveRight();
-		} else if (actionNum == 1) {
-			this.actuator.moveUp();
-		} else if (actionNum == 2) {
-			this.actuator.moveLeft();
-		} else if (actionNum == 3) {
-			this.actuator.moveDown();
-		} else {
-			this.actuator.coverCurrentNode();
-		}
-	}
-
-
 	@Override
 	public void reloadSettings() {
 		this.actuator.reloadSettings();
@@ -321,25 +305,5 @@ public class DQLGC extends GridCoverageAlgorithm {
 				&& AdversarialCoverage.settings.getBooleanProperty("deepql.use_external_qlearner");
 		this.LOSS_SAMPLING_RATE = AdversarialCoverage.settings.getIntProperty("logging.deepql.loss_sampling_interval");
 		this.EXTERNALNN_ALLOW_PARTIAL_TRANSITIONS = AdversarialCoverage.settings.getBooleanProperty("neuralnet.torch.use_partial_transitions");
-	}
-
-	public class StateTransition {
-		public boolean isTerminal;
-		public double[] nnInput;
-		// double[] resultState;
-		public double reward;
-		double correctQVal;
-		public int action;
-		public double[] nextInput;
-
-
-		StateTransition(double[] state) {
-			this.nnInput = state;
-		}
-
-
-		StateTransition() {
-			// Empty constructor
-		}
 	}
 }
