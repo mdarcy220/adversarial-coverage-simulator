@@ -10,15 +10,14 @@ public class StatePreprocessor {
 	private boolean NN_INPUT_OBSTACLE_LAYER = AdversarialCoverage.settings.getBooleanProperty("deepql.nn_input.obstacle_layer");
 	private final int NN_INPUT_SIZE = calcStateSize();
 	private VisionType visiontype = VisionType.CENTERED_SNAP_TO_EDGES;
-	private boolean attemptToNormalize = true;
 	private GridSensor sensor;
 
 
 	public StatePreprocessor(GridSensor sensor) {
 		this.sensor = sensor;
 	}
-	
-	
+
+
 	public double[] getPreprocessedState() {
 		return this.getPreprocessedState(new double[this.NN_INPUT_SIZE]);
 	}
@@ -93,7 +92,7 @@ public class StatePreprocessor {
 			stateBuf[this.NN_INPUT_SIZE - 1] = this.sensor.getGridHeight();
 		}
 
-		if (this.attemptToNormalize) {
+		if (AdversarialCoverage.settings.getBooleanProperty("deepql.statepreprocessor.attempt_mormalization")) {
 			// Normalize the data
 			// The sum of squares should be around 27 (1 for danger levels +
 			// 25 for coverage + 1 for location)
@@ -105,15 +104,10 @@ public class StatePreprocessor {
 
 		return stateBuf;
 	}
-	
-	
+
+
 	public double[] createEmptyStateBuffer() {
 		return new double[this.NN_INPUT_SIZE];
-	}
-
-
-	public void setShouldNormalize(boolean shouldNormalize) {
-		this.attemptToNormalize = shouldNormalize;
 	}
 
 

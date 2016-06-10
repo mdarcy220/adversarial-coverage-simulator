@@ -58,6 +58,14 @@ public class ConsoleController {
 			}
 		});
 
+		this.registerCommand("#", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				// Do nothing, this command serves as a comment in rc
+				// files
+			}
+		});
+
 		this.registerCommand(":help", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {

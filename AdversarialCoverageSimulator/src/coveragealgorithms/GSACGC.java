@@ -104,7 +104,7 @@ public class GSACGC implements GridCoverageAlgorithm {
 			while (iter.hasNext()) {
 				GridNode node = iter.next();
 				double costToNode = dj.getCostToNode(node);
-				if (costToNode < minCost) {
+				if (costToNode < minCost || (costToNode == minCost && checkTiebreaker(node, minCostNode))) {
 					minCost = costToNode;
 					minCostNode = node;
 				} else if (costToNode == Double.POSITIVE_INFINITY) {
@@ -176,6 +176,19 @@ public class GSACGC implements GridCoverageAlgorithm {
 			}
 		}
 		return graph;
+	}
+
+
+	private boolean checkTiebreaker(GridNode node, GridNode minDistNode) {
+		int nodeSum = node.getX() + node.getY();
+		int minDistNodeSum = minDistNode.getX() + minDistNode.getY();
+
+		if (nodeSum < minDistNodeSum) {
+			return true;
+		} else if (nodeSum == minDistNodeSum) {
+			return node.getY() < minDistNode.getY();
+		}
+		return false;
 	}
 
 

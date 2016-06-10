@@ -61,8 +61,6 @@ public class ExternalTorchNN extends NeuralNet {
 
 	@Override
 	public double[] getOutputs() {
-		// Scanner s = new Scanner(System.in);
-
 		// Make an array with the same size as the last layer of the
 		// network
 		double[] outputs = new double[5];
@@ -145,11 +143,7 @@ public class ExternalTorchNN extends NeuralNet {
 
 
 	public void runTorchMinibatch() {
-		if (AdversarialCoverage.settings.getBooleanProperty("neuralnet.torch.recurrent.sequenced_minibatch")) {
-			this.outWriter.print("mr\n");
-		} else {
-			this.outWriter.print("m\n");
-		}
+		this.outWriter.println(AdversarialCoverage.settings.getStringProperty("neuralnet.torch.minibatch_code"));
 		this.outWriter.flush();
 	}
 }

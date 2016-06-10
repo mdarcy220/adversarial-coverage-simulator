@@ -61,6 +61,8 @@ public class AdversarialCoverageSettings {
 		this.setIntProperty("autorun.stepdelay", 0);
 		this.setIntProperty("deepql.history_max", 1);
 		this.setIntProperty("deepql.minibatch_size", 0);
+		this.setIntProperty("deepql.minibatch_interval", 1);
+		this.setIntProperty("deepql.external.rnn.num_codes_per_minibatch", 1);
 		this.setIntProperty("deepql.nn_input.vision_radius", 5);
 		this.setIntProperty("env.grid.height", 5);
 		this.setIntProperty("env.grid.maxheight", 5);
@@ -78,15 +80,16 @@ public class AdversarialCoverageSettings {
 		this.setBooleanProperty("autorun.finished.newgrid", true);
 		this.setBooleanProperty("autorun.finished.display_full_stats", false);
 		this.setBooleanProperty("autorun.randomize_robot_start", true);
+		this.setBooleanProperty("deepql.always_forward_nninput", false);
 		this.setBooleanProperty("deepql.display.print_q_values", false);
 		this.setBooleanProperty("deepql.nn_input.obstacle_layer", true);
 		this.setBooleanProperty("deepql.use_external_qlearner", true);
 		this.setBooleanProperty("display.show_binary_coverage", false);
+		this.setBooleanProperty("deepql.statepreprocessor.attempt_normalization", true);
 		this.setBooleanProperty("env.clear_adjacent_cells_on_init", false);
 		this.setBooleanProperty("env.grid.force_square", true);
 		this.setBooleanProperty("env.variable_grid_size", false);
 		this.setBooleanProperty("neuralnet.give_global_pos_and_size", false);
-		this.setBooleanProperty("neuralnet.torch.recurrent.sequenced_minibatch", false);
 		this.setBooleanProperty("neuralnet.torch.use_partial_transitions", false);
 		this.setBooleanProperty("robots.breakable", true);
 		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
@@ -111,6 +114,7 @@ public class AdversarialCoverageSettings {
 		this.setStringProperty("deepql.nn_setup_mode", "native");
 		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
 		this.setStringProperty("logging.logfile", "");
+		this.setStringProperty("neuralnet.torch.minibatch_code", "m");
 		this.setStringProperty("neuralnet.loadfile", "");
 		this.setStringProperty("neuralnet.trainingtype", "rmsprop");
 	}
@@ -303,7 +307,7 @@ public class AdversarialCoverageSettings {
 			this.lastError = Error.NO_SUCH_PROPERTY;
 			return null;
 		}
-		
+
 		return this.settingsMap.get(key);
 	}
 
@@ -391,6 +395,7 @@ public class AdversarialCoverageSettings {
 		}
 
 		final JScrollPane sp = new JScrollPane(jp);
+		sp.getVerticalScrollBar().setUnitIncrement(16);
 		sd.add(sp);
 		JPanel buttonPanel = new JPanel();
 		JButton okButton = new JButton("OK");
