@@ -10,6 +10,7 @@ public class CoverageEngine {
 	private boolean isRunning = false;
 	private DisplayAdapter display = null;
 	private GridEnvironment env = null;
+	private Thread coverageThread = null;
 	private static final DisplayAdapter EmptyDisplayAdapter = new DisplayAdapter() {
 		@Override
 		public void refresh() {
@@ -132,6 +133,7 @@ public class CoverageEngine {
 			this.env.addRobot(robot);
 		}
 		AdversarialCoverage.stats = new SimulationStats(this.env, this.env.getRobotList());
+		AdversarialCoverage.stats.startNewRun();
 
 		this.env.init();
 
@@ -173,14 +175,18 @@ public class CoverageEngine {
 
 
 	private void startCoverageLoop() {
-		Thread t = new Thread() {
+		if (this.coverageThread != null && this.coverageThread.isAlive()) {
+			System.err.print("Coverage thread is already running. No action will be taken.\n");
+			return;
+		}
+
+		this.coverageThread = new Thread() {
 			@Override
 			public void run() {
 				coverageLoop();
 			}
 		};
-		t.start();
-
+		this.coverageThread.start();
 	}
 
 

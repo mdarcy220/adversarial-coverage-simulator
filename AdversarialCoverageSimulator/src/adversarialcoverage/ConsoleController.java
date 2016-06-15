@@ -356,8 +356,3 @@ public class ConsoleController {
 	}
 
 }
-
-
-interface TerminalCommand {
-	public void execute(String[] args);
-}

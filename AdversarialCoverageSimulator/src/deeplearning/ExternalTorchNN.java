@@ -7,6 +7,7 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 
 import adversarialcoverage.AdversarialCoverage;
+import adversarialcoverage.TerminalCommand;
 
 import java.io.BufferedReader;
 import java.io.*;
@@ -28,6 +29,8 @@ public class ExternalTorchNN extends NeuralNet {
 
 
 	public ExternalTorchNN(String outFile, String inFile) {
+		this.registerCustomCommands();
+
 		this.outFilename = outFile;
 		this.inFilename = inFile;
 
@@ -42,6 +45,25 @@ public class ExternalTorchNN extends NeuralNet {
 		} catch (FileNotFoundException e) {
 			System.err.printf("Failed to find file %s. Using STDIN instead.\n", this.inFilename);
 		}
+	}
+
+
+	private void registerCustomCommands() {
+		AdversarialCoverage.controller.registerCommand(":ExternalTorchNN_sendCommand", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				sendCommand(args[0]);
+			}
+		});
+	}
+
+
+	private void sendCommand(String code) {
+		this.outWriter.printf("%s\n", code);
+		this.outWriter.flush();
 	}
 
 

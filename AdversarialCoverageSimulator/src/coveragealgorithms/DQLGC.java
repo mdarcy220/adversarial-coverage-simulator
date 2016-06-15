@@ -8,6 +8,7 @@ import java.util.Scanner;
 import adversarialcoverage.AdversarialCoverage;
 import adversarialcoverage.GridActuator;
 import adversarialcoverage.GridSensor;
+import adversarialcoverage.TerminalCommand;
 import deeplearning.NeuralNet;
 import deeplearning.StatePreprocessor;
 import deeplearning.StateTransition;
@@ -68,6 +69,8 @@ public class DQLGC implements GridCoverageAlgorithm {
 		this.actuator = actuator;
 		this.preprocessor = new StatePreprocessor(this.sensor);
 		this.lastStates = new StateTransition[this.HISTORY_MAX];
+
+		this.registerCustomCommands();
 	}
 
 
@@ -295,7 +298,31 @@ public class DQLGC implements GridCoverageAlgorithm {
 				e.printStackTrace();
 			}
 		}
+	}
 
+
+	/**
+	 * Registers commands for this class to the main console controller.
+	 */
+	private void registerCustomCommands() {
+		AdversarialCoverage.controller.registerCommand(":dqlgc_get", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				printDQLGCProperty(args[0]);
+			}
+		});
+	}
+
+
+	private void printDQLGCProperty(String propertyName) {
+		if (propertyName.equals("greedy_epsilon")) {
+			System.out.printf("%f", this.greedyEpsilon);
+		} else if (propertyName.equals("stepNum")) {
+			System.out.printf("%d", this.stepNum);
+		}
 	}
 
 
