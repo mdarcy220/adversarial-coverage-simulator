@@ -16,15 +16,15 @@ public class GridEnvironment {
 
 	private GridNodeGenerator nodegen = new GridNodeGenerator();
 
-	private boolean RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings.getBooleanProperty("autorun.randomize_robot_start");
-	private boolean CLEAR_ADJACENT_CELLS_ON_INIT = AdversarialCoverage.settings.getBooleanProperty("env.clear_adjacent_cells_on_init");
-	private boolean VARIABLE_GRID_SIZE = AdversarialCoverage.settings.getBooleanProperty("env.variable_grid_size");
-	private boolean FORCE_SQUARE = AdversarialCoverage.settings.getBooleanProperty("env.grid.force_square");
-	private int MAX_HEIGHT = AdversarialCoverage.settings.getIntProperty("env.grid.maxheight");
-	private int MAX_WIDTH = AdversarialCoverage.settings.getIntProperty("env.grid.maxwidth");
-	private int MIN_HEIGHT = AdversarialCoverage.settings.getIntProperty("env.grid.minheight");
-	private int MIN_WIDTH = AdversarialCoverage.settings.getIntProperty("env.grid.minwidth");
-	private int MAX_STEPS_PER_RUN = AdversarialCoverage.settings.getIntProperty("autorun.max_steps_per_run");
+	private boolean RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings.getBoolean("autorun.randomize_robot_start");
+	private boolean CLEAR_ADJACENT_CELLS_ON_INIT = AdversarialCoverage.settings.getBoolean("env.clear_adjacent_cells_on_init");
+	private boolean VARIABLE_GRID_SIZE = AdversarialCoverage.settings.getBoolean("env.variable_grid_size");
+	private boolean FORCE_SQUARE = AdversarialCoverage.settings.getBoolean("env.grid.force_square");
+	private int MAX_HEIGHT = AdversarialCoverage.settings.getInt("env.grid.maxheight");
+	private int MAX_WIDTH = AdversarialCoverage.settings.getInt("env.grid.maxwidth");
+	private int MIN_HEIGHT = AdversarialCoverage.settings.getInt("env.grid.minheight");
+	private int MIN_WIDTH = AdversarialCoverage.settings.getInt("env.grid.minwidth");
+	private int MAX_STEPS_PER_RUN = AdversarialCoverage.settings.getInt("autorun.max_steps_per_run");
 
 
 	public GridEnvironment(Dimension gridSize) {
@@ -137,7 +137,7 @@ public class GridEnvironment {
 			this.setSize(new Dimension(newWidth, newHeight));
 		}
 
-		String dangerValStr = AdversarialCoverage.settings.getStringProperty("env.grid.dangervalues");
+		String dangerValStr = AdversarialCoverage.settings.getString("env.grid.dangervalues");
 
 		// To save time, only recompile the generator if the string has changed
 		if (!this.nodegen.getGeneratorString().equals(dangerValStr)) {
@@ -329,14 +329,14 @@ public class GridEnvironment {
 		for (Robot r : this.robots) {
 			r.reloadSettings();
 		}
-		this.RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings.getBooleanProperty("autorun.randomize_robot_start");
-		this.MAX_STEPS_PER_RUN = AdversarialCoverage.settings.getIntProperty("autorun.max_steps_per_run");
-		this.CLEAR_ADJACENT_CELLS_ON_INIT = AdversarialCoverage.settings.getBooleanProperty("env.clear_adjacent_cells_on_init");
-		this.VARIABLE_GRID_SIZE = AdversarialCoverage.settings.getBooleanProperty("env.variable_grid_size");
-		this.FORCE_SQUARE = AdversarialCoverage.settings.getBooleanProperty("env.grid.force_square");
-		this.MAX_HEIGHT = AdversarialCoverage.settings.getIntProperty("env.grid.maxheight");
-		this.MAX_WIDTH = AdversarialCoverage.settings.getIntProperty("env.grid.maxwidth");
-		this.MIN_HEIGHT = AdversarialCoverage.settings.getIntProperty("env.grid.minheight");
-		this.MIN_WIDTH = AdversarialCoverage.settings.getIntProperty("env.grid.minwidth");
+		this.RANDOMIZE_ROBOT_LOCATION_ON_INIT = AdversarialCoverage.settings.getBoolean("autorun.randomize_robot_start");
+		this.MAX_STEPS_PER_RUN = AdversarialCoverage.settings.getInt("autorun.max_steps_per_run");
+		this.CLEAR_ADJACENT_CELLS_ON_INIT = AdversarialCoverage.settings.getBoolean("env.clear_adjacent_cells_on_init");
+		this.VARIABLE_GRID_SIZE = AdversarialCoverage.settings.getBoolean("env.variable_grid_size");
+		this.FORCE_SQUARE = AdversarialCoverage.settings.getBoolean("env.grid.force_square");
+		this.MAX_HEIGHT = AdversarialCoverage.settings.getInt("env.grid.maxheight");
+		this.MAX_WIDTH = AdversarialCoverage.settings.getInt("env.grid.maxwidth");
+		this.MIN_HEIGHT = AdversarialCoverage.settings.getInt("env.grid.minheight");
+		this.MIN_WIDTH = AdversarialCoverage.settings.getInt("env.grid.minwidth");
 	}
 }

@@ -12,7 +12,7 @@ public class ExternalDQLGC implements GridCoverageAlgorithm {
 	private GridActuator actuator;
 	private GridCoverageAlgorithm realCoverageAlgo;
 	private ExternalTorchNN nn = null;
-	private boolean ALLOW_PARTIAL_TRANSITIONS = AdversarialCoverage.settings.getBooleanProperty("neuralnet.torch.use_partial_transitions");
+	private boolean ALLOW_PARTIAL_TRANSITIONS = AdversarialCoverage.settings.getBoolean("neuralnet.torch.use_partial_transitions");
 	private StatePreprocessor preprocessor;
 	private StateTransition transition = new StateTransition();
 
@@ -50,7 +50,7 @@ public class ExternalDQLGC implements GridCoverageAlgorithm {
 		this.preprocessor.reloadSettings();
 		this.realCoverageAlgo.reloadSettings();
 
-		this.ALLOW_PARTIAL_TRANSITIONS = AdversarialCoverage.settings.getBooleanProperty("neuralnet.torch.use_partial_transitions");
+		this.ALLOW_PARTIAL_TRANSITIONS = AdversarialCoverage.settings.getBoolean("neuralnet.torch.use_partial_transitions");
 	}
 
 
@@ -58,9 +58,9 @@ public class ExternalDQLGC implements GridCoverageAlgorithm {
 	public void init() {
 		this.transition.nnInput = this.preprocessor.createEmptyStateBuffer();
 		this.transition.nextInput = this.preprocessor.createEmptyStateBuffer();
-		String prefix = AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.io_file_prefix");
-		this.nn = new ExternalTorchNN(prefix + AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.nninput_file_name"),
-				prefix + AdversarialCoverage.settings.getStringProperty("deepql.external_torch_nn.nnoutput_file_name"));
+		String prefix = AdversarialCoverage.settings.getString("deepql.external_torch_nn.io_file_prefix");
+		this.nn = new ExternalTorchNN(prefix + AdversarialCoverage.settings.getString("deepql.external_torch_nn.nninput_file_name"),
+				prefix + AdversarialCoverage.settings.getString("deepql.external_torch_nn.nnoutput_file_name"));
 		this.realCoverageAlgo.init();
 	}
 

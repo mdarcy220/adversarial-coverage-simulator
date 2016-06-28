@@ -147,7 +147,7 @@ public class ConsoleController {
 				if (args.length < 1) {
 					return;
 				}
-				System.out.print(AdversarialCoverage.settings.getPropertyAsString(args[0]));
+				System.out.print(AdversarialCoverage.settings.getAsString(args[0]));
 			}
 		});
 

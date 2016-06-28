@@ -1,19 +1,21 @@
-package adversarialcoverage;
+package adversarialcoverage.stats;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import adversarialcoverage.*;
+
 public class SimulationStats {
 	private long nStepsInRun = 0;
-	private long nStepsInBatch = 0;
+	private SampledVariableLong batch_stepsPerRun = new SampledVariableLong();
 	private long nRunsInBatch = 0;
 	private long totalFreeCells = 0;
 	private Set<RobotStats> robotStats = new HashSet<>();
 	private GridEnvironment env;
 	private long[][] lastCellVisitTimes;
 
-	private double batchTotalMaxSurvivability = 0.0;
+	private SampledVariableDouble batch_survivability = new SampledVariableDouble();
 
 
 	public SimulationStats(GridEnvironment env, List<GridRobot> robots) {
@@ -129,6 +131,11 @@ public class SimulationStats {
 	}
 
 
+	/**
+	 * Returns the maximum individual survivability from the robots.
+	 * 
+	 * @return
+	 */
 	public double getMaxSurvivability() {
 		double best = 0.0;
 		for (RobotStats rs : this.robotStats) {
@@ -137,6 +144,16 @@ public class SimulationStats {
 			}
 		}
 		return best;
+	}
+
+
+	public double getTeamSurvivability() {
+		double total = 0.0;
+		for (RobotStats rs : this.robotStats) {
+			total += rs.survivability;
+
+		}
+		return total;
 	}
 
 
@@ -196,22 +213,24 @@ public class SimulationStats {
 
 
 	/**
-	 * Get the average number of steps per run for the current batch
+	 * Get a <code>SampledVariableLong</code> containing sample statistics for the
+	 * number of steps taken per run in the current batch.
 	 * 
 	 * @return
 	 */
-	public double getBatchAvgSteps() {
-		return ((double) this.nStepsInBatch / (double) this.nRunsInBatch);
+	public SampledVariableLong getBatchStepsPerRunInfo() {
+		return this.batch_stepsPerRun;
 	}
 
 
 	/**
-	 * Get the average of max survivabilities in each run for the current batch
+	 * Gets a <code>SampledVariableDouble</code> that can be used to retrieve
+	 * information about the survivability per run for the batch.
 	 * 
 	 * @return
 	 */
-	public double getBatchAvgMaxSurvivability() {
-		return this.batchTotalMaxSurvivability / this.nRunsInBatch;
+	public SampledVariableDouble getBatchSurvivability() {
+		return this.batch_survivability;
 	}
 
 
@@ -230,9 +249,10 @@ public class SimulationStats {
 	 * intact.
 	 */
 	public void startNewRun() {
-		this.nStepsInBatch += this.nStepsInRun;
-		this.batchTotalMaxSurvivability += this.getMaxSurvivability();
+		this.batch_stepsPerRun.addSample(this.nStepsInRun);
+		this.batch_survivability.addSample(this.getTeamSurvivability());
 		this.nRunsInBatch++;
+
 		resetRunStats();
 	}
 
@@ -252,15 +272,15 @@ public class SimulationStats {
 			rs.reset();
 		}
 	}
-	
-	
+
+
 	/**
 	 * Reset batch stats
 	 */
 	public void startNewBatch() {
-		this.nStepsInBatch = 0;
+		this.batch_stepsPerRun.reset();
 		this.nRunsInBatch = 0;
-		this.batchTotalMaxSurvivability = 0.0;
+		this.batch_survivability.reset();
 	}
 
 

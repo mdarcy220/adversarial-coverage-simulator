@@ -11,9 +11,9 @@ import adversarialcoverage.AdversarialCoverage;
 public class NeuralNet {
 	List<List<Neuron>> layers = new ArrayList<>();
 
-	public double LEARNING_RATE = AdversarialCoverage.settings.getDoubleProperty("neuralnet.learning_rate");
-	public double MOMENTUM_GAMMA = AdversarialCoverage.settings.getDoubleProperty("neuralnet.momentum");
-	public double RMS_DECAY_RATE = AdversarialCoverage.settings.getDoubleProperty("neuralnet.rms.decay_rate");
+	public double LEARNING_RATE = AdversarialCoverage.settings.getDouble("neuralnet.learning_rate");
+	public double MOMENTUM_GAMMA = AdversarialCoverage.settings.getDouble("neuralnet.momentum");
+	public double RMS_DECAY_RATE = AdversarialCoverage.settings.getDouble("neuralnet.rms.decay_rate");
 	public TrainingType trainingType = TrainingType.RMSPROP;
 	private int samplesInBatch = 0;
 	static Random randgen = new Random();

@@ -1,6 +1,8 @@
 package adversarialcoverage;
 
 import java.io.PrintStream;
+
+import adversarialcoverage.stats.SimulationStats;
 import coveragegui.GUIDisplay;
 
 public class AdversarialCoverage {
@@ -25,9 +27,9 @@ public class AdversarialCoverage {
 
 		this.engine = new CoverageEngine();
 		AdversarialCoverage.controller = new ConsoleController(this.engine);
-		
+
 		this.engine.resetCoverageEnvironment();
-		
+
 		if (!args.RC_FILE.equals("")) {
 			AdversarialCoverage.controller.loadCommandFile(args.RC_FILE);
 		}

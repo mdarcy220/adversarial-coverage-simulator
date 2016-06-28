@@ -98,7 +98,7 @@ public class ExternalTorchNN extends NeuralNet {
 		}
 
 		if (s == null) {
-			return outputs;
+			return null;
 		}
 
 		try {
@@ -167,7 +167,7 @@ public class ExternalTorchNN extends NeuralNet {
 
 
 	public void runTorchMinibatch() {
-		this.outWriter.println(AdversarialCoverage.settings.getStringProperty("neuralnet.torch.minibatch_code"));
+		this.outWriter.println(AdversarialCoverage.settings.getString("neuralnet.torch.minibatch_code"));
 		this.outWriter.flush();
 	}
 

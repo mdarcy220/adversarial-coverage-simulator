@@ -16,7 +16,7 @@ class CoveragePanel extends JPanel {
 	GridEnvironment env;
 	CoverageEngine engine;
 
-	private boolean SHOW_BINARY_COVERAGE = AdversarialCoverage.settings.getBooleanProperty("display.show_binary_coverage");
+	private boolean SHOW_BINARY_COVERAGE = AdversarialCoverage.settings.getBoolean("display.show_binary_coverage");
 
 
 	public CoveragePanel(CoverageEngine engine) {

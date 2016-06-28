@@ -57,67 +57,67 @@ public class AdversarialCoverageSettings {
 	 * Sets all settings to the default values
 	 */
 	public void setDefaults() {
-		this.setIntProperty("autorun.max_steps_per_run", Integer.MAX_VALUE - 1);
-		this.setIntProperty("autorun.stepdelay", 0);
-		this.setIntProperty("deepql.history_max", 1);
-		this.setIntProperty("deepql.minibatch_size", 0);
-		this.setIntProperty("deepql.minibatch_interval", 1);
-		this.setIntProperty("deepql.external.rnn.num_codes_per_minibatch", 1);
-		this.setIntProperty("deepql.nn_input.vision_radius", 5);
-		this.setIntProperty("env.grid.height", 5);
-		this.setIntProperty("env.grid.maxheight", 5);
-		this.setIntProperty("env.grid.maxwidth", 5);
-		this.setIntProperty("env.grid.minheight", 5);
-		this.setIntProperty("env.grid.minwidth", 5);
-		this.setIntProperty("env.grid.width", 5);
-		this.setIntProperty("logging.deepql.loss_sampling_interval", 500);
-		this.setIntProperty("neuralnet.hidden_layer_size", 30);
-		this.setIntProperty("neuralnet.num_hidden_layers", 2);
-		this.setIntProperty("robots.count", 1);
-		this.setIntProperty("stats.multirun.batch_size", 100);
+		this.setInt("autorun.max_steps_per_run", Integer.MAX_VALUE - 1);
+		this.setInt("autorun.stepdelay", 0);
+		this.setInt("deepql.history_max", 1);
+		this.setInt("deepql.minibatch_size", 0);
+		this.setInt("deepql.minibatch_interval", 1);
+		this.setInt("deepql.external.rnn.num_codes_per_minibatch", 1);
+		this.setInt("deepql.nn_input.vision_radius", 5);
+		this.setInt("env.grid.height", 5);
+		this.setInt("env.grid.maxheight", 5);
+		this.setInt("env.grid.maxwidth", 5);
+		this.setInt("env.grid.minheight", 5);
+		this.setInt("env.grid.minwidth", 5);
+		this.setInt("env.grid.width", 5);
+		this.setInt("logging.deepql.loss_sampling_interval", 500);
+		this.setInt("neuralnet.hidden_layer_size", 30);
+		this.setInt("neuralnet.num_hidden_layers", 2);
+		this.setInt("robots.count", 1);
+		this.setInt("stats.multirun.batch_size", 100);
 
-		this.setBooleanProperty("autorun.do_repaint", false);
-		this.setBooleanProperty("autorun.finished.newgrid", true);
-		this.setBooleanProperty("autorun.finished.display_full_stats", false);
-		this.setBooleanProperty("autorun.randomize_robot_start", true);
-		this.setBooleanProperty("deepql.always_forward_nninput", false);
-		this.setBooleanProperty("deepql.display.print_q_values", false);
-		this.setBooleanProperty("deepql.nn_input.obstacle_layer", true);
-		this.setBooleanProperty("deepql.use_external_qlearner", true);
-		this.setBooleanProperty("display.show_binary_coverage", false);
-		this.setBooleanProperty("deepql.statepreprocessor.attempt_normalization", true);
-		this.setBooleanProperty("env.clear_adjacent_cells_on_init", false);
-		this.setBooleanProperty("env.grid.force_square", true);
-		this.setBooleanProperty("env.variable_grid_size", false);
-		this.setBooleanProperty("neuralnet.give_global_pos_and_size", false);
-		this.setBooleanProperty("neuralnet.torch.use_partial_transitions", false);
-		this.setBooleanProperty("robots.breakable", true);
-		this.setBooleanProperty("rules.robots.robotsAreObstacles", true);
+		this.setBoolean("autorun.do_repaint", false);
+		this.setBoolean("autorun.finished.newgrid", true);
+		this.setBoolean("autorun.finished.display_full_stats", false);
+		this.setBoolean("autorun.randomize_robot_start", true);
+		this.setBoolean("deepql.always_forward_nninput", false);
+		this.setBoolean("deepql.display.print_q_values", false);
+		this.setBoolean("deepql.nn_input.obstacle_layer", true);
+		this.setBoolean("deepql.use_external_qlearner", true);
+		this.setBoolean("display.show_binary_coverage", false);
+		this.setBoolean("deepql.statepreprocessor.attempt_normalization", true);
+		this.setBoolean("env.clear_adjacent_cells_on_init", false);
+		this.setBoolean("env.grid.force_square", true);
+		this.setBoolean("env.variable_grid_size", false);
+		this.setBoolean("neuralnet.give_global_pos_and_size", false);
+		this.setBoolean("neuralnet.torch.use_partial_transitions", false);
+		this.setBoolean("robots.breakable", true);
+		this.setBoolean("rules.robots.robotsAreObstacles", true);
 
-		this.setDoubleProperty("deepql.discountfactor", 0.9);
-		this.setDoubleProperty("deepql.greedy_epsilon_decrement", 5E-7);
-		this.setDoubleProperty("deepql.greedy_epsilon_minimum", 0.1);
-		this.setDoubleProperty("deepql.greedy_epsilon_start", 1.0);
-		this.setDoubleProperty("deepql.learning_rate_decay_factor", 1.0);
-		this.setDoubleProperty("deepql.reward.cover_again", -0.1);
-		this.setDoubleProperty("deepql.reward.cover_unique", 1.0);
-		this.setDoubleProperty("deepql.reward.death", -2.0);
-		this.setDoubleProperty("deepql.reward.full_coverage", 4.0);
-		this.setDoubleProperty("neuralnet.learning_rate", 0.1);
-		this.setDoubleProperty("neuralnet.momentum", 0.9);
-		this.setDoubleProperty("neuralnet.rms.decay_rate", 0.9);
+		this.setDouble("deepql.discountfactor", 0.9);
+		this.setDouble("deepql.greedy_epsilon_decrement", 5E-7);
+		this.setDouble("deepql.greedy_epsilon_minimum", 0.1);
+		this.setDouble("deepql.greedy_epsilon_start", 1.0);
+		this.setDouble("deepql.learning_rate_decay_factor", 1.0);
+		this.setDouble("deepql.reward.cover_again", -0.1);
+		this.setDouble("deepql.reward.cover_unique", 1.0);
+		this.setDouble("deepql.reward.death", -2.0);
+		this.setDouble("deepql.reward.full_coverage", 4.0);
+		this.setDouble("neuralnet.learning_rate", 0.1);
+		this.setDouble("neuralnet.momentum", 0.9);
+		this.setDouble("neuralnet.rms.decay_rate", 0.9);
 
-		this.setStringProperty("coverage.algorithm_name", "DQLGC");
-		this.setStringProperty("deepql.external_torch_nn.io_file_prefix", "/home/ai04/midarcy/prog/lua/scratch/environments/betatester/");
-		this.setStringProperty("deepql.external_torch_nn.nninput_file_name", "input2.dat");
-		this.setStringProperty("deepql.external_torch_nn.nnoutput_file_name", "output2.dat");
-		this.setStringProperty("deepql.nn_setup_mode", "native");
-		this.setStringProperty("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
-		this.setStringProperty("logging.logfile", "");
-		this.setStringProperty("neuralnet.torch.minibatch_code", "m");
-		this.setStringProperty("neuralnet.loadfile", "");
-		this.setStringProperty("neuralnet.trainingtype", "rmsprop");
-		this.setStringProperty("deepql.minibatch_seq_type", "manual");
+		this.setString("coverage.algorithm_name", "DQLGC");
+		this.setString("deepql.external_torch_nn.io_file_prefix", "/home/ai04/midarcy/prog/lua/scratch/environments/betatester/");
+		this.setString("deepql.external_torch_nn.nninput_file_name", "input2.dat");
+		this.setString("deepql.external_torch_nn.nnoutput_file_name", "output2.dat");
+		this.setString("deepql.minibatch_seq_type", "manual");
+		this.setString("deepql.nn_setup_mode", "native");
+		this.setString("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
+		this.setString("logging.logfile", "");
+		this.setString("neuralnet.torch.minibatch_code", "m");
+		this.setString("neuralnet.loadfile", "");
+		this.setString("neuralnet.trainingtype", "momentum");
 	}
 
 
@@ -184,7 +184,7 @@ public class AdversarialCoverageSettings {
 	 *                the property name
 	 * @return the boolean value of the property
 	 */
-	public boolean getBooleanProperty(String key) {
+	public boolean getBoolean(String key) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return false;
@@ -216,7 +216,7 @@ public class AdversarialCoverageSettings {
 	 *                the name of the integer property
 	 * @return the property (int)
 	 */
-	public double getDoubleProperty(String key) {
+	public double getDouble(String key) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return 0;
@@ -240,7 +240,7 @@ public class AdversarialCoverageSettings {
 	 *                the name of the integer property
 	 * @return the property (int)
 	 */
-	public int getIntProperty(String key) {
+	public int getInt(String key) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return 0;
@@ -276,7 +276,7 @@ public class AdversarialCoverageSettings {
 	}
 
 
-	public String getStringProperty(String key) {
+	public String getString(String key) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return null;
@@ -300,7 +300,7 @@ public class AdversarialCoverageSettings {
 	 *                the key for the property
 	 * @return the property value as a string
 	 */
-	public String getPropertyAsString(String key) {
+	public String getAsString(String key) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return null;
@@ -345,19 +345,19 @@ public class AdversarialCoverageSettings {
 			String value = input.nextLine().trim();
 
 			if (!this.hasProperty(settingName)) {
-				this.setStringProperty(settingName, value);
+				this.setString(settingName, value);
 			} else if (this.getSettingType(settingName) == AdversarialCoverageSettings.SettingType.INT) {
-				this.setIntProperty(settingName, Integer.parseInt(value));
+				this.setInt(settingName, Integer.parseInt(value));
 			} else if (this.getSettingType(settingName) == AdversarialCoverageSettings.SettingType.DOUBLE) {
-				this.setDoubleProperty(settingName, Double.parseDouble(value));
+				this.setDouble(settingName, Double.parseDouble(value));
 			} else if (this.getSettingType(settingName) == AdversarialCoverageSettings.SettingType.BOOLEAN) {
 				if (value.equalsIgnoreCase("true")) {
-					this.setBooleanProperty(settingName, true);
+					this.setBoolean(settingName, true);
 				} else if (value.equalsIgnoreCase("false")) {
-					this.setBooleanProperty(settingName, false);
+					this.setBoolean(settingName, false);
 				}
 			} else {
-				this.setStringProperty(settingName, value);
+				this.setString(settingName, value);
 			}
 
 		}
@@ -411,22 +411,22 @@ public class AdversarialCoverageSettings {
 					} else if (type == SettingType.INT) {
 						try {
 							int value = Integer.parseInt(newValStr);
-							setIntProperty(settingName, value);
+							setInt(settingName, value);
 						} catch (NumberFormatException e) {
 							System.err.println("Failed to parse value for integer setting: " + settingName);
 						}
 					} else if (type == SettingType.BOOLEAN) {
 						if (newValStr.equalsIgnoreCase("true")) {
-							setBooleanProperty(settingName, true);
+							setBoolean(settingName, true);
 						} else if (newValStr.equalsIgnoreCase("false")) {
-							setBooleanProperty(settingName, false);
+							setBoolean(settingName, false);
 						} else {
 							System.err.println("Failed to parse value for boolean setting: " + settingName);
 						}
 					} else if (type == SettingType.DOUBLE) {
 						try {
 							double value = Double.parseDouble(newValStr);
-							setDoubleProperty(settingName, value);
+							setDouble(settingName, value);
 						} catch (NumberFormatException e) {
 							System.err.println("Failed to parse value for integer setting: " + settingName);
 						}
@@ -458,7 +458,7 @@ public class AdversarialCoverageSettings {
 	}
 
 
-	public void setBooleanProperty(String key, boolean value) {
+	public void setBoolean(String key, boolean value) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return;
@@ -478,7 +478,7 @@ public class AdversarialCoverageSettings {
 	 * @param key
 	 * @param value
 	 */
-	public void setBooleanProperty(String key, String value) {
+	public void setBoolean(String key, String value) {
 		try {
 			boolean boolValue = false;
 			if (value.equalsIgnoreCase("true")) {
@@ -489,7 +489,7 @@ public class AdversarialCoverageSettings {
 				this.lastError = Error.BAD_FORMAT;
 				return;
 			}
-			this.setBooleanProperty(key, boolValue);
+			this.setBoolean(key, boolValue);
 		} catch (NumberFormatException e) {
 			this.lastError = Error.BAD_FORMAT;
 		} catch (NullPointerException e) {
@@ -506,7 +506,7 @@ public class AdversarialCoverageSettings {
 	 * @param value
 	 *                the value to set
 	 */
-	public void setDoubleProperty(String key, double value) {
+	public void setDouble(String key, double value) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return;
@@ -524,9 +524,9 @@ public class AdversarialCoverageSettings {
 	 * @param value
 	 *                the value to set
 	 */
-	public void setDoubleProperty(String key, String value) {
+	public void setDouble(String key, String value) {
 		try {
-			this.setDoubleProperty(key, Double.parseDouble(value));
+			this.setDouble(key, Double.parseDouble(value));
 		} catch (NumberFormatException e) {
 			this.lastError = Error.BAD_FORMAT;
 		} catch (NullPointerException e) {
@@ -543,7 +543,7 @@ public class AdversarialCoverageSettings {
 	 * @param value
 	 *                the value to set
 	 */
-	public void setIntProperty(String key, int value) {
+	public void setInt(String key, int value) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return;
@@ -561,9 +561,9 @@ public class AdversarialCoverageSettings {
 	 * @param value
 	 *                the value to set
 	 */
-	public void setIntProperty(String key, String value) {
+	public void setInt(String key, String value) {
 		try {
-			this.setIntProperty(key, Integer.parseInt(value));
+			this.setInt(key, Integer.parseInt(value));
 		} catch (NumberFormatException e) {
 			this.lastError = Error.BAD_FORMAT;
 		} catch (NullPointerException e) {
@@ -572,7 +572,7 @@ public class AdversarialCoverageSettings {
 	}
 
 
-	public void setStringProperty(String key, String value) {
+	public void setString(String key, String value) {
 		if (key == null) {
 			this.lastError = Error.NULL_KEY;
 			return;
@@ -588,24 +588,24 @@ public class AdversarialCoverageSettings {
 			return;
 		}
 		if (!this.hasProperty(key)) {
-			this.setStringProperty(key, value);
+			this.setString(key, value);
 			return;
 		}
 
 		SettingType type = this.getSettingType(key);
 		switch (type) {
 		case INT:
-			this.setIntProperty(key, value);
+			this.setInt(key, value);
 			break;
 		case DOUBLE:
-			this.setDoubleProperty(key, value);
+			this.setDouble(key, value);
 			break;
 		case BOOLEAN:
-			this.setBooleanProperty(key, value);
+			this.setBoolean(key, value);
 			break;
 		case STRING: // FALLTHROUGH
 		default:
-			this.setStringProperty(key, value);
+			this.setString(key, value);
 		}
 	}
 

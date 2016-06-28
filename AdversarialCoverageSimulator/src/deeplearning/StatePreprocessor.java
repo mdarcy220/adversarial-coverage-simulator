@@ -5,9 +5,9 @@ import adversarialcoverage.GridSensor;
 
 public class StatePreprocessor {
 
-	private final boolean GIVE_GLOBAL_POS_AND_SIZE = AdversarialCoverage.settings.getBooleanProperty("neuralnet.give_global_pos_and_size");
-	private final int VISION_SIZE = AdversarialCoverage.settings.getIntProperty("deepql.nn_input.vision_radius");
-	private boolean NN_INPUT_OBSTACLE_LAYER = AdversarialCoverage.settings.getBooleanProperty("deepql.nn_input.obstacle_layer");
+	private final boolean GIVE_GLOBAL_POS_AND_SIZE = AdversarialCoverage.settings.getBoolean("neuralnet.give_global_pos_and_size");
+	private final int VISION_SIZE = AdversarialCoverage.settings.getInt("deepql.nn_input.vision_radius");
+	private boolean NN_INPUT_OBSTACLE_LAYER = AdversarialCoverage.settings.getBoolean("deepql.nn_input.obstacle_layer");
 	private final int NN_INPUT_SIZE = calcStateSize();
 	private VisionType visiontype = VisionType.CENTERED_SNAP_TO_EDGES;
 	private GridSensor sensor;
@@ -92,7 +92,7 @@ public class StatePreprocessor {
 			stateBuf[this.NN_INPUT_SIZE - 1] = this.sensor.getGridHeight();
 		}
 
-		if (AdversarialCoverage.settings.getBooleanProperty("deepql.statepreprocessor.attempt_mormalization")) {
+		if (AdversarialCoverage.settings.getBoolean("deepql.statepreprocessor.attempt_mormalization")) {
 			// Normalize the data
 			// The sum of squares should be around 27 (1 for danger levels +
 			// 25 for coverage + 1 for location)
@@ -113,8 +113,8 @@ public class StatePreprocessor {
 
 	private int calcStateSize() {
 		int layersize = this.VISION_SIZE * this.VISION_SIZE;
-		int numLayers = 3 + (AdversarialCoverage.settings.getBooleanProperty("deepql.nn_input.obstacle_layer") ? 1 : 0);
-		int miscInputs = (AdversarialCoverage.settings.getBooleanProperty("neuralnet.give_global_pos_and_size") ? 4 : 0);
+		int numLayers = 3 + (AdversarialCoverage.settings.getBoolean("deepql.nn_input.obstacle_layer") ? 1 : 0);
+		int miscInputs = (AdversarialCoverage.settings.getBoolean("neuralnet.give_global_pos_and_size") ? 4 : 0);
 
 		return (layersize * numLayers) + miscInputs;
 

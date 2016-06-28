@@ -29,7 +29,7 @@ public class Logger {
 	
 	public void reloadSettings() {
 		try {
-			this.logWriter = new PrintWriter(new File(AdversarialCoverage.settings.getStringProperty("logging.logfile")));
+			this.logWriter = new PrintWriter(new File(AdversarialCoverage.settings.getString("logging.logfile")));
 		} catch (FileNotFoundException e) {
 			System.err.println("Failed to open log file.");
 		}

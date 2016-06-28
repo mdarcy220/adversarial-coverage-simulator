@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.io.PrintStream;
 
 import coveragealgorithms.*;
+import adversarialcoverage.stats.*;
 
 public class CoverageEngine {
 
@@ -119,15 +120,15 @@ public class CoverageEngine {
 	 * Sets up the environment using the settings
 	 */
 	public void resetCoverageEnvironment() {
-		this.env = new GridEnvironment(new Dimension(AdversarialCoverage.settings.getIntProperty("env.grid.width"),
-				AdversarialCoverage.settings.getIntProperty("env.grid.height")));
+		this.env = new GridEnvironment(new Dimension(AdversarialCoverage.settings.getInt("env.grid.width"),
+				AdversarialCoverage.settings.getInt("env.grid.height")));
 
 
 		// Set up the coverage environment
 		this.env.regenerateGrid();
 
 		// Set up the robots
-		for (int i = 0; i < AdversarialCoverage.settings.getIntProperty("robots.count"); i++) {
+		for (int i = 0; i < AdversarialCoverage.settings.getInt("robots.count"); i++) {
 			GridRobot robot = new GridRobot(i, (int) (Math.random() * this.env.getWidth()), (int) (Math.random() * this.env.getHeight()));
 			robot.coverAlgo = this.createNewCoverageAlgoInstance(robot);
 			this.env.addRobot(robot);
@@ -144,7 +145,7 @@ public class CoverageEngine {
 		GridSensor sensor = new GridSensor(this.env, robot);
 		GridActuator actuator = new GridActuator(this.env, robot);
 
-		String coverageAlgoName = AdversarialCoverage.settings.getStringProperty("coverage.algorithm_name");
+		String coverageAlgoName = AdversarialCoverage.settings.getString("coverage.algorithm_name");
 		String metaCoverageAlgoName = "";
 
 		GridCoverageAlgorithm algo = null;
@@ -195,8 +196,8 @@ public class CoverageEngine {
 		// Update settings
 		this.env.reloadSettings();
 
-		long delay = AdversarialCoverage.settings.getIntProperty("autorun.stepdelay");
-		boolean doRepaint = AdversarialCoverage.settings.getBooleanProperty("autorun.do_repaint");
+		long delay = AdversarialCoverage.settings.getInt("autorun.stepdelay");
+		boolean doRepaint = AdversarialCoverage.settings.getBoolean("autorun.do_repaint");
 
 		while (this.isRunning) {
 			long time = System.currentTimeMillis();
@@ -221,23 +222,26 @@ public class CoverageEngine {
 
 
 	private void handleCoverageCompletion() {
-		long statsBatchSize = AdversarialCoverage.settings.getIntProperty("stats.multirun.batch_size");
-		if (this.env.isFinished()) {
-			System.out.printf("END OF RUN: steps=%d, coverage=%d/%d, maxSurvivability=%.3f\n",
-					AdversarialCoverage.stats.getNumTimeSteps(), AdversarialCoverage.stats.getTotalCellsCovered(),
-					AdversarialCoverage.stats.getTotalFreeCells(), AdversarialCoverage.stats.getMaxSurvivability());
-			if (AdversarialCoverage.stats.getRunsInCurrentBatch() % statsBatchSize == 0) {
-				System.out.printf("Averages for last batch (size=%d): steps=%f, survivability=%f\n",
-						AdversarialCoverage.stats.getRunsInCurrentBatch(), AdversarialCoverage.stats.getBatchAvgSteps(),
-						AdversarialCoverage.stats.getBatchAvgMaxSurvivability());
-				AdversarialCoverage.stats.startNewBatch();
+		long statsBatchSize = AdversarialCoverage.settings.getInt("stats.multirun.batch_size");
+		SimulationStats stats = AdversarialCoverage.stats;
+		if (this.env.isFinished() && stats != null) {
+			System.out.printf("END OF RUN: steps=%d, cover=%d/%d, teamSurv=%.3f, bots=%d/%d\n", stats.getNumTimeSteps(),
+					stats.getTotalCellsCovered(), stats.getTotalFreeCells(), stats.getTeamSurvivability(),
+					stats.getNumSurvivingRobots(), stats.getNumRobots());
+			if (stats.getRunsInCurrentBatch() % statsBatchSize == 0 && stats.getRunsInCurrentBatch() != 0) {
+				SampledVariableLong stepsPerRunInfo = stats.getBatchStepsPerRunInfo();
+				SampledVariableDouble survivabilityInfo = stats.getBatchSurvivability();
+				System.out.printf("Batch averages (size=%d): steps=%.3f (%.2f), teamSurv=%.3f (%.2f)\n",
+						stats.getRunsInCurrentBatch(), stepsPerRunInfo.mean(), stepsPerRunInfo.stddev(),
+						survivabilityInfo.mean(), survivabilityInfo.stddev());
+				stats.startNewBatch();
 			}
 		}
 
-		if (AdversarialCoverage.settings.getBooleanProperty("autorun.finished.display_full_stats")) {
+		if (AdversarialCoverage.settings.getBoolean("autorun.finished.display_full_stats")) {
 			AdversarialCoverage.printStats(new PrintStream(System.out));
 		}
-		if (AdversarialCoverage.settings.getBooleanProperty("autorun.finished.newgrid")) {
+		if (AdversarialCoverage.settings.getBoolean("autorun.finished.newgrid")) {
 			for (GridRobot r : this.env.getRobotList()) {
 				r.setBroken(false);
 			}
@@ -250,7 +254,10 @@ public class CoverageEngine {
 		} else {
 			this.isRunning = false;
 		}
-		AdversarialCoverage.stats.startNewRun();
+
+		if (stats != null) {
+			stats.startNewRun();
+		}
 	}
 
 
