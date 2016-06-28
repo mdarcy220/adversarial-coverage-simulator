@@ -2,6 +2,7 @@ package coveragealgorithms;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -32,42 +33,36 @@ public class DQLGC implements GridCoverageAlgorithm {
 	private double greedyEpsilon = AdversarialCoverage.settings.getDoubleProperty("deepql.greedy_epsilon_start");
 	private long stepNum = 0;
 	private StateTransition[] lastStates;
-	private int VISION_RADIUS = AdversarialCoverage.settings.getIntProperty("deepql.nn_input.vision_radius");
-	private final int NN_INPUT_SIZE = calcStateSize();
-	private int HISTORY_MAX = AdversarialCoverage.settings.getIntProperty("deepql.history_max");
-	private double DISCOUNT_FACTOR = AdversarialCoverage.settings.getDoubleProperty("deepql.discountfactor");
-	private double GREEDY_EPSILON_DECREMENT = AdversarialCoverage.settings.getDoubleProperty("deepql.greedy_epsilon_decrement");
-	private double GREEDY_EPSILON_MINIMUM = AdversarialCoverage.settings.getDoubleProperty("deepql.greedy_epsilon_minimum");
-	private int MINIBATCH_SIZE = AdversarialCoverage.settings.getIntProperty("deepql.minibatch_size");
-	private double LEARNING_RATE_DECAY_FACTOR = AdversarialCoverage.settings.getDoubleProperty("deepql.learning_rate_decay_factor");
+	private int HISTORY_MAX;
+	private double DISCOUNT_FACTOR;
+	private double GREEDY_EPSILON_DECREMENT;
+	private double GREEDY_EPSILON_MINIMUM;
+	private int MINIBATCH_SIZE;
+	private double LEARNING_RATE_DECAY_FACTOR;
 	private TrainingType NN_TRAINING_TYPE = TrainingType.RMSPROP;
-	private boolean PRINT_Q_VALUES = AdversarialCoverage.settings.getBooleanProperty("deepql.display.print_q_values");
-	private int HIDDEN_LAYER_SIZE = AdversarialCoverage.settings.getIntProperty("neuralnet.hidden_layer_size");
-	private int NUM_HIDDEN_LAYERS = AdversarialCoverage.settings.getIntProperty("neuralnet.num_hidden_layers");
-	private boolean USING_EXTERNAL_QLEARNER = AdversarialCoverage.settings.getStringProperty("deepql.nn_setup_mode").equalsIgnoreCase("torch")
-			&& AdversarialCoverage.settings.getBooleanProperty("deepql.use_external_qlearner");
-	private boolean EXTERNALNN_ALLOW_PARTIAL_TRANSITIONS = AdversarialCoverage.settings
-			.getBooleanProperty("neuralnet.torch.use_partial_transitions");
-	private int LOSS_SAMPLING_RATE = AdversarialCoverage.settings.getIntProperty("logging.deepql.loss_sampling_interval");
-	private int MINIBATCH_INTERVAL = AdversarialCoverage.settings.getIntProperty("deepql.minibatch_interval");
-	private int EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH = AdversarialCoverage.settings.getIntProperty("deepql.external.rnn.num_codes_per_minibatch");
+	private boolean PRINT_Q_VALUES;
+	private int HIDDEN_LAYER_SIZE;
+	private int NUM_HIDDEN_LAYERS;
+	private boolean USING_EXTERNAL_QLEARNER;
+	private boolean EXTERNALNN_ALLOW_PARTIAL_TRANSITIONS;
+	private boolean ALWAYS_FORWARD_NNINPUT;
+	private int LOSS_SAMPLING_RATE;
+	private int MINIBATCH_INTERVAL;
+	private int EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH;
+	private MinibatchSeqType MINIBATCH_SEQ_TYPE = MinibatchSeqType.MANUAL;
 
 	private long stateHistorySize = 0;
-
-
-	private int calcStateSize() {
-		int layersize = this.VISION_RADIUS * this.VISION_RADIUS;
-		int numLayers = 3 + (AdversarialCoverage.settings.getBooleanProperty("deepql.nn_input.obstacle_layer") ? 1 : 0);
-		int miscInputs = (AdversarialCoverage.settings.getBooleanProperty("neuralnet.give_global_pos_and_size") ? 4 : 0);
-
-		return (layersize * numLayers) + miscInputs;
-	}
+	private double[] nnOutput = null;
+	private long lastTerminalStepNum = -1;
 
 
 	public DQLGC(GridSensor sensor, GridActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 		this.preprocessor = new StatePreprocessor(this.sensor);
+
+		this.reloadSettings();
+
 		this.lastStates = new StateTransition[this.HISTORY_MAX];
 
 		this.registerCustomCommands();
@@ -85,64 +80,6 @@ public class DQLGC implements GridCoverageAlgorithm {
 
 	@Override
 	public void step() {
-		double[] curState = this.preprocessor.getPreprocessedState();
-		double[] nnInput = new double[this.NN_INPUT_SIZE];
-
-		for (int i = 0; i < this.NN_INPUT_SIZE; i++) {
-			nnInput[i] = curState[i];
-		}
-
-		StateTransition transition = new StateTransition();
-		transition.nnInput = nnInput;
-
-		int action = -1;
-		double[] nnOutput = null;
-
-		if (AdversarialCoverage.settings.getBooleanProperty("deepql.always_forward_nninput")) {
-			this.nn.feedForward(nnInput);
-			nnOutput = this.nn.getOutputs();
-		}
-
-		if (this.randgen.nextDouble() < this.greedyEpsilon) {
-			action = this.randgen.nextInt(5);
-		} else {
-			if (nnOutput == null) {
-				this.nn.feedForward(nnInput);
-				nnOutput = this.nn.getOutputs();
-			}
-			if (this.PRINT_Q_VALUES) {
-				printQVals(nnOutput);
-			}
-			double maxVal = Double.NEGATIVE_INFINITY;
-			int maxIndex = 0;
-			for (int i = 0; i < nnOutput.length; i++) {
-				if (maxVal < nnOutput[i]) {
-					maxVal = nnOutput[i];
-					maxIndex = i;
-				}
-			}
-
-			action = maxIndex;
-		}
-		transition.action = action;
-		this.actuator.takeActionById(action);
-		curState = this.preprocessor.getPreprocessedState();
-		transition.nextInput = curState;
-
-		transition.reward = this.actuator.getLastReward();
-		transition.correctQVal = transition.reward;
-		transition.isTerminal = this.sensor.isFinished();
-
-		if (this.stepNum % this.LOSS_SAMPLING_RATE == 0) {
-			showLossForTransition(transition, nnOutput);
-		}
-
-		this.storeTranstion(transition);
-
-		if (this.stepNum % this.MINIBATCH_INTERVAL == 0) {
-			this.trainMinibatch();
-		}
-
 		if (this.stepNum % 25000 == 0) {
 			this.nn.LEARNING_RATE *= this.LEARNING_RATE_DECAY_FACTOR;
 			System.out.println(this.nn.exportToString());
@@ -151,14 +88,89 @@ public class DQLGC implements GridCoverageAlgorithm {
 			System.out.println("Learning rate=" + this.nn.LEARNING_RATE);
 		}
 
+		double[] curState = this.preprocessor.getPreprocessedState();
+		double[] nnInput = new double[this.preprocessor.getNNInputSize()];
+
+		for (int i = 0; i < this.preprocessor.getNNInputSize(); i++) {
+			nnInput[i] = curState[i];
+		}
+
+		StateTransition transition = new StateTransition();
+		transition.nnInput = nnInput;
+
+		if (this.nnOutput == null && this.ALWAYS_FORWARD_NNINPUT) {
+			this.nn.feedForward(nnInput);
+			this.nnOutput = this.nn.getOutputs();
+		}
+
+		decideTransitionAction(transition, nnInput);
+		this.actuator.takeActionById(transition.action);
+
+		transition.reward = this.actuator.getLastReward();
+		transition.nextInput = this.preprocessor.getPreprocessedState();
+		transition.correctQVal = transition.reward;
+		transition.isTerminal = this.sensor.isFinished();
+
+		if ((this.LOSS_SAMPLING_RATE != 0) && (this.stepNum % this.LOSS_SAMPLING_RATE == 0)) {
+			showLoss(transition);
+		} else {
+			this.nnOutput = null;
+		}
+
+		this.storeTranstion(transition);
+
+		if (this.MINIBATCH_SEQ_TYPE == MinibatchSeqType.MANUAL) {
+			if (this.stepNum % this.MINIBATCH_INTERVAL == 0) {
+				this.trainMinibatch();
+			}
+		} else if (this.MINIBATCH_SEQ_TYPE == MinibatchSeqType.FULL_EPISODE) {
+			if (transition.isTerminal) {
+				this.trainMinibatch();
+			}
+		}
+
+		if (transition.isTerminal) {
+			this.lastTerminalStepNum = this.stepNum;
+			this.nn.forget();
+		}
+
+		this.updateGreedyEpsilon();
+
+		this.stepNum++;
+	}
+
+
+	private void updateGreedyEpsilon() {
 		if (this.GREEDY_EPSILON_MINIMUM < this.greedyEpsilon) {
 			this.greedyEpsilon -= this.GREEDY_EPSILON_DECREMENT;
 		} else {
 			this.greedyEpsilon = this.GREEDY_EPSILON_MINIMUM;
 		}
+	}
 
 
-		this.stepNum++;
+	private void decideTransitionAction(StateTransition transition, double[] nnInput) {
+		if (this.randgen.nextDouble() < this.greedyEpsilon) {
+			transition.action = this.randgen.nextInt(5);
+		} else {
+			if (this.nnOutput == null) {
+				this.nn.feedForward(nnInput);
+				this.nnOutput = this.nn.getOutputs();
+			}
+			if (this.PRINT_Q_VALUES) {
+				printQVals(this.nnOutput);
+			}
+			double maxVal = Double.NEGATIVE_INFINITY;
+			int maxIndex = 0;
+			for (int i = 0; i < this.nnOutput.length; i++) {
+				if (maxVal < this.nnOutput[i]) {
+					maxVal = this.nnOutput[i];
+					maxIndex = i;
+				}
+			}
+
+			transition.action = maxIndex;
+		}
 	}
 
 
@@ -172,17 +184,18 @@ public class DQLGC implements GridCoverageAlgorithm {
 	}
 
 
-	private void showLossForTransition(StateTransition transition, double[] tmpNNOutput) {
-		double[] nnOutput = tmpNNOutput;
-		if (nnOutput == null) {
+	private void showLoss(StateTransition transition) {
+		if (this.nnOutput == null) {
 			this.nn.feedForward(transition.nnInput);
-			nnOutput = this.nn.getOutputs();
+			this.nnOutput = this.nn.getOutputs();
 		}
 
-		if (!this.sensor.isFinished()) {
+		double[] initialOutputs = Arrays.copyOf(this.nnOutput, this.nnOutput.length);
+
+		if (!transition.isTerminal) {
 			this.nn.feedForward(transition.nextInput);
-			double[] nnOutput2 = this.nn.getOutputs();
-			double maxVal = fastMax_DoubleArr5(nnOutput2);
+			this.nnOutput = this.nn.getOutputs();
+			double maxVal = fastMax_DoubleArr5(this.nnOutput);
 
 			transition.correctQVal += this.DISCOUNT_FACTOR * maxVal;
 		}
@@ -190,14 +203,22 @@ public class DQLGC implements GridCoverageAlgorithm {
 			System.out.printf("\"correct\" q-value for %d: %f\n", transition.action, transition.correctQVal);
 		}
 
+		double linearLoss = transition.correctQVal - initialOutputs[transition.action];
+		// double squaredLoss = linearLoss*linearLoss;
 
-		System.out.printf("Loss for minibatch %d: %f\n", this.stepNum, transition.correctQVal - nnOutput[transition.action]);
+		System.out.printf("Loss for minibatch %d: %f\n", this.stepNum, linearLoss);
 	}
 
 
 	private void trainMinibatch() {
 		if (this.USING_EXTERNAL_QLEARNER && (this.nn instanceof ExternalTorchNN)) {
-			for (int i = 0; i < this.EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH; i++) {
+			long numCodesToSend = 1;
+			if (this.MINIBATCH_SEQ_TYPE == MinibatchSeqType.MANUAL) {
+				numCodesToSend = this.EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH;
+			} else if (this.MINIBATCH_SEQ_TYPE == MinibatchSeqType.FULL_EPISODE) {
+				numCodesToSend = this.stepNum - this.lastTerminalStepNum;
+			}
+			for (int i = 0; i < numCodesToSend; i++) {
 				((ExternalTorchNN) this.nn).runTorchMinibatch();
 			}
 		} else if (this.MINIBATCH_SIZE < this.stepNum) {
@@ -266,7 +287,7 @@ public class DQLGC implements GridCoverageAlgorithm {
 	private void initNeuralNet() {
 		final String setupMode = AdversarialCoverage.settings.getStringProperty("deepql.nn_setup_mode");
 		if (setupMode.equalsIgnoreCase("native")) {
-			this.nn = new NeuralNet(new int[] { this.NN_INPUT_SIZE, 1 });
+			this.nn = new NeuralNet(new int[] { this.preprocessor.getNNInputSize(), 1 });
 			this.nn.removeLastLayer();
 			for (int i = 0; i < this.NUM_HIDDEN_LAYERS; i++) {
 				this.nn.addFullyConnectedLayer(this.HIDDEN_LAYER_SIZE, ActivationFunction.RELU_ACTIVATION);
@@ -353,8 +374,25 @@ public class DQLGC implements GridCoverageAlgorithm {
 		this.LOSS_SAMPLING_RATE = AdversarialCoverage.settings.getIntProperty("logging.deepql.loss_sampling_interval");
 		this.EXTERNALNN_ALLOW_PARTIAL_TRANSITIONS = AdversarialCoverage.settings
 				.getBooleanProperty("neuralnet.torch.use_partial_transitions");
+		this.ALWAYS_FORWARD_NNINPUT = AdversarialCoverage.settings.getBooleanProperty("deepql.always_forward_nninput");
 		this.MINIBATCH_INTERVAL = AdversarialCoverage.settings.getIntProperty("deepql.minibatch_interval");
 		this.EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH = AdversarialCoverage.settings
 				.getIntProperty("deepql.external.rnn.num_codes_per_minibatch");
+		this.MINIBATCH_SEQ_TYPE = MinibatchSeqType.fromString(AdversarialCoverage.settings.getStringProperty("deepql.minibatch_seq_type"));
+	}
+
+
+	enum MinibatchSeqType {
+		MANUAL, FULL_EPISODE;
+
+		static MinibatchSeqType fromString(String str) {
+			if (str.equals("manual")) {
+				return MANUAL;
+			} else if (str.equals("full_episode")) {
+				return FULL_EPISODE;
+			}
+
+			return MANUAL;
+		}
 	}
 }

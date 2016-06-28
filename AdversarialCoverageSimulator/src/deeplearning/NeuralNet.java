@@ -118,6 +118,11 @@ public class NeuralNet {
 			this.layers.get(this.layers.size() - 1).get(i).activeFunc = ActivationFunction.LINEAR_ACTIVATION;
 		}
 	}
+	
+	
+	public void forget() {
+		// No native RNNs, so do nothing
+	}
 
 
 	public String exportToString() {

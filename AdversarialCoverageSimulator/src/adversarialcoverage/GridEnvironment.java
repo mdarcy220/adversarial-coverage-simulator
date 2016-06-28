@@ -78,6 +78,11 @@ public class GridEnvironment {
 	}
 
 
+	public long getSquaresLeft() {
+		return this.squaresLeft;
+	}
+
+
 	/**
 	 * Clears the four cells directly adjacent to the given grid coordinates
 	 * 

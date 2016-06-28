@@ -48,7 +48,7 @@ public class CoverageEngine {
 
 	public void stepCoverage() {
 		if (!this.env.isFinished()) {
-			this.env.step();
+			this.step();
 		}
 		refreshDisplay();
 	}
@@ -133,7 +133,7 @@ public class CoverageEngine {
 			this.env.addRobot(robot);
 		}
 		AdversarialCoverage.stats = new SimulationStats(this.env, this.env.getRobotList());
-		AdversarialCoverage.stats.startNewRun();
+		AdversarialCoverage.stats.startNewBatch();
 
 		this.env.init();
 
@@ -222,13 +222,15 @@ public class CoverageEngine {
 
 	private void handleCoverageCompletion() {
 		long statsBatchSize = AdversarialCoverage.settings.getIntProperty("stats.multirun.batch_size");
-		if (this.env.isCovered()) {
-			System.out.printf("Covered the environment in %d steps.\n", AdversarialCoverage.stats.getNumTimeSteps());
-
+		if (this.env.isFinished()) {
+			System.out.printf("END OF RUN: steps=%d, coverage=%d/%d, maxSurvivability=%.3f\n",
+					AdversarialCoverage.stats.getNumTimeSteps(), AdversarialCoverage.stats.getTotalCellsCovered(),
+					AdversarialCoverage.stats.getTotalFreeCells(), AdversarialCoverage.stats.getMaxSurvivability());
 			if (AdversarialCoverage.stats.getRunsInCurrentBatch() % statsBatchSize == 0) {
-				System.out.printf("Average steps for last %d coverages: %f\n", AdversarialCoverage.stats.getRunsInCurrentBatch(),
-						AdversarialCoverage.stats.getBatchAvgSteps());
-				AdversarialCoverage.stats.reset();
+				System.out.printf("Averages for last batch (size=%d): steps=%f, survivability=%f\n",
+						AdversarialCoverage.stats.getRunsInCurrentBatch(), AdversarialCoverage.stats.getBatchAvgSteps(),
+						AdversarialCoverage.stats.getBatchAvgMaxSurvivability());
+				AdversarialCoverage.stats.startNewBatch();
 			}
 		}
 

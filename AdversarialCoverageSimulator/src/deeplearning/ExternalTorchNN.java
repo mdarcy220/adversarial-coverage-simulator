@@ -152,11 +152,13 @@ public class ExternalTorchNN extends NeuralNet {
 		// Output the transition info
 		this.outMsg.append(String.format("%d %a %d \n", trans.action + 1, trans.reward, trans.isTerminal ? 1 : 0));
 
-		// Output the next state
-		for (int i = 0; i < trans.nextInput.length; i++) {
-			this.outMsg.append(String.format("%a ", trans.nextInput[i]));
+		if (!trans.isTerminal) {
+			// Output the next state
+			for (int i = 0; i < trans.nextInput.length; i++) {
+				this.outMsg.append(String.format("%a ", trans.nextInput[i]));
+			}
+			this.outMsg.append('\n');
 		}
-		this.outMsg.append('\n');
 
 		this.outWriter.print(this.outMsg.toString());
 		this.outWriter.flush();
@@ -166,6 +168,13 @@ public class ExternalTorchNN extends NeuralNet {
 
 	public void runTorchMinibatch() {
 		this.outWriter.println(AdversarialCoverage.settings.getStringProperty("neuralnet.torch.minibatch_code"));
+		this.outWriter.flush();
+	}
+
+
+	@Override
+	public void forget() {
+		this.outWriter.println("forget");
 		this.outWriter.flush();
 	}
 }

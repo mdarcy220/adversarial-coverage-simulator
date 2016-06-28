@@ -13,6 +13,8 @@ public class SimulationStats {
 	private GridEnvironment env;
 	private long[][] lastCellVisitTimes;
 
+	private double batchTotalMaxSurvivability = 0.0;
+
 
 	public SimulationStats(GridEnvironment env, List<GridRobot> robots) {
 		this.env = env;
@@ -35,17 +37,13 @@ public class SimulationStats {
 	}
 
 
-	public double getFractionCovered() {
-		long totalCellsCovered = 0;
-		for (int x = 0; x < this.env.getWidth(); x++) {
-			for (int y = 0; y < this.env.getHeight(); y++) {
-				if (0 < this.env.getGridNode(x, y).getCoverCount()) {
-					totalCellsCovered++;
-				}
-			}
-		}
+	public long getTotalCellsCovered() {
+		return this.totalFreeCells - this.env.getSquaresLeft();
+	}
 
-		return ((double) totalCellsCovered) / ((double) this.totalFreeCells);
+
+	public double getFractionCovered() {
+		return ((double) this.getTotalCellsCovered()) / ((double) this.totalFreeCells);
 	}
 
 
@@ -116,6 +114,11 @@ public class SimulationStats {
 	}
 
 
+	public long getNumRobots() {
+		return this.env.getRobotList().size();
+	}
+
+
 	public long getNumTimeSteps() {
 		return this.nStepsInRun;
 	}
@@ -138,8 +141,7 @@ public class SimulationStats {
 
 
 	/**
-	 * Get the best probability that a robot was able to cover the entire
-	 * region
+	 * Get the best probability that a robot was able to cover the entire region
 	 * 
 	 * @return
 	 */
@@ -156,7 +158,6 @@ public class SimulationStats {
 
 	public void updateTimeStep() {
 		this.nStepsInRun++;
-
 	}
 
 
@@ -175,8 +176,7 @@ public class SimulationStats {
 		long num = 0;
 		for (int x = 0; x < this.env.getWidth(); x++) {
 			for (int y = 0; y < this.env.getHeight(); y++) {
-				if (this.env.getGridNode(x, y).getNodeType() == NodeType.FREE
-						&& this.env.getGridNode(x, y).getCoverCount() == n) {
+				if (this.env.getGridNode(x, y).getNodeType() == NodeType.FREE && this.env.getGridNode(x, y).getCoverCount() == n) {
 					num++;
 				}
 			}
@@ -197,14 +197,27 @@ public class SimulationStats {
 
 	/**
 	 * Get the average number of steps per run for the current batch
+	 * 
 	 * @return
 	 */
 	public double getBatchAvgSteps() {
-		return ((double)this.nStepsInBatch/(double)this.nRunsInBatch);
+		return ((double) this.nStepsInBatch / (double) this.nRunsInBatch);
 	}
-	
+
+
+	/**
+	 * Get the average of max survivabilities in each run for the current batch
+	 * 
+	 * @return
+	 */
+	public double getBatchAvgMaxSurvivability() {
+		return this.batchTotalMaxSurvivability / this.nRunsInBatch;
+	}
+
+
 	/**
 	 * Gets the number of runs that are in the current batch
+	 * 
 	 * @return
 	 */
 	public long getRunsInCurrentBatch() {
@@ -213,11 +226,12 @@ public class SimulationStats {
 
 
 	/**
-	 * Resets the statistics for an individual coverage. Batch statistics
-	 * will remain intact.
+	 * Resets the statistics for an individual coverage. Batch statistics will remain
+	 * intact.
 	 */
 	public void startNewRun() {
 		this.nStepsInBatch += this.nStepsInRun;
+		this.batchTotalMaxSurvivability += this.getMaxSurvivability();
 		this.nRunsInBatch++;
 		resetRunStats();
 	}
@@ -234,9 +248,19 @@ public class SimulationStats {
 				}
 			}
 		}
-		for(RobotStats rs : this.robotStats) {
+		for (RobotStats rs : this.robotStats) {
 			rs.reset();
 		}
+	}
+	
+	
+	/**
+	 * Reset batch stats
+	 */
+	public void startNewBatch() {
+		this.nStepsInBatch = 0;
+		this.nRunsInBatch = 0;
+		this.batchTotalMaxSurvivability = 0.0;
 	}
 
 
@@ -244,16 +268,16 @@ public class SimulationStats {
 	 * Reset all statistics.
 	 */
 	public void reset() {
-		this.nStepsInBatch = 0;
-		this.nRunsInBatch = 0;
 		resetRunStats();
 	}
+
+
 }
 
 
 class RobotStats {
 	long pathLength = 0;
-	double survivability = 1.0;
+	double survivability = 0.0;
 	double coverageProb = 1.0;
 	GridRobot robot;
 	GridEnvironment env;
@@ -270,7 +294,7 @@ class RobotStats {
 		int y = this.robot.getLocation().y;
 
 		this.coverageProb *= (1.0 - this.env.getGridNode(x, y).getDangerProb());
-		if(this.env.getGridNode(x, y).getCoverCount() <= 1) {
+		if (this.env.getGridNode(x, y).getCoverCount() <= 1) {
 			this.survivability += this.coverageProb;
 		}
 		this.pathLength++;
@@ -279,7 +303,7 @@ class RobotStats {
 
 	public void reset() {
 		this.pathLength = 0;
-		this.survivability = 1.0;
+		this.survivability = 0.0;
 		this.coverageProb = 1.0;
 	}
 }

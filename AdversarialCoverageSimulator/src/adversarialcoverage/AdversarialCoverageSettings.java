@@ -117,6 +117,7 @@ public class AdversarialCoverageSettings {
 		this.setStringProperty("neuralnet.torch.minibatch_code", "m");
 		this.setStringProperty("neuralnet.loadfile", "");
 		this.setStringProperty("neuralnet.trainingtype", "rmsprop");
+		this.setStringProperty("deepql.minibatch_seq_type", "manual");
 	}
 
 
