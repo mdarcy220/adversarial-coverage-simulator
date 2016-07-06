@@ -134,7 +134,7 @@ public class CoverageEngine {
 			this.env.addRobot(robot);
 		}
 		AdversarialCoverage.stats = new SimulationStats(this.env, this.env.getRobotList());
-		AdversarialCoverage.stats.startNewBatch();
+		AdversarialCoverage.stats.resetBatchStats();
 
 		this.env.init();
 
@@ -225,16 +225,17 @@ public class CoverageEngine {
 		long statsBatchSize = AdversarialCoverage.settings.getInt("stats.multirun.batch_size");
 		SimulationStats stats = AdversarialCoverage.stats;
 		if (this.env.isFinished() && stats != null) {
-			System.out.printf("END OF RUN: steps=%d, cover=%d/%d, teamSurv=%.3f, bots=%d/%d\n", stats.getNumTimeSteps(),
+			System.out.printf("Run end: steps=%d, cov=%d/%d, tSv=%.3f, bots=%d/%d\n", stats.getNumTimeSteps(),
 					stats.getTotalCellsCovered(), stats.getTotalFreeCells(), stats.getTeamSurvivability(),
 					stats.getNumSurvivingRobots(), stats.getNumRobots());
-			if (stats.getRunsInCurrentBatch() % statsBatchSize == 0 && stats.getRunsInCurrentBatch() != 0) {
-				SampledVariableLong stepsPerRunInfo = stats.getBatchStepsPerRunInfo();
-				SampledVariableDouble survivabilityInfo = stats.getBatchSurvivability();
-				System.out.printf("Batch averages (size=%d): steps=%.3f (%.2f), teamSurv=%.3f (%.2f)\n",
-						stats.getRunsInCurrentBatch(), stepsPerRunInfo.mean(), stepsPerRunInfo.stddev(),
-						survivabilityInfo.mean(), survivabilityInfo.stddev());
-				stats.startNewBatch();
+			if (statsBatchSize <= stats.getRunsInCurrentBatch()) {
+				final SampledVariableLong stepsPerRunInfo = stats.getBatchStepsPerRunInfo();
+				final SampledVariableDouble survivabilityInfo = stats.getBatchSurvivability();
+				final SampledVariableDouble coverageInfo = stats.getBatchCoverage();
+				System.out.printf("Batch end (size=%d): steps=%.1f (%.1f), cov=%.1f%% (%.1f), tSv=%.2f (%.1f)\n",
+						stats.getRunsInCurrentBatch(), stepsPerRunInfo.mean(), stepsPerRunInfo.stddev(), coverageInfo.mean(),
+						coverageInfo.stddev(), survivabilityInfo.mean(), survivabilityInfo.stddev());
+				stats.resetBatchStats();
 			}
 		}
 

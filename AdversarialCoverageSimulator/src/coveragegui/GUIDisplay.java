@@ -1,5 +1,6 @@
 package coveragegui;
 
+import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,12 +23,22 @@ public class GUIDisplay implements DisplayAdapter {
 	private CoverageEngine engine = null;
 
 
-	public GUIDisplay(final CoverageEngine engine) {
+	private GUIDisplay(final CoverageEngine engine) {
 		this.engine = engine;
 		this.frame = new JFrame("Adversarial Coverage Simulator");
 		// initialize the window
 		this.frame.setSize(500, 400);
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+
+
+	public static GUIDisplay createInstance(final CoverageEngine engine) {
+		if (GraphicsEnvironment.isHeadless()) {
+			System.err.println("Could not instantiate GUI display because environment is headless.");
+			return null;
+		}
+		GUIDisplay instance = new GUIDisplay(engine);
+		return instance;
 	}
 
 

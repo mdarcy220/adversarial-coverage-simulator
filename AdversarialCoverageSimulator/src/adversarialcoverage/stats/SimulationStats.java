@@ -6,16 +6,19 @@ import java.util.Set;
 
 import adversarialcoverage.*;
 
+
 public class SimulationStats {
 	private long nStepsInRun = 0;
 	private SampledVariableLong batch_stepsPerRun = new SampledVariableLong();
 	private long nRunsInBatch = 0;
 	private long totalFreeCells = 0;
+	private long squaresLeft;
 	private Set<RobotStats> robotStats = new HashSet<>();
 	private GridEnvironment env;
 	private long[][] lastCellVisitTimes;
 
 	private SampledVariableDouble batch_survivability = new SampledVariableDouble();
+	private SampledVariableDouble batch_coverage = new SampledVariableDouble();
 
 
 	public SimulationStats(GridEnvironment env, List<GridRobot> robots) {
@@ -24,28 +27,7 @@ public class SimulationStats {
 		for (GridRobot r : robots) {
 			this.robotStats.add(new RobotStats(r, env));
 		}
-		for (int x = 0; x < env.getWidth(); x++) {
-			for (int y = 0; y < env.getHeight(); y++) {
-				if (env.getGridNode(x, y).getNodeType() == NodeType.FREE) {
-					this.totalFreeCells++;
-				}
-			}
-		}
-	}
-
-
-	public long getTotalFreeCells() {
-		return this.totalFreeCells;
-	}
-
-
-	public long getTotalCellsCovered() {
-		return this.totalFreeCells - this.env.getSquaresLeft();
-	}
-
-
-	public double getFractionCovered() {
-		return ((double) this.getTotalCellsCovered()) / ((double) this.totalFreeCells);
+		this.resetRunStats();
 	}
 
 
@@ -64,6 +46,44 @@ public class SimulationStats {
 
 
 	/**
+	 * Gets a <code>SampledVariableDouble</code> that can be used to retrieve
+	 * information about the fraction of the grid covered per run for the batch.
+	 * 
+	 * @return
+	 */
+	public SampledVariableDouble getBatchCoverage() {
+		return this.batch_coverage;
+	}
+
+
+	/**
+	 * Get a <code>SampledVariableLong</code> containing sample statistics for the
+	 * number of steps taken per run in the current batch.
+	 * 
+	 * @return
+	 */
+	public SampledVariableLong getBatchStepsPerRunInfo() {
+		return this.batch_stepsPerRun;
+	}
+
+
+	/**
+	 * Gets a <code>SampledVariableDouble</code> that can be used to retrieve
+	 * information about the survivability per run for the batch.
+	 * 
+	 * @return
+	 */
+	public SampledVariableDouble getBatchSurvivability() {
+		return this.batch_survivability;
+	}
+
+
+	public double getFractionCovered() {
+		return ((double) this.getTotalCellsCovered()) / ((double) this.totalFreeCells);
+	}
+
+
+	/**
 	 * Gets the cover count of the most-covered cell
 	 * 
 	 * @return
@@ -78,6 +98,38 @@ public class SimulationStats {
 			}
 		}
 		return maxCovers;
+	}
+
+
+	/**
+	 * Get the best probability that a robot was able to cover the entire region
+	 * 
+	 * @return
+	 */
+	public double getMaxCoverageProb() {
+		double best = 0.0;
+		for (RobotStats rs : this.robotStats) {
+			if (best < rs.coverageProb) {
+				best = rs.coverageProb;
+			}
+		}
+		return best;
+	}
+
+
+	/**
+	 * Returns the maximum individual survivability from the robots.
+	 * 
+	 * @return
+	 */
+	public double getMaxSurvivability() {
+		double best = 0.0;
+		for (RobotStats rs : this.robotStats) {
+			if (best < rs.survivability) {
+				best = rs.survivability;
+			}
+		}
+		return best;
 	}
 
 
@@ -111,13 +163,13 @@ public class SimulationStats {
 	}
 
 
-	public long getNumSurvivingRobots() {
-		return this.env.getRobotList().size() - getNumBrokenRobots();
+	public long getNumRobots() {
+		return this.env.getRobotList().size();
 	}
 
 
-	public long getNumRobots() {
-		return this.env.getRobotList().size();
+	public long getNumSurvivingRobots() {
+		return this.env.getRobotList().size() - getNumBrokenRobots();
 	}
 
 
@@ -126,24 +178,23 @@ public class SimulationStats {
 	}
 
 
-	public long getTotalCells() {
-		return this.env.getHeight() * this.env.getWidth();
+	public RobotStats getRobotStats(GridRobot r) {
+		for (RobotStats rs : this.robotStats) {
+			if (rs.robot.equals(r)) {
+				return rs;
+			}
+		}
+		return null;
 	}
 
 
 	/**
-	 * Returns the maximum individual survivability from the robots.
+	 * Gets the number of runs that are in the current batch
 	 * 
 	 * @return
 	 */
-	public double getMaxSurvivability() {
-		double best = 0.0;
-		for (RobotStats rs : this.robotStats) {
-			if (best < rs.survivability) {
-				best = rs.survivability;
-			}
-		}
-		return best;
+	public long getRunsInCurrentBatch() {
+		return this.nRunsInBatch;
 	}
 
 
@@ -157,35 +208,18 @@ public class SimulationStats {
 	}
 
 
-	/**
-	 * Get the best probability that a robot was able to cover the entire region
-	 * 
-	 * @return
-	 */
-	public double getMaxCoverageProb() {
-		double best = 0.0;
-		for (RobotStats rs : this.robotStats) {
-			if (best < rs.coverageProb) {
-				best = rs.coverageProb;
-			}
-		}
-		return best;
+	public long getTotalCells() {
+		return this.env.getHeight() * this.env.getWidth();
 	}
 
 
-	public void updateTimeStep() {
-		this.nStepsInRun++;
+	public long getTotalCellsCovered() {
+		return this.totalFreeCells - this.squaresLeft;
 	}
 
 
-	public void updateCellCovered(GridRobot r) {
-		for (RobotStats rs : this.robotStats) {
-			if (rs.robot.equals(r)) {
-				rs.updateCellCovered();
-			}
-		}
-
-		this.lastCellVisitTimes[r.getLocation().x][r.getLocation().y] = this.nStepsInRun;
+	public long getTotalFreeCells() {
+		return this.totalFreeCells;
 	}
 
 
@@ -202,62 +236,27 @@ public class SimulationStats {
 	}
 
 
-	public RobotStats getRobotStats(GridRobot r) {
-		for (RobotStats rs : this.robotStats) {
-			if (rs.robot.equals(r)) {
-				return rs;
-			}
-		}
-		return null;
-	}
-
-
 	/**
-	 * Get a <code>SampledVariableLong</code> containing sample statistics for the
-	 * number of steps taken per run in the current batch.
-	 * 
-	 * @return
+	 * Reset all statistics.
 	 */
-	public SampledVariableLong getBatchStepsPerRunInfo() {
-		return this.batch_stepsPerRun;
-	}
-
-
-	/**
-	 * Gets a <code>SampledVariableDouble</code> that can be used to retrieve
-	 * information about the survivability per run for the batch.
-	 * 
-	 * @return
-	 */
-	public SampledVariableDouble getBatchSurvivability() {
-		return this.batch_survivability;
-	}
-
-
-	/**
-	 * Gets the number of runs that are in the current batch
-	 * 
-	 * @return
-	 */
-	public long getRunsInCurrentBatch() {
-		return this.nRunsInBatch;
-	}
-
-
-	/**
-	 * Resets the statistics for an individual coverage. Batch statistics will remain
-	 * intact.
-	 */
-	public void startNewRun() {
-		this.batch_stepsPerRun.addSample(this.nStepsInRun);
-		this.batch_survivability.addSample(this.getTeamSurvivability());
-		this.nRunsInBatch++;
-
+	public void reset() {
 		resetRunStats();
+		resetBatchStats();
 	}
 
 
-	private void resetRunStats() {
+	/**
+	 * Reset batch stats
+	 */
+	public void resetBatchStats() {
+		this.nRunsInBatch = 0;
+		this.batch_stepsPerRun.reset();
+		this.batch_survivability.reset();
+		this.batch_coverage.reset();
+	}
+
+
+	public void resetRunStats() {
 		this.nStepsInRun = 0;
 		this.totalFreeCells = 0;
 		this.lastCellVisitTimes = new long[this.env.getWidth()][this.env.getHeight()];
@@ -268,6 +267,8 @@ public class SimulationStats {
 				}
 			}
 		}
+		this.squaresLeft = this.totalFreeCells;
+
 		for (RobotStats rs : this.robotStats) {
 			rs.reset();
 		}
@@ -275,20 +276,36 @@ public class SimulationStats {
 
 
 	/**
-	 * Reset batch stats
+	 * Resets the statistics for an individual coverage. Batch statistics will remain
+	 * intact.
 	 */
-	public void startNewBatch() {
-		this.batch_stepsPerRun.reset();
-		this.nRunsInBatch = 0;
-		this.batch_survivability.reset();
+	public void startNewRun() {
+		this.batch_stepsPerRun.addSample(this.nStepsInRun);
+		this.batch_survivability.addSample(this.getTeamSurvivability());
+		this.batch_coverage.addSample(this.getFractionCovered() * 100.0);
+		this.nRunsInBatch++;
+
+		resetRunStats();
 	}
 
 
-	/**
-	 * Reset all statistics.
-	 */
-	public void reset() {
-		resetRunStats();
+	public void updateCellCovered(GridRobot r) {
+		for (RobotStats rs : this.robotStats) {
+			if (rs.robot.equals(r)) {
+				rs.updateCellCovered();
+			}
+		}
+
+		this.lastCellVisitTimes[r.getLocation().x][r.getLocation().y] = this.nStepsInRun;
+
+		if (this.env.getGridNode(r.getLocation().x, r.getLocation().y).getCoverCount() == 0) {
+			this.squaresLeft--;
+		}
+	}
+
+
+	public void updateTimeStep() {
+		this.nStepsInRun++;
 	}
 
 
@@ -309,21 +326,23 @@ class RobotStats {
 	}
 
 
-	public void updateCellCovered() {
-		int x = this.robot.getLocation().x;
-		int y = this.robot.getLocation().y;
-
-		this.coverageProb *= (1.0 - this.env.getGridNode(x, y).getDangerProb());
-		if (this.env.getGridNode(x, y).getCoverCount() <= 1) {
-			this.survivability += this.coverageProb;
-		}
-		this.pathLength++;
-	}
-
-
 	public void reset() {
 		this.pathLength = 0;
 		this.survivability = 0.0;
 		this.coverageProb = 1.0;
+	}
+
+
+	public void updateCellCovered() {
+		int x = this.robot.getLocation().x;
+		int y = this.robot.getLocation().y;
+		GridNode node = this.env.getGridNode(x, y);
+
+		if (node.getCoverCount() < 1) {
+			this.survivability += this.coverageProb;
+		}
+		this.coverageProb *= (1.0 - node.getDangerProb());
+
+		this.pathLength++;
 	}
 }

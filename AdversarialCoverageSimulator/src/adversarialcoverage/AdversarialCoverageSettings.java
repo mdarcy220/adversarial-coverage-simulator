@@ -62,6 +62,7 @@ public class AdversarialCoverageSettings {
 		this.setInt("deepql.history_max", 1);
 		this.setInt("deepql.minibatch_size", 0);
 		this.setInt("deepql.minibatch_interval", 1);
+		this.setInt("deepql.minibatch_seq.fullep.numCodes", -1);
 		this.setInt("deepql.external.rnn.num_codes_per_minibatch", 1);
 		this.setInt("deepql.nn_input.vision_radius", 5);
 		this.setInt("env.grid.height", 5);
@@ -113,6 +114,7 @@ public class AdversarialCoverageSettings {
 		this.setString("deepql.external_torch_nn.nnoutput_file_name", "output2.dat");
 		this.setString("deepql.minibatch_seq_type", "manual");
 		this.setString("deepql.nn_setup_mode", "native");
+		this.setString("deepql.statepreprocessor.vision_type", "CENTERED_SNAP_TO_EDGES");
 		this.setString("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
 		this.setString("logging.logfile", "");
 		this.setString("neuralnet.torch.minibatch_code", "m");

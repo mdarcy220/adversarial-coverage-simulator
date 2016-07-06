@@ -1,6 +1,7 @@
 package adversarialcoverage;
 
 import java.awt.Dimension;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -41,6 +42,29 @@ public class GridEnvironment {
 			}
 		}
 
+		registerCustomCommands();
+
+	}
+
+
+	private void registerCustomCommands() {
+		AdversarialCoverage.controller.registerCommand(":env_printgrid", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				String streamname = "stdout";
+				if (1 <= args.length) {
+					streamname = args[0];
+				}
+
+				PrintStream stream = System.out;
+				if (streamname.equalsIgnoreCase("stderr")) {
+					stream = System.err;
+				}
+
+				printToWriter_onelayer(stream);
+
+			}
+		});
 	}
 
 
@@ -80,6 +104,38 @@ public class GridEnvironment {
 
 	public long getSquaresLeft() {
 		return this.squaresLeft;
+	}
+
+
+	public void printToWriter_onelayer(PrintStream pw) {
+		for (int y = 0; y < this.getHeight(); y++) {
+			for (int x = 0; x < this.getWidth(); x++) {
+				GridNode node = this.grid[x][y];
+				if (node.getNodeType() == NodeType.OBSTACLE) {
+					pw.printf("%4s", "OBS");
+				} else if (node.getDangerProb() == 0.0) {
+					pw.printf("%4s", "FREE");
+				} else {
+					pw.printf("%4.2f", node.getDangerProb());
+				}
+
+				int robotId = -1;
+				for (GridRobot r : this.robots) {
+					if (r.getLocation().x == x && r.getLocation().y == y) {
+						robotId = r.getId();
+						break;
+					}
+				}
+
+				if (robotId == -1) {
+					pw.printf("%c ", node.getCoverCount() <= 0 ? 'N' : 'Y');
+				} else {
+					pw.printf("* ");
+				}
+
+			}
+			pw.println();
+		}
 	}
 
 

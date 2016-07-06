@@ -99,27 +99,29 @@ public class GridActuator {
 
 	private void processCoveringCurrentNode() {
 		double rand = Math.random();
-
-		if (rand < this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb() && this.ROBOTS_BREAKABLE) {
-			this.env.getRobotById(this.robot.getId()).setBroken(true);
-			this.lastReward = this.DEATH_REWARD;
-			return;
-		}
-
+		boolean isThreat = rand < this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()
+				&& this.ROBOTS_BREAKABLE;
 		int coverCount = this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getCoverCount();
+
 		if (coverCount == 0) {
 			this.env.squaresLeft--;
 		}
-		this.lastReward = coverCount < 1 ? this.COVER_UNIQUE_REWARD : this.COVER_AGAIN_REWARD;
-		// this.lastReward -= this.env.getGridNode(this.robot.getLocation().x,
-		// this.robot.getLocation().y).getDangerProb();
-		if (this.env.isCovered()) {
-			this.lastReward = this.FULL_COVERAGE_REWARD;
-		}
-		// this.lastReward -= this.env.getGridNode(this.robot.getLocation().x,
-		// this.robot.getLocation().y).getDangerProb()*10;
-		this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).incrementCoverCount();
 		AdversarialCoverage.stats.updateCellCovered(this.robot);
+		this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).incrementCoverCount();
+
+		if (isThreat) {
+			this.env.getRobotById(this.robot.getId()).setBroken(true);
+			this.lastReward = this.DEATH_REWARD;
+
+		} else {
+			this.lastReward = coverCount < 1 ? this.COVER_UNIQUE_REWARD : this.COVER_AGAIN_REWARD;
+
+			if (this.env.isCovered()) {
+				this.lastReward = this.FULL_COVERAGE_REWARD;
+			}
+		}
+
+
 	}
 
 

@@ -54,7 +54,7 @@ public class DQLGC implements GridCoverageAlgorithm {
 
 	private long stateHistorySize = 0;
 	private double[] nnOutput = null;
-	private long lastTerminalStepNum = -1;
+	private long lastTerminalStep = -1;
 
 
 	public DQLGC(GridSensor sensor, GridActuator actuator) {
@@ -130,7 +130,7 @@ public class DQLGC implements GridCoverageAlgorithm {
 		}
 
 		if (transition.isTerminal) {
-			this.lastTerminalStepNum = this.stepNum;
+			this.lastTerminalStep = this.stepNum;
 			this.nn.forget();
 		}
 
@@ -145,9 +145,9 @@ public class DQLGC implements GridCoverageAlgorithm {
 		double[] tmpOutputs = this.nn.getOutputs();
 
 		if (tmpOutputs == null) {
-			System.err.println("Null nn output. Sleeping for 5 seconds.");
+			System.err.println("Null nn output. Sleeping for 10 seconds.");
 			try {
-				Thread.sleep(5000);
+				Thread.sleep(10000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -230,7 +230,8 @@ public class DQLGC implements GridCoverageAlgorithm {
 			if (this.MINIBATCH_SEQ_TYPE == MinibatchSeqType.MANUAL) {
 				numCodesToSend = this.EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH;
 			} else if (this.MINIBATCH_SEQ_TYPE == MinibatchSeqType.FULL_EPISODE) {
-				numCodesToSend = this.stepNum - this.lastTerminalStepNum;
+				int nCodesFixed = AdversarialCoverage.settings.getInt("deepql.minibatch_seq.fullep.numCodes");
+				numCodesToSend = nCodesFixed < 0 ? (this.stepNum - this.lastTerminalStep) : nCodesFixed;
 			}
 			for (int i = 0; i < numCodesToSend; i++) {
 				((ExternalTorchNN) this.nn).runTorchMinibatch();

@@ -37,9 +37,11 @@ public class AdversarialCoverage {
 
 
 		if (!args.HEADLESS) {
-			GUIDisplay gd = new GUIDisplay(this.engine);
-			gd.setup();
-			this.engine.setDisplay(gd);
+			GUIDisplay gd = GUIDisplay.createInstance(this.engine);
+			if (gd != null) {
+				gd.setup();
+				this.engine.setDisplay(gd);
+			}
 		}
 
 		if (args.USE_AUTOSTART && !this.engine.isRunning()) {

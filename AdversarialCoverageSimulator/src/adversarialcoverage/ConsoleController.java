@@ -1,5 +1,6 @@
 package adversarialcoverage;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -180,7 +181,10 @@ public class ConsoleController {
 				}
 				DisplayAdapter display = null;
 				if (args[0].equals("gui")) {
-					GUIDisplay gd = new GUIDisplay(ConsoleController.this.engine);
+					if (GraphicsEnvironment.isHeadless()) {
+						return;
+					}
+					GUIDisplay gd = GUIDisplay.createInstance(ConsoleController.this.engine);
 					gd.setup();
 					display = gd;
 				} else if (args[0].equals("none")) {
@@ -197,6 +201,51 @@ public class ConsoleController {
 					return;
 				}
 				loadCommandFile(args[0]);
+			}
+		});
+
+
+		this.registerCommand(":execAll", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				for (int i = 0; i < args.length; i++) {
+					handleLine(args[i]);
+				}
+			}
+		});
+
+		this.registerCommand(":registerCommand", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 2) {
+					return;
+				}
+				final String newCommandName = args[0];
+				final StringBuilder commandToExec = new StringBuilder(args[1]);
+				registerCommand(newCommandName, new TerminalCommand() {
+					@Override
+					public void execute(String[] args) {
+						for (int i = 0; i < args.length; i++) {
+							commandToExec.append(" ");
+							commandToExec.append(args[i]);
+						}
+						handleLine(commandToExec.toString());
+					}
+				});
+			}
+		});
+
+		this.registerCommand(":isRegistered", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				if (ConsoleController.this.commandList.containsKey(args[0])) {
+					System.out.printf("true\n");
+				} else {
+					System.out.printf("false\n");
+				}
 			}
 		});
 
