@@ -10,6 +10,9 @@ public class StatePreprocessor {
 	private boolean NN_INPUT_OBSTACLE_LAYER = AdversarialCoverage.settings.getBoolean("deepql.nn_input.obstacle_layer");
 	private final int NN_INPUT_SIZE;
 	private boolean ATTEMPT_NORMALIZATION = AdversarialCoverage.settings.getBoolean("deepql.statepreprocessor.attempt_mormalization");
+	private double OUT_OF_BOUNDS_VALS_DANGER = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.danger");
+	private double OUT_OF_BOUNDS_VALS_COVER = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.cover");
+	private double OUT_OF_BOUNDS_VALS_OBSTACLE = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.obstacle");
 	private VisionType visiontype;
 	private GridSensor sensor;
 
@@ -69,17 +72,17 @@ public class StatePreprocessor {
 					}
 				} else {
 					// Danger level layer
-					stateBuf[cellNum] = 0;
+					stateBuf[cellNum] = this.OUT_OF_BOUNDS_VALS_DANGER;
 
 					// Cover count layer
-					stateBuf[layerSize + cellNum] = 0;
+					stateBuf[layerSize + cellNum] = this.OUT_OF_BOUNDS_VALS_COVER;
 
 					// Robot position layer
 					stateBuf[(2 * layerSize) + cellNum] = 0;
 
 					// Obstacle layer
 					if (this.NN_INPUT_OBSTACLE_LAYER) {
-						stateBuf[(3 * layerSize) + cellNum] = 1.0;
+						stateBuf[(3 * layerSize) + cellNum] = this.OUT_OF_BOUNDS_VALS_OBSTACLE;
 					}
 				}
 			}
@@ -130,7 +133,7 @@ public class StatePreprocessor {
 					stateBuf[cellNum] = this.sensor.getDangerLevelAt(gridX, gridY) * 3.0;
 
 					// Cover count layer
-					stateBuf[layerSize + cellNum] = this.sensor.getCoverCountAt(gridX, gridY) < 1 ? -1 : 1;
+					stateBuf[layerSize + cellNum] = this.sensor.getCoverCountAt(gridX, gridY) < 1 ? -1.0 : 1.0;
 
 					// Obstacle layer
 					if (this.NN_INPUT_OBSTACLE_LAYER) {
@@ -138,14 +141,14 @@ public class StatePreprocessor {
 					}
 				} else {
 					// Danger level layer
-					stateBuf[cellNum] = 0;
+					stateBuf[cellNum] = this.OUT_OF_BOUNDS_VALS_DANGER;
 
 					// Cover count layer
-					stateBuf[layerSize + cellNum] = 0;
+					stateBuf[layerSize + cellNum] = this.OUT_OF_BOUNDS_VALS_COVER;
 
 					// Obstacle layer
 					if (this.NN_INPUT_OBSTACLE_LAYER) {
-						stateBuf[(2 * layerSize) + cellNum] = 1.0;
+						stateBuf[(2 * layerSize) + cellNum] = this.OUT_OF_BOUNDS_VALS_OBSTACLE;
 					}
 				}
 			}
@@ -210,6 +213,9 @@ public class StatePreprocessor {
 		}
 		this.ATTEMPT_NORMALIZATION = AdversarialCoverage.settings.getBoolean("deepql.statepreprocessor.attempt_mormalization");
 		this.NN_INPUT_OBSTACLE_LAYER = AdversarialCoverage.settings.getBoolean("deepql.nn_input.obstacle_layer");
+		this.OUT_OF_BOUNDS_VALS_DANGER = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.danger");
+		this.OUT_OF_BOUNDS_VALS_COVER = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.cover");
+		this.OUT_OF_BOUNDS_VALS_OBSTACLE = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.obstacle");
 	}
 
 

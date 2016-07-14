@@ -72,6 +72,7 @@ public class AdversarialCoverageSettings {
 		this.setInt("env.grid.minwidth", 5);
 		this.setInt("env.grid.width", 5);
 		this.setInt("logging.deepql.loss_sampling_interval", 500);
+		this.setInt("logging.deepql.loss_display_interval", 500);
 		this.setInt("neuralnet.hidden_layer_size", 30);
 		this.setInt("neuralnet.num_hidden_layers", 2);
 		this.setInt("robots.count", 1);
@@ -83,6 +84,7 @@ public class AdversarialCoverageSettings {
 		this.setBoolean("autorun.randomize_robot_start", true);
 		this.setBoolean("deepql.always_forward_nninput", false);
 		this.setBoolean("deepql.display.print_q_values", false);
+		this.setBoolean("deepql.external.use_fast_forwards", false);
 		this.setBoolean("deepql.nn_input.obstacle_layer", true);
 		this.setBoolean("deepql.use_external_qlearner", true);
 		this.setBoolean("display.show_binary_coverage", false);
@@ -100,10 +102,13 @@ public class AdversarialCoverageSettings {
 		this.setDouble("deepql.greedy_epsilon_minimum", 0.1);
 		this.setDouble("deepql.greedy_epsilon_start", 1.0);
 		this.setDouble("deepql.learning_rate_decay_factor", 1.0);
-		this.setDouble("deepql.reward.cover_again", -0.1);
-		this.setDouble("deepql.reward.cover_unique", 1.0);
-		this.setDouble("deepql.reward.death", -2.0);
-		this.setDouble("deepql.reward.full_coverage", 4.0);
+		this.setDouble("deepql.reward.cover_again", -0.01);
+		this.setDouble("deepql.reward.cover_unique", 0.1);
+		this.setDouble("deepql.reward.death", -0.2);
+		this.setDouble("deepql.reward.full_coverage", 0.4);
+		this.setDouble("deepql.statepreprocessor.out_of_bounds_vals.danger", 0.0);
+		this.setDouble("deepql.statepreprocessor.out_of_bounds_vals.cover", 0.0);
+		this.setDouble("deepql.statepreprocessor.out_of_bounds_vals.obstacle", 1.0);
 		this.setDouble("neuralnet.learning_rate", 0.1);
 		this.setDouble("neuralnet.momentum", 0.9);
 		this.setDouble("neuralnet.rms.decay_rate", 0.9);

@@ -79,6 +79,12 @@ public class ExternalTorchNN extends NeuralNet {
 		this.outWriter.flush();
 		this.outMsg.setLength(0);
 	}
+	
+	
+	public void feedForward_noSendState() {
+		this.outWriter.print("f_nostate\n");
+		this.outWriter.flush();
+	}
 
 
 	@Override

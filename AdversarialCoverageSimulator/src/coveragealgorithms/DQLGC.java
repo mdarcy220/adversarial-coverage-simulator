@@ -11,6 +11,7 @@ import adversarialcoverage.AdversarialCoverageSettings;
 import adversarialcoverage.GridActuator;
 import adversarialcoverage.GridSensor;
 import adversarialcoverage.TerminalCommand;
+import adversarialcoverage.stats.SampledVariableDouble;
 import deeplearning.NeuralNet;
 import deeplearning.StatePreprocessor;
 import deeplearning.StateTransition;
@@ -46,8 +47,10 @@ public class DQLGC implements GridCoverageAlgorithm {
 	private int NUM_HIDDEN_LAYERS;
 	private boolean USING_EXTERNAL_QLEARNER;
 	private boolean EXTERNALNN_ALLOW_PARTIAL_TRANSITIONS;
+	private boolean EXTERNALNN_USE_FAST_FORWARDS;
 	private boolean ALWAYS_FORWARD_NNINPUT;
-	private int LOSS_SAMPLING_RATE;
+	private int LOSS_SAMPLING_INTERVAL;
+	private int LOSS_DISPLAY_INTERVAL;
 	private int MINIBATCH_INTERVAL;
 	private int EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH;
 	private MinibatchSeqType MINIBATCH_SEQ_TYPE = MinibatchSeqType.MANUAL;
@@ -55,6 +58,8 @@ public class DQLGC implements GridCoverageAlgorithm {
 	private long stateHistorySize = 0;
 	private double[] nnOutput = null;
 	private long lastTerminalStep = -1;
+	private SampledVariableDouble trainingLoss = new SampledVariableDouble();
+	private SampledVariableDouble trainingAbsLoss = new SampledVariableDouble();
 
 
 	public DQLGC(GridSensor sensor, GridActuator actuator) {
@@ -89,12 +94,7 @@ public class DQLGC implements GridCoverageAlgorithm {
 			System.out.println("Learning rate=" + this.nn.LEARNING_RATE);
 		}
 
-		double[] curState = this.preprocessor.getPreprocessedState();
-		double[] nnInput = new double[this.preprocessor.getNNInputSize()];
-
-		for (int i = 0; i < this.preprocessor.getNNInputSize(); i++) {
-			nnInput[i] = curState[i];
-		}
+		double[] nnInput = this.preprocessor.getPreprocessedState();
 
 		StateTransition transition = new StateTransition();
 		transition.nnInput = nnInput;
@@ -108,13 +108,24 @@ public class DQLGC implements GridCoverageAlgorithm {
 
 		transition.reward = this.actuator.getLastReward();
 		transition.nextInput = this.preprocessor.getPreprocessedState();
-		transition.correctQVal = transition.reward;
 		transition.isTerminal = this.sensor.isFinished();
 
-		if ((this.LOSS_SAMPLING_RATE != 0) && (this.stepNum % this.LOSS_SAMPLING_RATE == 0)) {
-			showLoss(transition);
+		if ((this.LOSS_SAMPLING_INTERVAL != 0) && (this.stepNum % this.LOSS_SAMPLING_INTERVAL == 0)) {
+			double loss = calcLoss(transition);
+			this.trainingLoss.addSample(loss);
+			this.trainingAbsLoss.addSample(Math.abs(loss));
 		} else {
 			this.nnOutput = null;
+		}
+
+		if ((this.LOSS_DISPLAY_INTERVAL != 0) && (this.stepNum % this.LOSS_DISPLAY_INTERVAL == 0)) {
+			double loss_extreme = (Math.abs(this.trainingLoss.getMax()) < Math.abs(this.trainingLoss.getMin()))
+					? this.trainingLoss.getMin() : this.trainingLoss.getMax();
+			System.out.printf("Loss stats: n=%d, mx=%.4f, avg=%.5f (%.5f), avgmag=%.6f\n", this.trainingLoss.numSamples(),
+					loss_extreme, this.trainingLoss.mean(), this.trainingLoss.stddev(), this.trainingAbsLoss.mean(),
+					this.trainingAbsLoss.stddev());
+			this.trainingLoss.reset();
+			this.trainingAbsLoss.reset();
 		}
 
 		this.storeTranstion(transition);
@@ -140,8 +151,23 @@ public class DQLGC implements GridCoverageAlgorithm {
 	}
 
 
+	/**
+	 * Feeds the given input through the network and returns the output. This method
+	 * guarantees a valid output, even if the network's real output is null. If the
+	 * network has null output, an array of zeros will be returned.
+	 * 
+	 * @param nnInput
+	 *                the input to the network
+	 * @return
+	 */
 	private double[] ensureNNOutput(double[] nnInput) {
-		this.nn.feedForward(nnInput);
+		boolean use_fast_forward = this.EXTERNALNN_USE_FAST_FORWARDS && (this.nn instanceof ExternalTorchNN)
+				&& (this.lastTerminalStep < (this.stepNum - 2)) && 0 < this.stepNum;
+		if (use_fast_forward) {
+			((ExternalTorchNN) this.nn).feedForward_noSendState();
+		} else {
+			this.nn.feedForward(nnInput);
+		}
 		double[] tmpOutputs = this.nn.getOutputs();
 
 		if (tmpOutputs == null) {
@@ -200,27 +226,27 @@ public class DQLGC implements GridCoverageAlgorithm {
 	}
 
 
-	private void showLoss(StateTransition transition) {
+	private double calcLoss(StateTransition transition) {
 		if (this.nnOutput == null) {
 			this.nnOutput = ensureNNOutput(transition.nnInput);
 		}
 
 		double[] initialOutputs = Arrays.copyOf(this.nnOutput, this.nnOutput.length);
+		double correctQVal = transition.reward;
 
 		if (!transition.isTerminal) {
 			this.nnOutput = ensureNNOutput(transition.nextInput);
 			double maxVal = fastMax_DoubleArr5(this.nnOutput);
 
-			transition.correctQVal += this.DISCOUNT_FACTOR * maxVal;
+			correctQVal += this.DISCOUNT_FACTOR * maxVal;
 		}
 		if (this.PRINT_Q_VALUES) {
-			System.out.printf("\"correct\" q-value for %d: %f\n", transition.action, transition.correctQVal);
+			System.out.printf("\"correct\" q-value for %d: %f\n", transition.action, correctQVal);
 		}
 
-		double linearLoss = transition.correctQVal - initialOutputs[transition.action];
-		// double squaredLoss = linearLoss*linearLoss;
+		double linearLoss = correctQVal - initialOutputs[transition.action];
 
-		System.out.printf("Loss for minibatch %d: %f\n", this.stepNum, linearLoss);
+		return linearLoss;
 	}
 
 
@@ -252,7 +278,7 @@ public class DQLGC implements GridCoverageAlgorithm {
 		for (int i = 0; i < batchSize; i++) {
 			int sampleNum = this.randgen.nextInt((int) this.stateHistorySize);
 			StateTransition sample = this.lastStates[sampleNum];
-			
+
 			double[] tmpnnOutput = ensureNNOutput(sample.nextInput);
 			double nextQVal = fastMax_DoubleArr5(tmpnnOutput);
 
@@ -390,8 +416,10 @@ public class DQLGC implements GridCoverageAlgorithm {
 		this.NUM_HIDDEN_LAYERS = settings.getInt("neuralnet.num_hidden_layers");
 		this.USING_EXTERNAL_QLEARNER = settings.getString("deepql.nn_setup_mode").equalsIgnoreCase("torch")
 				&& settings.getBoolean("deepql.use_external_qlearner");
-		this.LOSS_SAMPLING_RATE = settings.getInt("logging.deepql.loss_sampling_interval");
+		this.LOSS_SAMPLING_INTERVAL = settings.getInt("logging.deepql.loss_sampling_interval");
+		this.LOSS_DISPLAY_INTERVAL = settings.getInt("logging.deepql.loss_display_interval");
 		this.EXTERNALNN_ALLOW_PARTIAL_TRANSITIONS = settings.getBoolean("neuralnet.torch.use_partial_transitions");
+		this.EXTERNALNN_USE_FAST_FORWARDS = settings.getBoolean("deepql.external.use_fast_forwards");
 		this.ALWAYS_FORWARD_NNINPUT = settings.getBoolean("deepql.always_forward_nninput");
 		this.MINIBATCH_INTERVAL = settings.getInt("deepql.minibatch_interval");
 		this.EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH = settings.getInt("deepql.external.rnn.num_codes_per_minibatch");

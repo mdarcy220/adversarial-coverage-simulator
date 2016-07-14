@@ -65,6 +65,30 @@ public class GridEnvironment {
 
 			}
 		});
+
+		AdversarialCoverage.controller.registerCommand(":env_set_robot_pos", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 3) {
+					System.err.println("Usage: :env_set_robot_pos <robotId> <x> <y>");
+					return;
+				}
+				try {
+					int robotId = Integer.parseInt(args[0]);
+					int xPos = Integer.parseInt(args[1]);
+					int yPos = Integer.parseInt(args[2]);
+
+					GridRobot robot = GridEnvironment.this.getRobotById(robotId);
+					if (robot == null) {
+						System.err.println("No robot found with specified robotId.");
+						return;
+					}
+					robot.setLocation(xPos, yPos);
+				} catch (NumberFormatException e) {
+					System.err.println("One or more numbers were formatted incorrectly.");
+				}
+			}
+		});
 	}
 
 
@@ -249,7 +273,7 @@ public class GridEnvironment {
 	 *                the id of the robot to get
 	 * @return the robot
 	 */
-	public Robot getRobotById(int id) {
+	public GridRobot getRobotById(int id) {
 		for (int i = 0; i < this.robots.size(); i++) {
 			if (this.robots.get(i).getId() == id) {
 				return this.robots.get(i);

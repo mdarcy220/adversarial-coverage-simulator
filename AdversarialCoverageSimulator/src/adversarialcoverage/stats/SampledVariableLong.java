@@ -3,6 +3,9 @@ package adversarialcoverage.stats;
 public class SampledVariableLong extends SampledVariable {
 	protected long runningSum = 0;
 
+	protected long maxVal = Long.MIN_VALUE;
+	protected long minVal = Long.MAX_VALUE;
+
 
 	public SampledVariableLong() {
 		this.reset();
@@ -13,12 +16,28 @@ public class SampledVariableLong extends SampledVariable {
 		this.runningSum += value;
 		this.nSamples++;
 
+		if (this.maxVal < value) {
+			this.maxVal = value;
+		}
+
+		if (value < this.minVal) {
+			this.minVal = value;
+		}
+
 		// Update variance params
-		double delta;
-		// Params for step count
-		delta = value - this.runningMean;
+		double delta = value - this.runningMean;
 		this.runningMean += delta / this.nSamples;
 		this.m2 += delta * (value - this.runningMean);
+	}
+
+
+	public long getMax() {
+		return this.maxVal;
+	}
+
+
+	public long getMin() {
+		return this.minVal;
 	}
 
 
@@ -53,5 +72,7 @@ public class SampledVariableLong extends SampledVariable {
 	public void reset() {
 		super.reset();
 		this.runningSum = 0;
+		this.maxVal = 0;
+		this.minVal = 0;
 	}
 }

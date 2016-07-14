@@ -4,6 +4,7 @@ import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -221,15 +222,21 @@ public class ConsoleController {
 					return;
 				}
 				final String newCommandName = args[0];
-				final StringBuilder commandToExec = new StringBuilder(args[1]);
+				final String baseCmdToExec = args[1];
+				final List<String> baseCmdArgs = splitCmdStr(baseCmdToExec);
 				registerCommand(newCommandName, new TerminalCommand() {
 					@Override
 					public void execute(String[] args) {
-						for (int i = 0; i < args.length; i++) {
-							commandToExec.append(" ");
-							commandToExec.append(args[i]);
+						final List<String> newArgs = new ArrayList<>();
+						newArgs.addAll(baseCmdArgs);
+						newArgs.addAll(Arrays.asList(args));
+						String[] cmdArgs = null;
+						if(newArgs.size() == 0) {
+							return;
 						}
-						handleLine(commandToExec.toString());
+						cmdArgs = new String[newArgs.size()-1];
+						cmdArgs = newArgs.subList(1, newArgs.size()).toArray(cmdArgs);
+						executeCommand(newArgs.get(0), cmdArgs);
 					}
 				});
 			}

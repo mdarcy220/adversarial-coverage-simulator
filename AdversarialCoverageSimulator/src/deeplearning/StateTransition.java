@@ -5,7 +5,6 @@ public class StateTransition {
 	public double[] nnInput;
 	// double[] resultState;
 	public double reward;
-	public double correctQVal;
 	public int action;
 	public double[] nextInput;
 

@@ -2,6 +2,8 @@ package adversarialcoverage.stats;
 
 public class SampledVariableDouble extends SampledVariable {
 	protected double runningSum = 0.0;
+	protected double maxVal = Double.NEGATIVE_INFINITY;
+	protected double minVal = Double.POSITIVE_INFINITY;
 
 
 	public SampledVariableDouble() {
@@ -13,12 +15,28 @@ public class SampledVariableDouble extends SampledVariable {
 		this.runningSum += value;
 		this.nSamples++;
 
+		if (this.maxVal < value) {
+			this.maxVal = value;
+		}
+
+		if (value < this.minVal) {
+			this.minVal = value;
+		}
+
 		// Update variance params
-		double delta;
-		// Params for step count
-		delta = value - this.runningMean;
+		double delta = value - this.runningMean;
 		this.runningMean += delta / this.nSamples;
 		this.m2 += delta * (value - this.runningMean);
+	}
+	
+	
+	public double getMax() {
+		return this.maxVal;
+	}
+	
+	
+	public double getMin() {
+		return this.minVal;
 	}
 
 
@@ -50,5 +68,7 @@ public class SampledVariableDouble extends SampledVariable {
 	public void reset() {
 		super.reset();
 		this.runningSum = 0.0;
+		this.maxVal = 0.0;
+		this.minVal = 0.0;
 	}
 }
