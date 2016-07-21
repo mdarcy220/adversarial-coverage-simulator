@@ -121,6 +121,7 @@ public class AdversarialCoverageSettings {
 		this.setString("deepql.nn_setup_mode", "native");
 		this.setString("deepql.statepreprocessor.vision_type", "CENTERED_SNAP_TO_EDGES");
 		this.setString("env.grid.dangervalues", "@o 0.00 @d 0.3 @r 0.00 0.25");
+		this.setString("hooks.env.post_init.cmd", "");
 		this.setString("logging.logfile", "");
 		this.setString("neuralnet.torch.minibatch_code", "m");
 		this.setString("neuralnet.loadfile", "");

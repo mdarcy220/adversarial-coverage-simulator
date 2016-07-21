@@ -123,6 +123,8 @@ public class GridEnvironment {
 			this.robots.get(robotNum).coverAlgo.init();
 
 		}
+		
+		AdversarialCoverage.controller.runCommand_noEcho(AdversarialCoverage.settings.getString("hooks.env.post_init.cmd"));
 	}
 
 

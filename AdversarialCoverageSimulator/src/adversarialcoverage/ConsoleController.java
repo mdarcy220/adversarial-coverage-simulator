@@ -231,10 +231,10 @@ public class ConsoleController {
 						newArgs.addAll(baseCmdArgs);
 						newArgs.addAll(Arrays.asList(args));
 						String[] cmdArgs = null;
-						if(newArgs.size() == 0) {
+						if (newArgs.size() == 0) {
 							return;
 						}
-						cmdArgs = new String[newArgs.size()-1];
+						cmdArgs = new String[newArgs.size() - 1];
 						cmdArgs = newArgs.subList(1, newArgs.size()).toArray(cmdArgs);
 						executeCommand(newArgs.get(0), cmdArgs);
 					}
@@ -294,7 +294,7 @@ public class ConsoleController {
 	}
 
 
-	private void executeCommand(String commandName, String[] args) {
+	private synchronized void executeCommand(String commandName, String[] args) {
 		TerminalCommand cmd = this.commandList.get(commandName);
 		if (cmd != null) {
 			cmd.execute(args);
@@ -304,7 +304,7 @@ public class ConsoleController {
 	}
 
 
-	public void registerCommand(String command, TerminalCommand action) {
+	public synchronized void registerCommand(String command, TerminalCommand action) {
 		this.commandList.put(command, action);
 	}
 
@@ -409,6 +409,28 @@ public class ConsoleController {
 		}
 
 		fileScanner.close();
+	}
+
+
+	public void runCommand(String cmdStr) {
+		if (cmdStr == null || cmdStr.length() == 0) {
+			return;
+		}
+		handleLine(cmdStr);
+	}
+
+
+	public void runCommand_noEcho(String cmdStr) {
+		if (cmdStr == null || cmdStr.length() == 0) {
+			return;
+		}
+		boolean echo_tmp = this.useEcho;
+		try {
+			this.useEcho = false;
+			handleLine(cmdStr);
+		} finally {
+			this.useEcho = echo_tmp;
+		}
 	}
 
 }
