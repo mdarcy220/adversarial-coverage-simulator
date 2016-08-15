@@ -1,10 +1,8 @@
 package adsim;
 import java.awt.image.BufferedImage;
 
-import algo.coverage.GridCoverageAlgorithm;
-
 public abstract class Robot {
-	public GridCoverageAlgorithm coverAlgo;
+	public Algorithm coverAlgo;
 	public BufferedImage sprite;
 	/**
 	 * The uniqueId is used to differentiate this robot from other robots in the environment

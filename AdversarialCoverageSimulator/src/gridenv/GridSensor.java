@@ -1,7 +1,7 @@
 package gridenv;
 
-import adsim.Coordinate;
 import adsim.NodeType;
+import adsim.SimulatorMain;
 
 /**
  * A sensor for grids. It can detect the entire grid (including danger level, the number
@@ -139,7 +139,7 @@ public class GridSensor {
 	
 	
 	public boolean isFinished() {
-		return this.env.isFinished();
+		return SimulatorMain.getEngine().getSimulation().isTerminalState();
 	}
 
 

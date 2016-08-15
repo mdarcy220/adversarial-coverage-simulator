@@ -1,17 +1,17 @@
-package algo;
+package simulations.generic.algo;
 
+import adsim.Algorithm;
 import adsim.SimulatorMain;
-import algo.coverage.GridCoverageAlgorithm;
 import deeplearning.ExternalTorchNN;
 import deeplearning.StatePreprocessor;
 import deeplearning.StateTransition;
 import gridenv.GridActuator;
 import gridenv.GridSensor;
 
-public class ExternalDQL implements GridCoverageAlgorithm {
+public class ExternalDQL implements Algorithm {
 	private GridSensor sensor;
 	private GridActuator actuator;
-	private GridCoverageAlgorithm realCoverageAlgo;
+	private Algorithm realCoverageAlgo;
 	private ExternalTorchNN nn = null;
 	private boolean ALLOW_PARTIAL_TRANSITIONS = SimulatorMain.settings.getBoolean("neuralnet.torch.use_partial_transitions");
 	private StatePreprocessor preprocessor;
@@ -36,7 +36,7 @@ public class ExternalDQL implements GridCoverageAlgorithm {
 	 *                the "real" coverage algorithm, used to choose all the actions
 	 *                for the coverage
 	 */
-	public ExternalDQL(GridSensor sensor, GridActuator actuator, GridCoverageAlgorithm realCoverageAlgo) {
+	public ExternalDQL(GridSensor sensor, GridActuator actuator, Algorithm realCoverageAlgo) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 		this.preprocessor = new StatePreprocessor(this.sensor);

@@ -139,7 +139,7 @@ public class ConsoleController {
 					return;
 				}
 				SimulatorMain.settings.setAuto(args[0], args[1]);
-				ConsoleController.this.engine.getEnv().reloadSettings();
+				ConsoleController.this.engine.reloadSettings();
 			}
 		});
 

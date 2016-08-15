@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import adsim.Coordinate;
 import adsim.NodeType;
 import adsim.Robot;
 import adsim.SimulatorMain;
@@ -17,7 +16,7 @@ public class GridEnvironment {
 	public Dimension gridSize = new Dimension();
 	public List<GridRobot> robots;
 	private int stepCount = 0;
-	public int squaresLeft = 0;
+	
 
 	private Random randgen = new Random();
 
@@ -31,7 +30,6 @@ public class GridEnvironment {
 	private int MAX_WIDTH = SimulatorMain.settings.getInt("env.grid.maxwidth");
 	private int MIN_HEIGHT = SimulatorMain.settings.getInt("env.grid.minheight");
 	private int MIN_WIDTH = SimulatorMain.settings.getInt("env.grid.minwidth");
-	private int MAX_STEPS_PER_RUN = SimulatorMain.settings.getInt("autorun.max_steps_per_run");
 
 
 	public GridEnvironment(Dimension gridSize) {
@@ -102,14 +100,7 @@ public class GridEnvironment {
 	 * Initialize all the robots in the environment
 	 */
 	public void init() {
-		this.squaresLeft = this.gridSize.width * this.gridSize.height;
-		for (int x = 0; x < this.gridSize.width; x++) {
-			for (int y = 0; y < this.gridSize.height; y++) {
-				if (this.getGridNode(x, y).getNodeType() == NodeType.OBSTACLE || 0 < this.getGridNode(x, y).getCoverCount()) {
-					this.squaresLeft--;
-				}
-			}
-		}
+		
 		this.stepCount = 1;
 		for (int robotNum = 0; robotNum < this.robots.size(); robotNum++) {
 			if (this.RANDOMIZE_ROBOT_LOCATION_ON_INIT) {
@@ -131,11 +122,7 @@ public class GridEnvironment {
 		}
 		
 		SimulatorMain.controller.runCommand_noEcho(SimulatorMain.settings.getString("hooks.env.post_init.cmd"));
-	}
-
-
-	public long getSquaresLeft() {
-		return this.squaresLeft;
+		SimulatorMain.getEngine().getSimulation().onEnvInit();
 	}
 
 
@@ -372,29 +359,8 @@ public class GridEnvironment {
 	}
 
 
-	/**
-	 * Checks if every grid space has been covered at least once
-	 * 
-	 * @return true if the graph has been covered at least once, false otherwise
-	 */
-	public boolean isCovered() {
-		return this.squaresLeft <= 0;
-	}
-
-
 	public int getStepCount() {
 		return this.stepCount;
-	}
-
-
-	/**
-	 * Checks whether a terminal state has been reached. This could happen if the
-	 * environment is covered or if there are no robots left (i.e. they all failed).
-	 * 
-	 * @return true if more steps can be taken, false otherwise
-	 */
-	public boolean isFinished() {
-		return (this.allRobotsBroken() || this.isCovered() || this.MAX_STEPS_PER_RUN <= this.stepCount);
 	}
 
 
@@ -418,7 +384,6 @@ public class GridEnvironment {
 			r.reloadSettings();
 		}
 		this.RANDOMIZE_ROBOT_LOCATION_ON_INIT = SimulatorMain.settings.getBoolean("autorun.randomize_robot_start");
-		this.MAX_STEPS_PER_RUN = SimulatorMain.settings.getInt("autorun.max_steps_per_run");
 		this.CLEAR_ADJACENT_CELLS_ON_INIT = SimulatorMain.settings.getBoolean("env.clear_adjacent_cells_on_init");
 		this.VARIABLE_GRID_SIZE = SimulatorMain.settings.getBoolean("env.variable_grid_size");
 		this.FORCE_SQUARE = SimulatorMain.settings.getBoolean("env.grid.force_square");

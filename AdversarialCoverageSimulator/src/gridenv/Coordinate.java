@@ -1,4 +1,4 @@
-package adsim;
+package gridenv;
 /**
  * This class represents an (x, y) coordinate pair in 2D space.
  * 

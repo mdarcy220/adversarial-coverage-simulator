@@ -1,17 +1,16 @@
 package adsim;
 
 import java.awt.Dimension;
-import java.io.PrintStream;
-
-import adsim.stats.*;
-import algo.*;
-import algo.coverage.GSACGC;
-import algo.coverage.GridCoverageAlgorithm;
-import algo.coverage.RandomGC;
 import gridenv.GridActuator;
 import gridenv.GridEnvironment;
 import gridenv.GridRobot;
 import gridenv.GridSensor;
+import simulations.coverage.CoverageStats;
+import simulations.coverage.algo.GSACGC;
+import simulations.generic.GenericSimulation;
+import simulations.generic.algo.DQL;
+import simulations.generic.algo.ExternalDQL;
+import simulations.generic.algo.RandomActionAlgo;
 
 public class SimulatorEngine {
 
@@ -19,6 +18,7 @@ public class SimulatorEngine {
 	private DisplayAdapter display = null;
 	private GridEnvironment env = null;
 	private Thread simulationThread = null;
+	private Simulation simulation;
 	private static final DisplayAdapter EmptyDisplayAdapter = new DisplayAdapter() {
 		@Override
 		public void refresh() {
@@ -33,14 +33,15 @@ public class SimulatorEngine {
 	};
 
 
-	public SimulatorEngine(DisplayAdapter display) {
-		this.setDisplay(display);
+	public SimulatorEngine(Simulation sim) {
+		this.setSimulation(sim);
+		this.setDisplay(SimulatorEngine.EmptyDisplayAdapter);
 		this.init();
 	}
 
 
 	public SimulatorEngine() {
-		this(SimulatorEngine.EmptyDisplayAdapter);
+		this(new GenericSimulation());
 	}
 
 
@@ -55,7 +56,7 @@ public class SimulatorEngine {
 
 
 	public void stepSimulation() {
-		if (!this.env.isFinished()) {
+		if (!this.simulation.isTerminalState()) {
 			this.step();
 		}
 		refreshDisplay();
@@ -109,6 +110,31 @@ public class SimulatorEngine {
 	}
 
 
+	public void setSimulation(Simulation newSimulation) {
+		if (newSimulation == null) {
+			setSimulation(new GenericSimulation());
+			return;
+		}
+
+		if (this.isRunning) {
+			System.out.println("warn: Simulation was running. Attempting to stop it...");
+			this.pauseSimulation();
+		}
+		try {
+			if (this.isThreadRunning()) {
+				this.simulationThread.join();
+			}
+		} catch (InterruptedException e) {
+			System.err.println(
+					"warn: Interrupted while waiting for simulation to finish! No guarantees of thread safety beyond this point.");
+		}
+
+		this.simulation = newSimulation;
+		this.simulation.setEnvironment(this.env);
+		this.simulation.init();
+	}
+
+
 	private void reinitializeSimulation() {
 		for (int x = 0; x < this.env.getWidth(); x++) {
 			for (int y = 0; y < this.env.getHeight(); y++) {
@@ -123,9 +149,9 @@ public class SimulatorEngine {
 	 * Sets up the environment using the settings
 	 */
 	public void resetEnvironment() {
-		this.env = new GridEnvironment(new Dimension(SimulatorMain.settings.getInt("env.grid.width"),
-				SimulatorMain.settings.getInt("env.grid.height")));
-
+		this.env = new GridEnvironment(
+				new Dimension(SimulatorMain.settings.getInt("env.grid.width"), SimulatorMain.settings.getInt("env.grid.height")));
+		this.simulation.setEnvironment(this.env);
 
 		// Set up the coverage environment
 		this.env.regenerateGrid();
@@ -136,7 +162,7 @@ public class SimulatorEngine {
 			robot.coverAlgo = this.createNewCoverageAlgoInstance(robot);
 			this.env.addRobot(robot);
 		}
-		SimulatorMain.setStats(new SimulationStats(this.env, this.env.getRobotList()));
+		SimulatorMain.setStats(new CoverageStats(this.env, this.env.getRobotList()));
 		SimulatorMain.getStats().resetBatchStats();
 
 		this.env.init();
@@ -144,14 +170,14 @@ public class SimulatorEngine {
 	}
 
 
-	private GridCoverageAlgorithm createNewCoverageAlgoInstance(GridRobot robot) {
+	private Algorithm createNewCoverageAlgoInstance(GridRobot robot) {
 		GridSensor sensor = new GridSensor(this.env, robot);
 		GridActuator actuator = new GridActuator(this.env, robot);
 
 		String coverageAlgoName = SimulatorMain.settings.getString("adsim.algorithm_name");
 		String metaCoverageAlgoName = "";
 
-		GridCoverageAlgorithm algo = null;
+		Algorithm algo = null;
 
 		if (coverageAlgoName.indexOf('+') != -1) {
 			metaCoverageAlgoName = coverageAlgoName.substring(0, coverageAlgoName.indexOf('+')).trim();
@@ -161,7 +187,7 @@ public class SimulatorEngine {
 		if (coverageAlgoName.equalsIgnoreCase("DQL")) {
 			algo = new DQL(sensor, actuator);
 		} else if (coverageAlgoName.equalsIgnoreCase("RandomGC")) {
-			algo = new RandomGC(sensor, actuator);
+			algo = new RandomActionAlgo(sensor, actuator);
 		} else if (coverageAlgoName.equalsIgnoreCase("GSACGC")) {
 			algo = new GSACGC(sensor, actuator);
 		} else {
@@ -179,7 +205,7 @@ public class SimulatorEngine {
 
 
 	private void startSimulationLoop() {
-		if (this.simulationThread != null && this.simulationThread.isAlive()) {
+		if (this.isThreadRunning()) {
 			System.err.print("Coverage thread is already running. No action will be taken.\n");
 			return;
 		}
@@ -198,6 +224,7 @@ public class SimulatorEngine {
 
 		// Update settings
 		this.env.reloadSettings();
+		this.simulation.reloadSettings();
 
 		long delay = SimulatorMain.settings.getInt("autorun.stepdelay");
 		boolean doRepaint = SimulatorMain.settings.getBoolean("autorun.do_repaint");
@@ -208,7 +235,7 @@ public class SimulatorEngine {
 			if (doRepaint && !SimulatorMain.args.HEADLESS) {
 				refreshDisplay();
 			}
-			if (this.env.isFinished()) {
+			if (this.simulation.isTerminalState()) {
 				handleSimulationCompletion();
 			}
 
@@ -225,26 +252,9 @@ public class SimulatorEngine {
 
 
 	private void handleSimulationCompletion() {
-		long statsBatchSize = SimulatorMain.settings.getInt("stats.multirun.batch_size");
-		SimulationStats stats = SimulatorMain.getStats();
-		if (this.env.isFinished() && stats != null) {
-			System.out.printf("Run end: steps=%d, cov=%d/%d, tSv=%.3f, bots=%d/%d\n", stats.getNumTimeSteps(),
-					stats.getTotalCellsCovered(), stats.getTotalFreeCells(), stats.getTeamSurvivability(),
-					stats.getNumSurvivingRobots(), stats.getNumRobots());
-			if (statsBatchSize <= stats.getRunsInCurrentBatch()) {
-				final SampledVariableLong stepsPerRunInfo = stats.getBatchStepsPerRunInfo();
-				final SampledVariableDouble survivabilityInfo = stats.getBatchSurvivability();
-				final SampledVariableDouble coverageInfo = stats.getBatchCoverage();
-				System.out.printf("Batch end (size=%d): steps=%.1f (%.1f), cov=%.1f%% (%.1f), tSv=%.2f (%.1f)\n",
-						stats.getRunsInCurrentBatch(), stepsPerRunInfo.mean(), stepsPerRunInfo.stddev(), coverageInfo.mean(),
-						coverageInfo.stddev(), survivabilityInfo.mean(), survivabilityInfo.stddev());
-				stats.resetBatchStats();
-			}
-		}
+		this.simulation.onRunEnd();
+		CoverageStats stats = SimulatorMain.getStats();
 
-		if (SimulatorMain.settings.getBoolean("autorun.finished.display_full_stats")) {
-			SimulatorMain.printStats(new PrintStream(System.out));
-		}
 		if (SimulatorMain.settings.getBoolean("autorun.finished.newgrid")) {
 			for (GridRobot r : this.env.getRobotList()) {
 				r.setBroken(false);
@@ -276,9 +286,30 @@ public class SimulatorEngine {
 	}
 
 
+	public boolean isThreadRunning() {
+		return (this.simulationThread != null && this.simulationThread.isAlive());
+	}
+
+
 	public void kill() {
 		this.isRunning = false;
 		this.display.dispose();
+	}
+
+
+	public void reloadSettings() {
+		if (this.env != null) {
+			this.env.reloadSettings();
+		}
+
+		if (this.simulation != null) {
+			this.simulation.reloadSettings();
+		}
+	}
+
+
+	public Simulation getSimulation() {
+		return this.simulation;
 	}
 
 }

@@ -1,16 +1,18 @@
-package adsim.stats;
+package simulations.coverage;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import adsim.*;
+import adsim.stats.SampledVariableDouble;
+import adsim.stats.SampledVariableLong;
 import gridenv.GridEnvironment;
 import gridenv.GridNode;
 import gridenv.GridRobot;
 
 
-public class SimulationStats {
+public class CoverageStats {
 	private long nStepsInRun = 0;
 	private SampledVariableLong batch_stepsPerRun = new SampledVariableLong();
 	private long nRunsInBatch = 0;
@@ -24,7 +26,7 @@ public class SimulationStats {
 	private SampledVariableDouble batch_coverage = new SampledVariableDouble();
 
 
-	public SimulationStats(GridEnvironment env, List<GridRobot> robots) {
+	public CoverageStats(GridEnvironment env, List<GridRobot> robots) {
 		this.env = env;
 		this.lastCellVisitTimes = new long[env.getWidth()][env.getHeight()];
 		for (GridRobot r : robots) {

@@ -1,10 +1,9 @@
 package adsim;
 
-import java.io.PrintStream;
-
-import adsim.stats.SimulationStats;
 import gridenv.GridEnvironment;
 import gui.GUIDisplay;
+import simulations.coverage.CoverageSimulation;
+import simulations.coverage.CoverageStats;
 
 public class SimulatorMain {
 
@@ -14,8 +13,8 @@ public class SimulatorMain {
 	public static ConsoleController controller = null;
 
 	GridEnvironment env = null;
-	private static SimulationStats stats;
-	private SimulatorEngine engine = null;
+	private static CoverageStats stats;
+	private static SimulatorEngine engine = null;
 
 
 	public SimulatorMain(String argsArr[]) {
@@ -26,10 +25,10 @@ public class SimulatorMain {
 		// Set up the logger
 		logger = new Logger();
 
-		this.engine = new SimulatorEngine();
-		SimulatorMain.controller = new ConsoleController(this.engine);
+		SimulatorMain.engine = new SimulatorEngine(new CoverageSimulation());
+		SimulatorMain.controller = new ConsoleController(SimulatorMain.engine);
 
-		this.engine.resetEnvironment();
+		SimulatorMain.engine.resetEnvironment();
 
 		if (!args.RC_FILE.equals("")) {
 			SimulatorMain.controller.loadCommandFile(args.RC_FILE);
@@ -38,40 +37,22 @@ public class SimulatorMain {
 
 
 		if (!args.HEADLESS) {
-			GUIDisplay gd = GUIDisplay.createInstance(this.engine);
+			GUIDisplay gd = GUIDisplay.createInstance(SimulatorMain.engine);
 			if (gd != null) {
 				gd.setup();
-				this.engine.setDisplay(gd);
+				SimulatorMain.engine.setDisplay(gd);
 			}
 		}
 
-		if (args.USE_AUTOSTART && !this.engine.isRunning()) {
-			this.engine.runSimulation();
+		if (args.USE_AUTOSTART && !SimulatorMain.engine.isRunning()) {
+			SimulatorMain.engine.runSimulation();
 		}
 
 	}
 
 
-	public void registerControllerCommand(String cmdName, TerminalCommand cmd) {
-		SimulatorMain.controller.registerCommand(cmdName, cmd);
-	}
-
-
-	public static void printStats(PrintStream ps) {
-		ps.println("Name\tValue");
-
-		ps.printf("Avg. covers per free cell\t%f\n", SimulatorMain.getStats().getAvgCoversPerFreeCell());
-		ps.printf("Max covers of a cell\t%d\n", SimulatorMain.getStats().getMaxCellCovers());
-		ps.printf("Min covers of a cell\t%d\n", SimulatorMain.getStats().getMinCellCovers());
-		ps.printf("Number of cells covered exactly once\t%d\n", SimulatorMain.getStats().numFreeCellsCoveredNTimes(1));
-		ps.printf("Total cells in grid\t%d\n", SimulatorMain.getStats().getTotalCells());
-		ps.printf("Total non-obstacle cells\t%d\n", SimulatorMain.getStats().getTotalFreeCells());
-		ps.printf("Total time steps\t%d\n", SimulatorMain.getStats().getNumTimeSteps());
-		ps.printf("Robots broken\t%d\n", SimulatorMain.getStats().getNumBrokenRobots());
-		ps.printf("Robots surviving\t%d\n", SimulatorMain.getStats().getNumSurvivingRobots());
-		ps.printf("Percent covered\t%f\n", SimulatorMain.getStats().getFractionCovered() * 100.0);
-		ps.printf("Best survivability\t%f\n", SimulatorMain.getStats().getMaxSurvivability());
-		ps.printf("Best whole area coverage probability\t%.6E\n", SimulatorMain.getStats().getMaxCoverageProb());
+	public static SimulatorEngine getEngine() {
+		return engine;
 	}
 
 
@@ -80,12 +61,12 @@ public class SimulatorMain {
 	}
 
 
-	public static SimulationStats getStats() {
+	public static CoverageStats getStats() {
 		return stats;
 	}
 
 
-	public static void setStats(SimulationStats stats) {
+	public static void setStats(CoverageStats stats) {
 		SimulatorMain.stats = stats;
 	}
 }

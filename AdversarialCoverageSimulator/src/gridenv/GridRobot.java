@@ -1,8 +1,7 @@
 package gridenv;
 
-import adsim.Coordinate;
+import adsim.Algorithm;
 import adsim.Robot;
-import algo.coverage.GridCoverageAlgorithm;
 
 /**
  * A robot spcialized for grid environments.
@@ -58,7 +57,7 @@ public class GridRobot extends Robot {
 	 * 
 	 * @param algo
 	 */
-	public void setCoverageAlgorithm(GridCoverageAlgorithm algo) {
+	public void setCoverageAlgorithm(Algorithm algo) {
 		this.coverAlgo = algo;
 	}
 

@@ -1,8 +1,9 @@
 package gridenv;
 
-import adsim.Coordinate;
 import adsim.NodeType;
+import adsim.Simulation;
 import adsim.SimulatorMain;
+import simulations.coverage.CoverageSimulation;
 
 public class GridActuator {
 	/**
@@ -15,10 +16,6 @@ public class GridActuator {
 	private GridRobot robot;
 	private double lastReward = 0.0;
 	private int lastActionId = -1;
-	private double COVER_UNIQUE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.cover_unique");
-	private double COVER_AGAIN_REWARD = SimulatorMain.settings.getDouble("deepql.reward.cover_again");
-	private double DEATH_REWARD = SimulatorMain.settings.getDouble("deepql.reward.death");
-	private double FULL_COVERAGE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.full_coverage");
 	private boolean ROBOTS_BREAKABLE = SimulatorMain.settings.getBoolean("robots.breakable");
 
 
@@ -106,26 +103,15 @@ public class GridActuator {
 		boolean isThreat = rand < this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getDangerProb()
 				&& this.ROBOTS_BREAKABLE;
 		int coverCount = this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).getCoverCount();
-
-		if (coverCount == 0) {
-			this.env.squaresLeft--;
+		Simulation sim = SimulatorMain.getEngine().getSimulation();
+		if (sim instanceof CoverageSimulation) {
+			((CoverageSimulation) sim).getCellCoverageReward(coverCount, isThreat);
 		}
 		SimulatorMain.getStats().updateCellCovered(this.robot);
 		this.env.getGridNode(this.robot.getLocation().x, this.robot.getLocation().y).incrementCoverCount();
-
 		if (isThreat) {
 			this.env.getRobotById(this.robot.getId()).setBroken(true);
-			this.lastReward = this.DEATH_REWARD;
-
-		} else {
-			this.lastReward = coverCount < 1 ? this.COVER_UNIQUE_REWARD : this.COVER_AGAIN_REWARD;
-
-			if (this.env.isCovered()) {
-				this.lastReward = this.FULL_COVERAGE_REWARD;
-			}
 		}
-
-
 	}
 
 
@@ -163,10 +149,6 @@ public class GridActuator {
 
 
 	public void reloadSettings() {
-		this.COVER_UNIQUE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.cover_unique");
-		this.COVER_AGAIN_REWARD = SimulatorMain.settings.getDouble("deepql.reward.cover_again");
-		this.DEATH_REWARD = SimulatorMain.settings.getDouble("deepql.reward.death");
-		this.FULL_COVERAGE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.full_coverage");
 		this.ROBOTS_BREAKABLE = SimulatorMain.settings.getBoolean("robots.breakable");
 	}
 }

@@ -1,5 +1,6 @@
-package algo.coverage;
+package simulations.generic.algo;
 
+import adsim.Algorithm;
 import adsim.Node;
 import adsim.NodeType;
 import gridenv.GridActuator;
@@ -14,13 +15,13 @@ import gridenv.GridSensor;
  * @author Mike D'Arcy
  *
  */
-public class RandomGC implements GridCoverageAlgorithm {
+public class RandomActionAlgo implements Algorithm {
 	GridSensor sensor;
 	GridActuator actuator;
 	long stepNum = 0;
 
 
-	public RandomGC(GridSensor sensor, GridActuator actuator) {
+	public RandomActionAlgo(GridSensor sensor, GridActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 	}

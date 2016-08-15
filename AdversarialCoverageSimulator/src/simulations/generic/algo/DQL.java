@@ -1,4 +1,4 @@
-package algo;
+package simulations.generic.algo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -6,11 +6,11 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
 
+import adsim.Algorithm;
 import adsim.SimulatorMain;
 import adsim.SimulatorSettings;
 import adsim.TerminalCommand;
 import adsim.stats.SampledVariableDouble;
-import algo.coverage.GridCoverageAlgorithm;
 import deeplearning.NeuralNet;
 import deeplearning.StatePreprocessor;
 import deeplearning.StateTransition;
@@ -28,7 +28,7 @@ import deeplearning.ExternalTorchNN;
  * @author Mike D'Arcy
  *
  */
-public class DQL implements GridCoverageAlgorithm {
+public class DQL implements Algorithm {
 	private NeuralNet nn = null;
 	private GridSensor sensor;
 	private GridActuator actuator;

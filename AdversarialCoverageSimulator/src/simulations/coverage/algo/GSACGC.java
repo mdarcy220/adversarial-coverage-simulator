@@ -1,4 +1,4 @@
-package algo.coverage;
+package simulations.coverage.algo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import adsim.Coordinate;
+import adsim.Algorithm;
 import adsim.NodeType;
+import gridenv.Coordinate;
 import gridenv.GridActuator;
 import gridenv.GridNode;
 import gridenv.GridSensor;
@@ -21,7 +22,7 @@ import gridenv.GridSensor;
  * @author Mike D'Arcy
  *
  */
-public class GSACGC implements GridCoverageAlgorithm {
+public class GSACGC implements Algorithm {
 
 	GridSensor sensor;
 	GridActuator actuator;

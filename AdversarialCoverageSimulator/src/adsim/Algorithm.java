@@ -1,7 +1,7 @@
-package algo.coverage;
+package adsim;
 
 
-public interface GridCoverageAlgorithm {
+public interface Algorithm {
 
 	public void init();
 

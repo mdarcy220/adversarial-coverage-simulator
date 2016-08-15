@@ -1,6 +1,5 @@
 package gridenv;
 
-import adsim.Coordinate;
 import adsim.Node;
 import adsim.NodeType;
 
