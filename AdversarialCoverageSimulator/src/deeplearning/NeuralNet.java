@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
-import adversarialcoverage.AdversarialCoverage;
+import adsim.SimulatorMain;
 
 public class NeuralNet {
 	List<List<Neuron>> layers = new ArrayList<>();
 
-	public double LEARNING_RATE = AdversarialCoverage.settings.getDouble("neuralnet.learning_rate");
-	public double MOMENTUM_GAMMA = AdversarialCoverage.settings.getDouble("neuralnet.momentum");
-	public double RMS_DECAY_RATE = AdversarialCoverage.settings.getDouble("neuralnet.rms.decay_rate");
+	public double LEARNING_RATE = SimulatorMain.settings.getDouble("neuralnet.learning_rate");
+	public double MOMENTUM_GAMMA = SimulatorMain.settings.getDouble("neuralnet.momentum");
+	public double RMS_DECAY_RATE = SimulatorMain.settings.getDouble("neuralnet.rms.decay_rate");
 	public TrainingType trainingType = TrainingType.RMSPROP;
 	private int samplesInBatch = 0;
 	static Random randgen = new Random();

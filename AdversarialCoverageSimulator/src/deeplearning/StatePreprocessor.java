@@ -1,18 +1,18 @@
 package deeplearning;
 
-import adversarialcoverage.AdversarialCoverage;
-import adversarialcoverage.GridSensor;
+import adsim.SimulatorMain;
+import gridenv.GridSensor;
 
 public class StatePreprocessor {
 
-	private final boolean GIVE_GLOBAL_POS_AND_SIZE = AdversarialCoverage.settings.getBoolean("neuralnet.give_global_pos_and_size");
-	private final int VISION_SIZE = AdversarialCoverage.settings.getInt("deepql.nn_input.vision_radius");
-	private boolean NN_INPUT_OBSTACLE_LAYER = AdversarialCoverage.settings.getBoolean("deepql.nn_input.obstacle_layer");
+	private final boolean GIVE_GLOBAL_POS_AND_SIZE = SimulatorMain.settings.getBoolean("neuralnet.give_global_pos_and_size");
+	private final int VISION_SIZE = SimulatorMain.settings.getInt("deepql.nn_input.vision_radius");
+	private boolean NN_INPUT_OBSTACLE_LAYER = SimulatorMain.settings.getBoolean("deepql.nn_input.obstacle_layer");
 	private final int NN_INPUT_SIZE;
-	private boolean ATTEMPT_NORMALIZATION = AdversarialCoverage.settings.getBoolean("deepql.statepreprocessor.attempt_mormalization");
-	private double OUT_OF_BOUNDS_VALS_DANGER = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.danger");
-	private double OUT_OF_BOUNDS_VALS_COVER = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.cover");
-	private double OUT_OF_BOUNDS_VALS_OBSTACLE = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.obstacle");
+	private boolean ATTEMPT_NORMALIZATION = SimulatorMain.settings.getBoolean("deepql.statepreprocessor.attempt_mormalization");
+	private double OUT_OF_BOUNDS_VALS_DANGER = SimulatorMain.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.danger");
+	private double OUT_OF_BOUNDS_VALS_COVER = SimulatorMain.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.cover");
+	private double OUT_OF_BOUNDS_VALS_OBSTACLE = SimulatorMain.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.obstacle");
 	private VisionType visiontype;
 	private GridSensor sensor;
 
@@ -207,15 +207,15 @@ public class StatePreprocessor {
 	public void reloadSettings() {
 		this.sensor.reloadSettings();
 		try {
-			this.visiontype = VisionType.valueOf(AdversarialCoverage.settings.getString("deepql.statepreprocessor.vision_type"));
+			this.visiontype = VisionType.valueOf(SimulatorMain.settings.getString("deepql.statepreprocessor.vision_type"));
 		} catch (IllegalArgumentException e) {
 			System.err.println("Could not set vision type. No such enum value exists.");
 		}
-		this.ATTEMPT_NORMALIZATION = AdversarialCoverage.settings.getBoolean("deepql.statepreprocessor.attempt_mormalization");
-		this.NN_INPUT_OBSTACLE_LAYER = AdversarialCoverage.settings.getBoolean("deepql.nn_input.obstacle_layer");
-		this.OUT_OF_BOUNDS_VALS_DANGER = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.danger");
-		this.OUT_OF_BOUNDS_VALS_COVER = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.cover");
-		this.OUT_OF_BOUNDS_VALS_OBSTACLE = AdversarialCoverage.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.obstacle");
+		this.ATTEMPT_NORMALIZATION = SimulatorMain.settings.getBoolean("deepql.statepreprocessor.attempt_mormalization");
+		this.NN_INPUT_OBSTACLE_LAYER = SimulatorMain.settings.getBoolean("deepql.nn_input.obstacle_layer");
+		this.OUT_OF_BOUNDS_VALS_DANGER = SimulatorMain.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.danger");
+		this.OUT_OF_BOUNDS_VALS_COVER = SimulatorMain.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.cover");
+		this.OUT_OF_BOUNDS_VALS_OBSTACLE = SimulatorMain.settings.getDouble("deepql.statepreprocessor.out_of_bounds_vals.obstacle");
 	}
 
 

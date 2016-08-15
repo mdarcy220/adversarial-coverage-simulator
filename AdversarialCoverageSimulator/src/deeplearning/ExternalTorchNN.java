@@ -6,8 +6,8 @@ import java.io.PrintWriter;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-import adversarialcoverage.AdversarialCoverage;
-import adversarialcoverage.TerminalCommand;
+import adsim.SimulatorMain;
+import adsim.TerminalCommand;
 
 import java.io.BufferedReader;
 import java.io.*;
@@ -49,7 +49,7 @@ public class ExternalTorchNN extends NeuralNet {
 
 
 	private void registerCustomCommands() {
-		AdversarialCoverage.controller.registerCommand(":ExternalTorchNN_sendCommand", new TerminalCommand() {
+		SimulatorMain.controller.registerCommand(":ExternalTorchNN_sendCommand", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
 				if (args.length < 1) {
@@ -173,7 +173,7 @@ public class ExternalTorchNN extends NeuralNet {
 
 
 	public void runTorchMinibatch() {
-		this.outWriter.println(AdversarialCoverage.settings.getString("neuralnet.torch.minibatch_code"));
+		this.outWriter.println(SimulatorMain.settings.getString("neuralnet.torch.minibatch_code"));
 		this.outWriter.flush();
 	}
 
