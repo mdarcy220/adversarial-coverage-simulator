@@ -1,6 +1,5 @@
 package adsim;
 
-import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -10,10 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import gui.GUIDisplay;
-
 public class ConsoleController {
-	private SimulatorEngine engine = null;
 	private Thread inputThread = null;
 	private Map<String, TerminalCommand> commandList = new HashMap<>();
 	private boolean hasQuitInput = false;
@@ -21,12 +17,6 @@ public class ConsoleController {
 
 
 	public ConsoleController() {
-		this(null);
-	}
-
-
-	public ConsoleController(SimulatorEngine engine) {
-		this.engine = engine;
 		this.inputThread = new Thread() {
 			@Override
 			public void run() {
@@ -37,29 +27,12 @@ public class ConsoleController {
 	}
 
 
-	public void setEngine(SimulatorEngine engine) {
-		this.engine = engine;
-	}
-
-
 	public void start() {
 		this.inputThread.start();
-		if (SimulatorMain.args.USE_AUTOSTART) {
-			this.engine.runSimulation();
-		}
 	}
 
 
 	private void registerDefaultCommands() {
-		this.registerCommand(":quit", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				ConsoleController.this.engine.pauseSimulation();
-				ConsoleController.this.engine.kill();
-				ConsoleController.this.hasQuitInput = true;
-			}
-		});
-
 		this.registerCommand("#", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
@@ -90,48 +63,6 @@ public class ConsoleController {
 			}
 		});
 
-		this.registerCommand(":pause", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				ConsoleController.this.engine.pauseSimulation();
-			}
-		});
-
-		this.registerCommand(":step", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				ConsoleController.this.engine.stepSimulation();
-			}
-		});
-
-		this.registerCommand(":run", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				ConsoleController.this.engine.runSimulation();
-			}
-		});
-
-		this.registerCommand(":restart", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				ConsoleController.this.engine.restartSimulation();
-			}
-		});
-
-		this.registerCommand(":new", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				ConsoleController.this.engine.newSimulation();
-			}
-		});
-
-		this.registerCommand(":showstate", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				System.out.printf("isRunning = %s\n", ConsoleController.this.engine.isRunning() ? "true" : "false");
-			}
-		});
-
 		this.registerCommand(":set", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
@@ -139,7 +70,7 @@ public class ConsoleController {
 					return;
 				}
 				SimulatorMain.settings.setAuto(args[0], args[1]);
-				ConsoleController.this.engine.reloadSettings();
+				SimulatorMain.getEngine().reloadSettings();
 			}
 		});
 
@@ -171,27 +102,6 @@ public class ConsoleController {
 				} else {
 					System.out.println(SimulatorMain.settings.exportToString());
 				}
-			}
-		});
-
-		this.registerCommand(":setdisplay", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				if (args.length < 1) {
-					return;
-				}
-				DisplayAdapter display = null;
-				if (args[0].equals("gui")) {
-					if (GraphicsEnvironment.isHeadless()) {
-						return;
-					}
-					GUIDisplay gd = GUIDisplay.createInstance(ConsoleController.this.engine);
-					gd.setup();
-					display = gd;
-				} else if (args[0].equals("none")) {
-					display = null;
-				}
-				ConsoleController.this.engine.setDisplay(display);
 			}
 		});
 
@@ -431,6 +341,11 @@ public class ConsoleController {
 		} finally {
 			this.useEcho = echo_tmp;
 		}
+	}
+
+
+	public void quit() {
+		this.hasQuitInput = true;
 	}
 
 }

@@ -1,7 +1,14 @@
 package adsim;
 
-import gridenv.GridEnvironment;
-
+/**
+ * This interface defines a simulation. A simulation determines what should happen on each
+ * event hook from the simulation engine, and provides the appropriate specialty helper
+ * classes (such as displays and algorithms) necessary to run. A simulation must have a
+ * way to check when a goal state is reached.
+ * 
+ * @author Mike D'Arcy
+ *
+ */
 public interface Simulation {
 	/**
 	 * Initializer for the simulation.
@@ -10,18 +17,23 @@ public interface Simulation {
 
 
 	/**
-	 * Sets the environment for the simulation.
+	 * Checks if an end state has been reached
 	 * 
-	 * @param env
-	 *                - the new environment
+	 * @return true if the current state is an end state, false otherwise
 	 */
-	public void setEnvironment(GridEnvironment newEnv);
+	public boolean isTerminalState();
 
 
 	/**
 	 * Event hook for init of the environment
 	 */
 	public void onEnvInit();
+
+
+	/**
+	 * Event hook for starting a new run of the simulation.
+	 */
+	public void onNewRun();
 
 
 	/**
@@ -37,15 +49,16 @@ public interface Simulation {
 
 
 	/**
-	 * Checks if an end state has been reached
-	 * 
-	 * @return true if the current state is an end state, false otherwise
-	 */
-	public boolean isTerminalState();
-
-
-	/**
 	 * Refreshes internal settings according to the global settings.
 	 */
 	public void reloadSettings();
+
+
+	/**
+	 * Sets the environment for the simulation.
+	 * 
+	 * @param env
+	 *                - the new environment
+	 */
+	public void setEngine(SimulatorEngine simulatorEngine);
 }

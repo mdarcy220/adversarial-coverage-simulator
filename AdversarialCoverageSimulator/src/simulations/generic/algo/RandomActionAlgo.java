@@ -3,9 +3,9 @@ package simulations.generic.algo;
 import adsim.Algorithm;
 import adsim.Node;
 import adsim.NodeType;
-import gridenv.GridActuator;
 import gridenv.GridNode;
 import gridenv.GridSensor;
+import simulations.coverage.CoverageGridActuator;
 
 /**
  * A coverage algorithm that covers the grid using an e-greedy policy, moving either
@@ -17,11 +17,11 @@ import gridenv.GridSensor;
  */
 public class RandomActionAlgo implements Algorithm {
 	GridSensor sensor;
-	GridActuator actuator;
+	CoverageGridActuator actuator;
 	long stepNum = 0;
 
 
-	public RandomActionAlgo(GridSensor sensor, GridActuator actuator) {
+	public RandomActionAlgo(GridSensor sensor, CoverageGridActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 	}

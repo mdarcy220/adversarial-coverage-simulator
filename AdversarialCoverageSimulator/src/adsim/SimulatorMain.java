@@ -1,7 +1,6 @@
 package adsim;
 
 import gridenv.GridEnvironment;
-import gui.GUIDisplay;
 import simulations.coverage.CoverageSimulation;
 import simulations.coverage.CoverageStats;
 
@@ -25,24 +24,18 @@ public class SimulatorMain {
 		// Set up the logger
 		logger = new Logger();
 
+		// Set up controller before engine (because engine could register commands
+		// to the controller)
+		SimulatorMain.controller = new ConsoleController();
+		
 		SimulatorMain.engine = new SimulatorEngine(new CoverageSimulation());
-		SimulatorMain.controller = new ConsoleController(SimulatorMain.engine);
-
-		SimulatorMain.engine.resetEnvironment();
+		SimulatorMain.engine.newRun();
 
 		if (!args.RC_FILE.equals("")) {
 			SimulatorMain.controller.loadCommandFile(args.RC_FILE);
 		}
 		SimulatorMain.controller.start();
 
-
-		if (!args.HEADLESS) {
-			GUIDisplay gd = GUIDisplay.createInstance(SimulatorMain.engine);
-			if (gd != null) {
-				gd.setup();
-				SimulatorMain.engine.setDisplay(gd);
-			}
-		}
 
 		if (args.USE_AUTOSTART && !SimulatorMain.engine.isRunning()) {
 			SimulatorMain.engine.runSimulation();

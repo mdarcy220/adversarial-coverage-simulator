@@ -1,21 +1,32 @@
 package simulations.coverage;
 
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+
+import adsim.Algorithm;
+import adsim.ConsoleController;
+import adsim.DisplayAdapter;
 import adsim.NodeType;
 import adsim.Simulation;
+import adsim.SimulatorEngine;
 import adsim.SimulatorMain;
+import adsim.TerminalCommand;
 import adsim.stats.SampledVariableDouble;
 import adsim.stats.SampledVariableLong;
 import gridenv.GridEnvironment;
+import gridenv.GridRobot;
+import gridenv.GridSensor;
+import simulations.coverage.algo.GSACGC;
+import simulations.generic.algo.DQL;
+import simulations.generic.algo.ExternalDQL;
+import simulations.generic.algo.RandomActionAlgo;
 
 public class CoverageSimulation implements Simulation {
 
 	GridEnvironment env = null;
+	SimulatorEngine engine = null;
 	public int squaresLeft = 0;
 	private int MAX_STEPS_PER_RUN = SimulatorMain.settings.getInt("autorun.max_steps_per_run");
-	private double COVER_UNIQUE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.cover_unique");
-	private double COVER_AGAIN_REWARD = SimulatorMain.settings.getDouble("deepql.reward.cover_again");
-	private double DEATH_REWARD = SimulatorMain.settings.getDouble("deepql.reward.death");
-	private double FULL_COVERAGE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.full_coverage");
 
 
 	public CoverageSimulation() {
@@ -23,9 +34,101 @@ public class CoverageSimulation implements Simulation {
 	}
 
 
+	private Algorithm createNewCoverageAlgoInstance(GridRobot robot) {
+		GridSensor sensor = new GridSensor(this.env, robot);
+		CoverageGridActuator actuator = new CoverageGridActuator(this.env, robot, this);
+
+		String coverageAlgoName = SimulatorMain.settings.getString("adsim.algorithm_name");
+		String metaCoverageAlgoName = "";
+
+		Algorithm algo = null;
+
+		if (coverageAlgoName.indexOf('+') != -1) {
+			metaCoverageAlgoName = coverageAlgoName.substring(0, coverageAlgoName.indexOf('+')).trim();
+			coverageAlgoName = coverageAlgoName.substring(coverageAlgoName.indexOf('+') + 1).trim();
+		}
+
+		if (coverageAlgoName.equalsIgnoreCase("DQL")) {
+			algo = new DQL(sensor, actuator);
+		} else if (coverageAlgoName.equalsIgnoreCase("RandomGC")) {
+			algo = new RandomActionAlgo(sensor, actuator);
+		} else if (coverageAlgoName.equalsIgnoreCase("GSACGC")) {
+			algo = new GSACGC(sensor, actuator);
+		} else {
+			algo = new DQL(sensor, actuator);
+		}
+
+		if (!metaCoverageAlgoName.isEmpty()) {
+			if (metaCoverageAlgoName.equalsIgnoreCase("ExternalDQL")) {
+				algo = new ExternalDQL(sensor, actuator, algo);
+			}
+		}
+
+		return algo;
+	}
+
+
 	@Override
 	public void init() {
+		this.registerConsoleCommands();
+		if (!SimulatorMain.args.HEADLESS) {
+			GUIDisplay gd = GUIDisplay.createInstance(this);
+			if (gd != null) {
+				gd.setup();
+				this.engine.setDisplay(gd);
+			}
+		}
+	}
 
+
+	private void registerConsoleCommands() {
+		final ConsoleController controller = SimulatorMain.controller;
+		controller.registerCommand(":setdisplay", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				DisplayAdapter display = null;
+				if (args[0].equals("gui")) {
+					if (GraphicsEnvironment.isHeadless()) {
+						return;
+					}
+					GUIDisplay gd = GUIDisplay.createInstance(CoverageSimulation.this);
+					gd.setup();
+					display = gd;
+				} else if (args[0].equals("none")) {
+					display = null;
+				}
+				CoverageSimulation.this.engine.setDisplay(display);
+			}
+		});
+
+
+		controller.registerCommand(":restart", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				CoverageSimulation.this.restartSimulation();
+			}
+		});
+	}
+
+
+	/**
+	 * Checks if every grid space has been covered at least once
+	 * 
+	 * @return true if the graph has been covered at least once, false otherwise
+	 */
+	private boolean isCovered() {
+		return this.squaresLeft <= 0;
+	}
+
+
+	@Override
+	public boolean isTerminalState() {
+		// Terminal states occur when the environment is covered, all robots are
+		// dead, or the maximum allowed number of steps has been reached
+		return (this.env.allRobotsBroken() || this.isCovered() || this.MAX_STEPS_PER_RUN <= this.env.getStepCount());
 	}
 
 
@@ -48,18 +151,16 @@ public class CoverageSimulation implements Simulation {
 
 
 	/**
-	 * Checks if every grid space has been covered at least once
-	 * 
-	 * @return true if the graph has been covered at least once, false otherwise
+	 * Event hook for cell coverage
 	 */
-	private boolean isCovered() {
-		return this.squaresLeft <= 0;
+	public void onNewCellCovered() {
+		this.squaresLeft--;
 	}
 
 
 	@Override
-	public void setEnvironment(GridEnvironment env) {
-		this.env = env;
+	public void onNewRun() {
+		this.resetEnvironment();
 	}
 
 
@@ -81,60 +182,87 @@ public class CoverageSimulation implements Simulation {
 				stats.resetBatchStats();
 			}
 		}
-	}
 
+		if (SimulatorMain.settings.getBoolean("autorun.finished.newgrid")) {
+			for (GridRobot r : this.env.getRobotList()) {
+				r.setBroken(false);
+			}
 
-	@Override
-	public boolean isTerminalState() {
-		// Terminal states occur when the environment is covered, all robots are
-		// dead, or the maximum allowed number of steps has been reached
-		return (this.env.allRobotsBroken() || this.isCovered() || this.MAX_STEPS_PER_RUN <= this.env.getStepCount());
+			this.env.regenerateGrid();
+			this.env.init();
+
+		} else {
+			this.engine.pauseSimulation();
+		}
 	}
 
 
 	@Override
 	public void onStep() {
-
+		this.env.step();
 	}
 
 
-	/**
-	 * Gets the reward for covering the given cell. This method must be called BEFORE
-	 * the cover count is incremented.
-	 * 
-	 * @param oldCoverCount
-	 *                the cover count the cell had before being covered by the robot
-	 * @param isThreat
-	 *                whether the cell will kill the robot
-	 * @return the reward
-	 */
-	public double getCellCoverageReward(int oldCoverCount, boolean isThreat) {
-		double reward = 0.0;
-		if (oldCoverCount == 0) {
-			this.squaresLeft--;
-		}
+	public void restartSimulation() {
+		this.engine.pauseSimulation();
+		reinitializeSimulation();
+		this.engine.refreshDisplay();
+	}
 
-		if (isThreat) {
-			reward = this.DEATH_REWARD;
 
-		} else {
-			reward = oldCoverCount < 1 ? this.COVER_UNIQUE_REWARD : this.COVER_AGAIN_REWARD;
-
-			if (this.isCovered()) {
-				reward = this.FULL_COVERAGE_REWARD;
+	private void reinitializeSimulation() {
+		for (int x = 0; x < this.env.getWidth(); x++) {
+			for (int y = 0; y < this.env.getHeight(); y++) {
+				this.env.getGridNode(x, y).setCoverCount(0);
 			}
 		}
-		return reward;
+		this.env.init();
 	}
 
 
 	@Override
 	public void reloadSettings() {
-		this.COVER_UNIQUE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.cover_unique");
-		this.COVER_AGAIN_REWARD = SimulatorMain.settings.getDouble("deepql.reward.cover_again");
-		this.DEATH_REWARD = SimulatorMain.settings.getDouble("deepql.reward.death");
-		this.FULL_COVERAGE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.full_coverage");
+		this.env.reloadSettings();
 		this.MAX_STEPS_PER_RUN = SimulatorMain.settings.getInt("autorun.max_steps_per_run");
+	}
+
+
+	/**
+	 * Sets up the environment using the settings
+	 */
+	private void resetEnvironment() {
+		this.env = new GridEnvironment(
+				new Dimension(SimulatorMain.settings.getInt("env.grid.width"), SimulatorMain.settings.getInt("env.grid.height")));
+
+		// Set up the coverage environment
+		this.env.regenerateGrid();
+
+		// Set up the robots
+		for (int i = 0; i < SimulatorMain.settings.getInt("robots.count"); i++) {
+			GridRobot robot = new GridRobot(i, (int) (Math.random() * this.env.getWidth()), (int) (Math.random() * this.env.getHeight()));
+			robot.coverAlgo = this.createNewCoverageAlgoInstance(robot);
+			this.env.addRobot(robot);
+		}
+		SimulatorMain.setStats(new CoverageStats(this.env, this.env.getRobotList()));
+		SimulatorMain.getStats().resetBatchStats();
+
+		this.env.init();
+	}
+
+
+	@Override
+	public void setEngine(SimulatorEngine engine) {
+		this.engine = engine;
+	}
+
+
+	public SimulatorEngine getEngine() {
+		return this.engine;
+	}
+
+
+	public GridEnvironment getEnv() {
+		return this.env;
 	}
 
 }

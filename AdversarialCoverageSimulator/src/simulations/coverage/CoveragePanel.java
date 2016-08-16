@@ -1,4 +1,4 @@
-package gui;
+package simulations.coverage;
 
 import java.awt.*;
 import javax.swing.*;
@@ -7,22 +7,21 @@ import adsim.SimulatorMain;
 import gridenv.GridEnvironment;
 import gridenv.GridNode;
 import gridenv.GridRobot;
-import adsim.SimulatorEngine;
 import adsim.NodeType;
 
-class EnvPanel extends JPanel {
+public class CoveragePanel extends JPanel {
 	private static final long serialVersionUID = -3413050706073789678L;
 
 	GridEnvironment env;
-	SimulatorEngine engine;
+	CoverageSimulation sim;
 
 	private boolean SHOW_BINARY_COVERAGE = SimulatorMain.settings.getBoolean("display.show_binary_coverage");
 
 
-	public EnvPanel(SimulatorEngine engine) {
+	public CoveragePanel(CoverageSimulation sim) {
 		super();
 		setSize(500, 500);
-		this.engine = engine;
+		this.sim = sim;
 	}
 
 
@@ -33,32 +32,36 @@ class EnvPanel extends JPanel {
 	}
 
 
-	public void setEngine(SimulatorEngine engine) {
-		this.engine = engine;
+	public void setSimulation(CoverageSimulation sim) {
+		this.sim = sim;
 	}
 
 
 	private void draw(Graphics g, Dimension windowSize) {
-		synchronized (this.engine.getEnv()) {
+		GridEnvironment env = this.sim.getEnv();
+		if (env == null) {
+			return;
+		}
+		synchronized (env) {
 			// Get the cell size
-			Dimension cellSize = new Dimension(windowSize.width / this.engine.getEnv().gridSize.width,
-					windowSize.height / this.engine.getEnv().gridSize.height);
+			Dimension cellSize = new Dimension(windowSize.width / this.sim.getEnv().gridSize.width,
+					windowSize.height / this.sim.getEnv().gridSize.height);
 
 			// Draw the grid
 			g.translate(-cellSize.width, -cellSize.height);
-			for (int x = 0; x < this.engine.getEnv().gridSize.width; x++) {
+			for (int x = 0; x < this.sim.getEnv().gridSize.width; x++) {
 				g.translate(cellSize.width, 0);
-				for (int y = 0; y < this.engine.getEnv().gridSize.height; y++) {
+				for (int y = 0; y < this.sim.getEnv().gridSize.height; y++) {
 					g.translate(0, cellSize.height);
-					drawGridCell(this.engine.getEnv().grid[x][y], g, cellSize);
+					drawGridCell(this.sim.getEnv().grid[x][y], g, cellSize);
 				}
-				g.translate(0, -this.engine.getEnv().gridSize.height * cellSize.height);
+				g.translate(0, -this.sim.getEnv().gridSize.height * cellSize.height);
 			}
-			g.translate(-(this.engine.getEnv().gridSize.width - 1) * cellSize.width, cellSize.height);
+			g.translate(-(this.sim.getEnv().gridSize.width - 1) * cellSize.width, cellSize.height);
 
 			// Draw the robots
 			g.setColor(Color.darkGray);
-			for (GridRobot r : this.engine.getEnv().robots) {
+			for (GridRobot r : this.sim.getEnv().robots) {
 				g.setColor(new Color((37 * r.getId()) % 256, (53 * (r.getId() + 9)) % 256, (71 * r.getId()) % 256));
 				g.fillOval(r.getLocation().x * cellSize.width, r.getLocation().y * cellSize.height, cellSize.width, cellSize.height);
 			}
@@ -95,11 +98,11 @@ class EnvPanel extends JPanel {
 
 
 	public int getGridX(int x) {
-		return this.engine.getEnv().getWidth() * x / this.getWidth();
+		return this.sim.getEnv().getWidth() * x / this.getWidth();
 	}
 
 
 	public int getGridY(int y) {
-		return this.engine.getEnv().getHeight() * y / this.getHeight();
+		return this.sim.getEnv().getHeight() * y / this.getHeight();
 	}
 }

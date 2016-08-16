@@ -1,4 +1,4 @@
-package gui;
+package simulations.coverage;
 
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
@@ -13,18 +13,17 @@ import javax.swing.*;
 
 import adsim.SimulatorMain;
 import gridenv.GridNode;
-import adsim.SimulatorEngine;
 import adsim.DisplayAdapter;
 import adsim.NodeType;
 
 public class GUIDisplay implements DisplayAdapter {
-	private EnvPanel mainPanel = null;
+	private CoveragePanel mainPanel = null;
 	private JFrame frame = null;
-	private SimulatorEngine engine = null;
+	private CoverageSimulation sim = null;
 
 
-	private GUIDisplay(final SimulatorEngine engine) {
-		this.engine = engine;
+	private GUIDisplay(final CoverageSimulation sim) {
+		this.sim = sim;
 		this.frame = new JFrame("Adversarial Coverage Simulator");
 		// initialize the window
 		this.frame.setSize(500, 400);
@@ -32,12 +31,12 @@ public class GUIDisplay implements DisplayAdapter {
 	}
 
 
-	public static GUIDisplay createInstance(final SimulatorEngine engine) {
+	public static GUIDisplay createInstance(final CoverageSimulation sim) {
 		if (GraphicsEnvironment.isHeadless()) {
 			System.err.println("Could not instantiate GUI display because environment is headless.");
 			return null;
 		}
-		GUIDisplay instance = new GUIDisplay(engine);
+		GUIDisplay instance = new GUIDisplay(sim);
 		return instance;
 	}
 
@@ -79,14 +78,13 @@ public class GUIDisplay implements DisplayAdapter {
 	}
 
 
-	private EnvPanel createMainPanel() {
-		final EnvPanel panel = new EnvPanel(this.engine);
+	private CoveragePanel createMainPanel() {
+		final CoveragePanel panel = new CoveragePanel(this.sim);
 		panel.setSize(500, 500);
 		panel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				openGridNodeEditDialog(
-						GUIDisplay.this.engine.getEnv().getGridNode(panel.getGridX(e.getX()), panel.getGridY(e.getY())));
+				openGridNodeEditDialog(GUIDisplay.this.sim.getEnv().getGridNode(panel.getGridX(e.getX()), panel.getGridY(e.getY())));
 			}
 		});
 		return panel;
@@ -125,7 +123,7 @@ public class GUIDisplay implements DisplayAdapter {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
 				SimulatorMain.settings.openSettingsDialog(GUIDisplay.this.frame);
-				GUIDisplay.this.engine.getEnv().reloadSettings();
+				GUIDisplay.this.sim.getEnv().reloadSettings();
 			}
 		});
 		fileMenu.add(settingsDialogMenuItem);
@@ -134,7 +132,7 @@ public class GUIDisplay implements DisplayAdapter {
 		exportMapDialogMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				System.out.println(GUIDisplay.this.engine.getEnv().exportToString());
+				System.out.println(GUIDisplay.this.sim.getEnv().exportToString());
 			}
 		});
 		fileMenu.add(exportMapDialogMenuItem);
@@ -143,7 +141,7 @@ public class GUIDisplay implements DisplayAdapter {
 		switchToHeadlessMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				GUIDisplay.this.engine.setDisplay(null);
+				GUIDisplay.this.sim.getEngine().setDisplay(null);
 			}
 		});
 		fileMenu.add(switchToHeadlessMenuItem);
@@ -169,7 +167,7 @@ public class GUIDisplay implements DisplayAdapter {
 				pauseCoverageMenuItem.setEnabled(true);
 				runCoverageMenuItem.setEnabled(false);
 				stepCoverageMenuItem.setEnabled(false);
-				GUIDisplay.this.engine.runSimulation();
+				GUIDisplay.this.sim.getEngine().runSimulation();
 				;
 			}
 		});
@@ -183,7 +181,7 @@ public class GUIDisplay implements DisplayAdapter {
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				GUIDisplay.this.engine.pauseSimulation();
+				GUIDisplay.this.sim.getEngine().pauseSimulation();
 			}
 		});
 		runMenu.add(pauseCoverageMenuItem);
@@ -193,7 +191,7 @@ public class GUIDisplay implements DisplayAdapter {
 		stepCoverageMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				GUIDisplay.this.engine.stepSimulation();
+				GUIDisplay.this.sim.getEngine().stepSimulation();
 			}
 		});
 		runMenu.add(stepCoverageMenuItem);
@@ -206,7 +204,7 @@ public class GUIDisplay implements DisplayAdapter {
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				GUIDisplay.this.engine.restartSimulation();
+				GUIDisplay.this.sim.restartSimulation();
 			}
 		});
 		runMenu.add(restartCoverageMenuItem);
@@ -219,7 +217,7 @@ public class GUIDisplay implements DisplayAdapter {
 				runCoverageMenuItem.setEnabled(true);
 				stepCoverageMenuItem.setEnabled(true);
 				pauseCoverageMenuItem.setEnabled(false);
-				GUIDisplay.this.engine.newSimulation();
+				GUIDisplay.this.sim.getEngine().newRun();
 			}
 		});
 		runMenu.add(newCoverageMenuItem);

@@ -1,6 +1,7 @@
 package simulations.generic;
 
 import adsim.Simulation;
+import adsim.SimulatorEngine;
 import gridenv.GridEnvironment;
 
 /**
@@ -12,6 +13,7 @@ import gridenv.GridEnvironment;
 public class GenericSimulation implements Simulation {
 
 	GridEnvironment env = null;
+	SimulatorEngine engine = null;
 
 
 	public GenericSimulation() {
@@ -20,13 +22,7 @@ public class GenericSimulation implements Simulation {
 
 
 	@Override
-	public void setEnvironment(GridEnvironment env) {
-		this.env = env;
-	}
-
-
-	@Override
-	public void onRunEnd() {
+	public void init() {
 
 	}
 
@@ -38,7 +34,19 @@ public class GenericSimulation implements Simulation {
 
 
 	@Override
-	public void init() {
+	public void onEnvInit() {
+
+	}
+
+
+	@Override
+	public void onNewRun() {
+
+	}
+
+
+	@Override
+	public void onRunEnd() {
 
 	}
 
@@ -56,8 +64,8 @@ public class GenericSimulation implements Simulation {
 
 
 	@Override
-	public void onEnvInit() {
-
+	public void setEngine(SimulatorEngine engine) {
+		this.engine = engine;
 	}
 
 }

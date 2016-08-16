@@ -15,8 +15,9 @@ import deeplearning.NeuralNet;
 import deeplearning.StatePreprocessor;
 import deeplearning.StateTransition;
 import deeplearning.NeuralNet.TrainingType;
-import gridenv.GridActuator;
+import deeplearning.DQLActuator;
 import gridenv.GridSensor;
+import simulations.coverage.CoverageGridActuator;
 import deeplearning.ActivationFunction;
 import deeplearning.ExternalTorchNN;
 
@@ -29,24 +30,16 @@ import deeplearning.ExternalTorchNN;
  *
  */
 public class DQL implements Algorithm {
-	private NeuralNet nn = null;
-	private GridSensor sensor;
-	private GridActuator actuator;
-	private Random randgen = new Random();
-	private StatePreprocessor preprocessor;
-	private double greedyEpsilon = SimulatorMain.settings.getDouble("deepql.greedy_epsilon_start");
-	private long stepNum = 0;
-	private StateTransition[] lastStates;
-	private double DISCOUNT_FACTOR;
-	private double GREEDY_EPSILON_DECREMENT;
-	private double GREEDY_EPSILON_MINIMUM;
-	private double LEARNING_RATE_DECAY_FACTOR;
-	private TrainingType NN_TRAINING_TYPE = TrainingType.RMSPROP;
 	private boolean PRINT_Q_VALUES;
 	private boolean USING_EXTERNAL_QLEARNER;
 	private boolean EXTERNALNN_ALLOW_PARTIAL_TRANSITIONS;
 	private boolean EXTERNALNN_USE_FAST_FORWARDS;
 	private boolean ALWAYS_FORWARD_NNINPUT;
+	private double greedyEpsilon = SimulatorMain.settings.getDouble("deepql.greedy_epsilon_start");
+	private double DISCOUNT_FACTOR;
+	private double GREEDY_EPSILON_DECREMENT;
+	private double GREEDY_EPSILON_MINIMUM;
+	private double LEARNING_RATE_DECAY_FACTOR;
 	private int EXTERNAL_RNN_NUM_CODES_PER_MINIBATCH;
 	private int HIDDEN_LAYER_SIZE;
 	private int HISTORY_MAX;
@@ -55,16 +48,24 @@ public class DQL implements Algorithm {
 	private int MINIBATCH_INTERVAL;
 	private int MINIBATCH_SIZE;
 	private int NUM_HIDDEN_LAYERS;
-	private MinibatchSeqType MINIBATCH_SEQ_TYPE = MinibatchSeqType.MANUAL;
-
-	private long stateHistorySize = 0;
-	private double[] nnOutput = null;
 	private long lastTerminalStep = -1;
+	private long stateHistorySize = 0;
+	private long stepNum = 0;
+	private DQLActuator actuator;
+	private GridSensor sensor;
+	private MinibatchSeqType MINIBATCH_SEQ_TYPE = MinibatchSeqType.MANUAL;
+	private NeuralNet nn = null;
+	private Random randgen = new Random();
 	private SampledVariableDouble trainingLoss = new SampledVariableDouble();
 	private SampledVariableDouble trainingAbsLoss = new SampledVariableDouble();
+	private StatePreprocessor preprocessor;
+	private StateTransition[] lastStates;
+	private TrainingType NN_TRAINING_TYPE = TrainingType.RMSPROP;
+
+	private double[] nnOutput = null;
 
 
-	public DQL(GridSensor sensor, GridActuator actuator) {
+	public DQL(GridSensor sensor, CoverageGridActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 		this.preprocessor = new StatePreprocessor(this.sensor);
