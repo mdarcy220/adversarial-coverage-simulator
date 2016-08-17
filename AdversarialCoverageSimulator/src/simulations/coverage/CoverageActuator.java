@@ -7,7 +7,7 @@ import gridenv.Coordinate;
 import gridenv.GridEnvironment;
 import gridenv.GridRobot;
 
-public class CoverageGridActuator implements DQLActuator {
+public class CoverageActuator implements DQLActuator {
 	private CoverageSimulation simulation;
 	/**
 	 * The environment in which this actuator exists
@@ -34,7 +34,7 @@ public class CoverageGridActuator implements DQLActuator {
 	 * @param robot
 	 *                the robot that controls this actuator
 	 */
-	public CoverageGridActuator(GridEnvironment env, GridRobot robot, CoverageSimulation covSim) {
+	public CoverageActuator(GridEnvironment env, GridRobot robot, CoverageSimulation covSim) {
 		this.env = env;
 		this.robot = robot;
 		this.simulation = covSim;
@@ -176,12 +176,6 @@ public class CoverageGridActuator implements DQLActuator {
 	}
 
 
-	/**
-	 * Get the reward value from the most recent action (usually useful for MDP-based
-	 * coverage algorithms)
-	 * 
-	 * @return
-	 */
 	@Override
 	public double getLastReward() {
 		return this.lastReward;

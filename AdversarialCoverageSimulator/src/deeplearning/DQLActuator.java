@@ -11,7 +11,8 @@ import adsim.Actuator;
  */
 public interface DQLActuator extends Actuator {
 	/**
-	 * Gets the reward for taking the specified action.
+	 * Gets the reward received from taking the last action. This is necessary for
+	 * Q-Learning.
 	 * 
 	 * @param action
 	 *                the id of the action to be taken

@@ -1,4 +1,4 @@
-package simulations.coverage;
+package simulations.pathplan.display;
 
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
@@ -9,34 +9,51 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.NumberFormat;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFormattedTextField;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.KeyStroke;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
+import adsim.Display;
+import adsim.NodeType;
 import adsim.SimulatorMain;
 import gridenv.GridNode;
-import adsim.DisplayAdapter;
-import adsim.NodeType;
+import simulations.pathplan.PathplanSimulation;
+import simulations.pathplan.display.PathplanGUIDisplay;
+import simulations.pathplan.display.PathplanPanel;
 
-public class GUIDisplay implements DisplayAdapter {
-	private CoveragePanel mainPanel = null;
+public class PathplanGUIDisplay implements Display {
+	private PathplanPanel mainPanel = null;
 	private JFrame frame = null;
-	private CoverageSimulation sim = null;
+	private PathplanSimulation sim = null;
 
 
-	private GUIDisplay(final CoverageSimulation sim) {
+	private PathplanGUIDisplay(final PathplanSimulation sim) {
 		this.sim = sim;
-		this.frame = new JFrame("Adversarial Coverage Simulator");
+		this.frame = new JFrame("Adversarial Pathplan Simulator");
 		// initialize the window
 		this.frame.setSize(500, 400);
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 
 
-	public static GUIDisplay createInstance(final CoverageSimulation sim) {
+	public static PathplanGUIDisplay createInstance(final PathplanSimulation sim) {
 		if (GraphicsEnvironment.isHeadless()) {
 			System.err.println("Could not instantiate GUI display because environment is headless.");
 			return null;
 		}
-		GUIDisplay instance = new GUIDisplay(sim);
+		PathplanGUIDisplay instance = new PathplanGUIDisplay(sim);
 		return instance;
 	}
 
@@ -78,13 +95,14 @@ public class GUIDisplay implements DisplayAdapter {
 	}
 
 
-	private CoveragePanel createMainPanel() {
-		final CoveragePanel panel = new CoveragePanel(this.sim);
+	private PathplanPanel createMainPanel() {
+		final PathplanPanel panel = new PathplanPanel(this.sim);
 		panel.setSize(500, 500);
 		panel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				openGridNodeEditDialog(GUIDisplay.this.sim.getEnv().getGridNode(panel.getGridX(e.getX()), panel.getGridY(e.getY())));
+				openGridNodeEditDialog(
+						PathplanGUIDisplay.this.sim.getEnv().getGridNode(panel.getGridX(e.getX()), panel.getGridY(e.getY())));
 			}
 		});
 		return panel;
@@ -104,7 +122,7 @@ public class GUIDisplay implements DisplayAdapter {
 		exportSettingsMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				GUIDisplay.this.showExportSettingsDialog();
+				PathplanGUIDisplay.this.showExportSettingsDialog();
 			}
 		});
 		fileMenu.add(exportSettingsMenuItem);
@@ -113,7 +131,7 @@ public class GUIDisplay implements DisplayAdapter {
 		loadSettingsMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				GUIDisplay.this.showLoadSettingsDialog();
+				PathplanGUIDisplay.this.showLoadSettingsDialog();
 			}
 		});
 		fileMenu.add(loadSettingsMenuItem);
@@ -122,8 +140,8 @@ public class GUIDisplay implements DisplayAdapter {
 		settingsDialogMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				SimulatorMain.settings.openSettingsDialog(GUIDisplay.this.frame);
-				GUIDisplay.this.sim.getEnv().reloadSettings();
+				SimulatorMain.settings.openSettingsDialog(PathplanGUIDisplay.this.frame);
+				PathplanGUIDisplay.this.sim.getEnv().reloadSettings();
 			}
 		});
 		fileMenu.add(settingsDialogMenuItem);
@@ -132,7 +150,7 @@ public class GUIDisplay implements DisplayAdapter {
 		exportMapDialogMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				System.out.println(GUIDisplay.this.sim.getEnv().exportToString());
+				System.out.println(PathplanGUIDisplay.this.sim.getEnv().exportToString());
 			}
 		});
 		fileMenu.add(exportMapDialogMenuItem);
@@ -141,7 +159,7 @@ public class GUIDisplay implements DisplayAdapter {
 		switchToHeadlessMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				GUIDisplay.this.sim.getEngine().setDisplay(null);
+				PathplanGUIDisplay.this.sim.getEngine().setDisplay(null);
 			}
 		});
 		fileMenu.add(switchToHeadlessMenuItem);
@@ -153,74 +171,74 @@ public class GUIDisplay implements DisplayAdapter {
 	private void setupRunMenu(JMenuBar menuBar) {
 		// Run menu
 		final JMenu runMenu = new JMenu("Run");
-		final JMenuItem runCoverageMenuItem = new JMenuItem("Autorun");
-		final JMenuItem pauseCoverageMenuItem = new JMenuItem("Stop");
-		final JMenuItem stepCoverageMenuItem = new JMenuItem("Step");
-		final JMenuItem restartCoverageMenuItem = new JMenuItem("Restart (keep grid)");
-		final JMenuItem newCoverageMenuItem = new JMenuItem("New coverage");
+		final JMenuItem runPathplanMenuItem = new JMenuItem("Autorun");
+		final JMenuItem pausePathplanMenuItem = new JMenuItem("Stop");
+		final JMenuItem stepPathplanMenuItem = new JMenuItem("Step");
+		final JMenuItem restartPathplanMenuItem = new JMenuItem("Restart (keep grid)");
+		final JMenuItem newPathplanMenuItem = new JMenuItem("New Pathplan");
 
-		runCoverageMenuItem.setToolTipText("Automatically step until coverage is done");
-		runCoverageMenuItem.setAccelerator(KeyStroke.getKeyStroke("F6"));
-		runCoverageMenuItem.addActionListener(new ActionListener() {
+		runPathplanMenuItem.setToolTipText("Automatically step until Pathplan is done");
+		runPathplanMenuItem.setAccelerator(KeyStroke.getKeyStroke("F6"));
+		runPathplanMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				pauseCoverageMenuItem.setEnabled(true);
-				runCoverageMenuItem.setEnabled(false);
-				stepCoverageMenuItem.setEnabled(false);
-				GUIDisplay.this.sim.getEngine().runSimulation();
+				pausePathplanMenuItem.setEnabled(true);
+				runPathplanMenuItem.setEnabled(false);
+				stepPathplanMenuItem.setEnabled(false);
+				PathplanGUIDisplay.this.sim.getEngine().runSimulation();
 				;
 			}
 		});
-		runMenu.add(runCoverageMenuItem);
+		runMenu.add(runPathplanMenuItem);
 
-		pauseCoverageMenuItem.setToolTipText("Pause the simulation (if running)");
-		pauseCoverageMenuItem.setAccelerator(KeyStroke.getKeyStroke("F7"));
-		pauseCoverageMenuItem.addActionListener(new ActionListener() {
+		pausePathplanMenuItem.setToolTipText("Pause the simulation (if running)");
+		pausePathplanMenuItem.setAccelerator(KeyStroke.getKeyStroke("F7"));
+		pausePathplanMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				runCoverageMenuItem.setEnabled(true);
-				stepCoverageMenuItem.setEnabled(true);
-				pauseCoverageMenuItem.setEnabled(false);
-				GUIDisplay.this.sim.getEngine().pauseSimulation();
+				runPathplanMenuItem.setEnabled(true);
+				stepPathplanMenuItem.setEnabled(true);
+				pausePathplanMenuItem.setEnabled(false);
+				PathplanGUIDisplay.this.sim.getEngine().pauseSimulation();
 			}
 		});
-		runMenu.add(pauseCoverageMenuItem);
+		runMenu.add(pausePathplanMenuItem);
 
-		stepCoverageMenuItem.setToolTipText("Increment the coverage by one step");
-		stepCoverageMenuItem.setAccelerator(KeyStroke.getKeyStroke("F8"));
-		stepCoverageMenuItem.addActionListener(new ActionListener() {
+		stepPathplanMenuItem.setToolTipText("Increment the Pathplan by one step");
+		stepPathplanMenuItem.setAccelerator(KeyStroke.getKeyStroke("F8"));
+		stepPathplanMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				GUIDisplay.this.sim.getEngine().stepSimulation();
+				PathplanGUIDisplay.this.sim.getEngine().stepSimulation();
 			}
 		});
-		runMenu.add(stepCoverageMenuItem);
+		runMenu.add(stepPathplanMenuItem);
 
-		restartCoverageMenuItem.setToolTipText("Reinitialize the current coverage");
-		restartCoverageMenuItem.setAccelerator(KeyStroke.getKeyStroke("control R"));
-		restartCoverageMenuItem.addActionListener(new ActionListener() {
+		restartPathplanMenuItem.setToolTipText("Reinitialize the current Pathplan");
+		restartPathplanMenuItem.setAccelerator(KeyStroke.getKeyStroke("control R"));
+		restartPathplanMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				runCoverageMenuItem.setEnabled(true);
-				stepCoverageMenuItem.setEnabled(true);
-				pauseCoverageMenuItem.setEnabled(false);
-				GUIDisplay.this.sim.restartSimulation();
+				runPathplanMenuItem.setEnabled(true);
+				stepPathplanMenuItem.setEnabled(true);
+				pausePathplanMenuItem.setEnabled(false);
+				PathplanGUIDisplay.this.sim.restartSimulation();
 			}
 		});
-		runMenu.add(restartCoverageMenuItem);
+		runMenu.add(restartPathplanMenuItem);
 
-		newCoverageMenuItem.setToolTipText("Start a new coverage");
-		newCoverageMenuItem.setAccelerator(KeyStroke.getKeyStroke("control N"));
-		newCoverageMenuItem.addActionListener(new ActionListener() {
+		newPathplanMenuItem.setToolTipText("Start a new Pathplan");
+		newPathplanMenuItem.setAccelerator(KeyStroke.getKeyStroke("control N"));
+		newPathplanMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				runCoverageMenuItem.setEnabled(true);
-				stepCoverageMenuItem.setEnabled(true);
-				pauseCoverageMenuItem.setEnabled(false);
-				GUIDisplay.this.sim.getEngine().newRun();
+				runPathplanMenuItem.setEnabled(true);
+				stepPathplanMenuItem.setEnabled(true);
+				pausePathplanMenuItem.setEnabled(false);
+				PathplanGUIDisplay.this.sim.getEngine().newRun();
 			}
 		});
-		runMenu.add(newCoverageMenuItem);
+		runMenu.add(newPathplanMenuItem);
 
 		menuBar.add(runMenu);
 	}
@@ -293,7 +311,7 @@ public class GUIDisplay implements DisplayAdapter {
 				gridNode.setCost(((Number) costField.getValue()).doubleValue());
 				gridNode.setCoverCount(((Number) coverCountSpinner.getValue()).intValue());
 				gridNode.setNodeType(((ComboBoxNodeType) typeBox.getSelectedItem()).nodetype);
-				GUIDisplay.this.mainPanel.repaint();
+				PathplanGUIDisplay.this.mainPanel.repaint();
 				dialog.dispose();
 			}
 		});
@@ -324,7 +342,7 @@ public class GUIDisplay implements DisplayAdapter {
 	 */
 	public void showLoadSettingsDialog() {
 		JFileChooser chooser = new JFileChooser();
-		int status = chooser.showOpenDialog(GUIDisplay.this.frame);
+		int status = chooser.showOpenDialog(PathplanGUIDisplay.this.frame);
 		if (status == JFileChooser.APPROVE_OPTION) {
 			File settingsFile = chooser.getSelectedFile();
 			SimulatorMain.settings.loadFromFile(settingsFile);
@@ -340,7 +358,7 @@ public class GUIDisplay implements DisplayAdapter {
 	 */
 	public void showExportSettingsDialog() {
 		JFileChooser chooser = new JFileChooser();
-		int status = chooser.showOpenDialog(GUIDisplay.this.frame);
+		int status = chooser.showOpenDialog(PathplanGUIDisplay.this.frame);
 		if (status == JFileChooser.APPROVE_OPTION) {
 			File settingsFile = chooser.getSelectedFile();
 			SimulatorMain.settings.exportToFile(settingsFile);
@@ -352,4 +370,5 @@ public class GUIDisplay implements DisplayAdapter {
 	public void refresh() {
 		this.mainPanel.repaint();
 	}
+
 }

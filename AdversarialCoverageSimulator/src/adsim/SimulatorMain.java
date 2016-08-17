@@ -27,7 +27,7 @@ public class SimulatorMain {
 		// Set up controller before engine (because engine could register commands
 		// to the controller)
 		SimulatorMain.controller = new ConsoleController();
-		
+
 		SimulatorMain.engine = new SimulatorEngine(new CoverageSimulation());
 		SimulatorMain.engine.newRun();
 

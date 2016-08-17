@@ -17,6 +17,13 @@ public interface Simulation {
 
 
 	/**
+	 * Does any cleanup needed before this simulation can be destroyed, such as
+	 * de-registering console commands and releasing object references.
+	 */
+	public void dispose();
+
+
+	/**
 	 * Checks if an end state has been reached
 	 * 
 	 * @return true if the current state is an end state, false otherwise

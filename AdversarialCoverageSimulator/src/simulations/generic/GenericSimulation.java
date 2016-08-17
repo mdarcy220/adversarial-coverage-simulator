@@ -68,4 +68,11 @@ public class GenericSimulation implements Simulation {
 		this.engine = engine;
 	}
 
+
+	@Override
+	public void dispose() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

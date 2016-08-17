@@ -2,10 +2,11 @@ package simulations.coverage;
 
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
+import java.util.Random;
 
 import adsim.Algorithm;
 import adsim.ConsoleController;
-import adsim.DisplayAdapter;
+import adsim.Display;
 import adsim.NodeType;
 import adsim.Simulation;
 import adsim.SimulatorEngine;
@@ -14,9 +15,11 @@ import adsim.TerminalCommand;
 import adsim.stats.SampledVariableDouble;
 import adsim.stats.SampledVariableLong;
 import gridenv.GridEnvironment;
+import gridenv.GridNodeGenerator;
 import gridenv.GridRobot;
 import gridenv.GridSensor;
 import simulations.coverage.algo.GSACGC;
+import simulations.coverage.display.CoverageGUIDisplay;
 import simulations.generic.algo.DQL;
 import simulations.generic.algo.ExternalDQL;
 import simulations.generic.algo.RandomActionAlgo;
@@ -26,7 +29,15 @@ public class CoverageSimulation implements Simulation {
 	GridEnvironment env = null;
 	SimulatorEngine engine = null;
 	public int squaresLeft = 0;
+	private Random random = new Random();
+	private GridNodeGenerator nodegen = new GridNodeGenerator();
 	private int MAX_STEPS_PER_RUN = SimulatorMain.settings.getInt("autorun.max_steps_per_run");
+	private boolean VARIABLE_GRID_SIZE = SimulatorMain.settings.getBoolean("env.variable_grid_size");
+	private boolean FORCE_SQUARE = SimulatorMain.settings.getBoolean("env.grid.force_square");
+	private int MAX_HEIGHT = SimulatorMain.settings.getInt("env.grid.maxheight");
+	private int MAX_WIDTH = SimulatorMain.settings.getInt("env.grid.maxwidth");
+	private int MIN_HEIGHT = SimulatorMain.settings.getInt("env.grid.minheight");
+	private int MIN_WIDTH = SimulatorMain.settings.getInt("env.grid.minwidth");
 
 
 	public CoverageSimulation() {
@@ -36,7 +47,7 @@ public class CoverageSimulation implements Simulation {
 
 	private Algorithm createNewCoverageAlgoInstance(GridRobot robot) {
 		GridSensor sensor = new GridSensor(this.env, robot);
-		CoverageGridActuator actuator = new CoverageGridActuator(this.env, robot, this);
+		CoverageActuator actuator = new CoverageActuator(this.env, robot, this);
 
 		String coverageAlgoName = SimulatorMain.settings.getString("adsim.algorithm_name");
 		String metaCoverageAlgoName = "";
@@ -50,19 +61,23 @@ public class CoverageSimulation implements Simulation {
 
 		if (coverageAlgoName.equalsIgnoreCase("DQL")) {
 			algo = new DQL(sensor, actuator);
-		} else if (coverageAlgoName.equalsIgnoreCase("RandomGC")) {
+			((DQL) algo).setStatePreprocessor(new CoverageStatePreprocessor(sensor));
+		} else if (coverageAlgoName.equalsIgnoreCase("Random")) {
 			algo = new RandomActionAlgo(sensor, actuator);
 		} else if (coverageAlgoName.equalsIgnoreCase("GSACGC")) {
 			algo = new GSACGC(sensor, actuator);
 		} else {
 			algo = new DQL(sensor, actuator);
+			((DQL) algo).setStatePreprocessor(new CoverageStatePreprocessor(sensor));
 		}
 
 		if (!metaCoverageAlgoName.isEmpty()) {
 			if (metaCoverageAlgoName.equalsIgnoreCase("ExternalDQL")) {
 				algo = new ExternalDQL(sensor, actuator, algo);
+				((ExternalDQL) algo).setStatePreprocessor(new CoverageStatePreprocessor(sensor));
 			}
 		}
+
 
 		return algo;
 	}
@@ -72,7 +87,7 @@ public class CoverageSimulation implements Simulation {
 	public void init() {
 		this.registerConsoleCommands();
 		if (!SimulatorMain.args.HEADLESS) {
-			GUIDisplay gd = GUIDisplay.createInstance(this);
+			CoverageGUIDisplay gd = CoverageGUIDisplay.createInstance(this);
 			if (gd != null) {
 				gd.setup();
 				this.engine.setDisplay(gd);
@@ -89,12 +104,12 @@ public class CoverageSimulation implements Simulation {
 				if (args.length < 1) {
 					return;
 				}
-				DisplayAdapter display = null;
+				Display display = null;
 				if (args[0].equals("gui")) {
 					if (GraphicsEnvironment.isHeadless()) {
 						return;
 					}
-					GUIDisplay gd = GUIDisplay.createInstance(CoverageSimulation.this);
+					CoverageGUIDisplay gd = CoverageGUIDisplay.createInstance(CoverageSimulation.this);
 					gd.setup();
 					display = gd;
 				} else if (args[0].equals("none")) {
@@ -188,11 +203,42 @@ public class CoverageSimulation implements Simulation {
 				r.setBroken(false);
 			}
 
-			this.env.regenerateGrid();
+			this.regenerateGrid();
 			this.env.init();
 
 		} else {
 			this.engine.pauseSimulation();
+		}
+	}
+
+
+	private void regenerateGrid() {
+		if (this.VARIABLE_GRID_SIZE) {
+			int newWidth = (int) (this.random.nextDouble() * (this.MAX_WIDTH - this.MIN_WIDTH) + this.MIN_WIDTH);
+			int newHeight = (int) (this.random.nextDouble() * (this.MAX_HEIGHT - this.MIN_HEIGHT) + this.MIN_HEIGHT);
+			if (this.FORCE_SQUARE) {
+				newHeight = newWidth;
+			}
+
+			this.env.setSize(new Dimension(newWidth, newHeight));
+		}
+
+		String dangerValStr = SimulatorMain.settings.getString("env.grid.dangervalues");
+
+		// To save time, only recompile the generator if the string has changed
+		if (!this.nodegen.getGeneratorString().equals(dangerValStr)) {
+			this.nodegen.setGeneratorString(dangerValStr);
+		}
+
+		this.nodegen.setRandomMap();
+
+		int gridWidth = this.env.getWidth();
+		int gridHeight = this.env.getHeight();
+
+		for (int x = 0; x < gridWidth; x++) {
+			for (int y = 0; y < gridHeight; y++) {
+				this.nodegen.genNext(this.env.grid[x][y]);
+			}
 		}
 	}
 
@@ -224,6 +270,12 @@ public class CoverageSimulation implements Simulation {
 	public void reloadSettings() {
 		this.env.reloadSettings();
 		this.MAX_STEPS_PER_RUN = SimulatorMain.settings.getInt("autorun.max_steps_per_run");
+		this.VARIABLE_GRID_SIZE = SimulatorMain.settings.getBoolean("env.variable_grid_size");
+		this.FORCE_SQUARE = SimulatorMain.settings.getBoolean("env.grid.force_square");
+		this.MAX_HEIGHT = SimulatorMain.settings.getInt("env.grid.maxheight");
+		this.MAX_WIDTH = SimulatorMain.settings.getInt("env.grid.maxwidth");
+		this.MIN_HEIGHT = SimulatorMain.settings.getInt("env.grid.minheight");
+		this.MIN_WIDTH = SimulatorMain.settings.getInt("env.grid.minwidth");
 	}
 
 
@@ -235,7 +287,7 @@ public class CoverageSimulation implements Simulation {
 				new Dimension(SimulatorMain.settings.getInt("env.grid.width"), SimulatorMain.settings.getInt("env.grid.height")));
 
 		// Set up the coverage environment
-		this.env.regenerateGrid();
+		this.regenerateGrid();
 
 		// Set up the robots
 		for (int i = 0; i < SimulatorMain.settings.getInt("robots.count"); i++) {
@@ -263,6 +315,13 @@ public class CoverageSimulation implements Simulation {
 
 	public GridEnvironment getEnv() {
 		return this.env;
+	}
+
+
+	@Override
+	public void dispose() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

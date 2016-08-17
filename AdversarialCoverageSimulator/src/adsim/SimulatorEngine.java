@@ -1,30 +1,21 @@
 package adsim;
 
+import simulations.coverage.CoverageSimulation;
 import simulations.coverage.CoverageStats;
 import simulations.generic.GenericSimulation;
+import simulations.generic.display.EmptyDisplayAdapter;
+import simulations.pathplan.PathplanSimulation;
 
 public class SimulatorEngine {
 
 	private boolean isRunning = false;
-	private DisplayAdapter display = null;
+	private Display display = null;
 	private Thread simulationThread = null;
 	private Simulation simulation;
-	private static final DisplayAdapter EmptyDisplayAdapter = new DisplayAdapter() {
-		@Override
-		public void refresh() {
-			// Do nothing
-		}
-
-
-		@Override
-		public void dispose() {
-			// Do nothing
-		}
-	};
 
 
 	public SimulatorEngine(Simulation sim) {
-		this.setDisplay(SimulatorEngine.EmptyDisplayAdapter);
+		this.setDisplay(new EmptyDisplayAdapter());
 		this.setSimulation(sim);
 		this.init();
 	}
@@ -76,6 +67,25 @@ public class SimulatorEngine {
 			public void execute(String[] args) {
 				System.out.printf("isRunning = %s, thread.isAlive() = %s\n", SimulatorEngine.this.isRunning ? "true" : "false",
 						SimulatorEngine.this.simulationThread.isAlive() ? "true" : "false");
+			}
+		});
+
+		controller.registerCommand(":set_sim_type", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+
+				if (args[0].equalsIgnoreCase("pathplanning")) {
+					setSimulation(new PathplanSimulation());
+					newRun();
+				} else if (args[0].equalsIgnoreCase("coverage")) {
+					setSimulation(new CoverageSimulation());
+					newRun();
+				} else {
+					System.err.println("error: Invalid simulation type name. No changes were made.");
+				}
 			}
 		});
 
@@ -139,7 +149,7 @@ public class SimulatorEngine {
 	}
 
 
-	public void setDisplay(DisplayAdapter newDisplay) {
+	public void setDisplay(Display newDisplay) {
 		if (this.display != null) {
 			this.display.dispose();
 		}
@@ -147,7 +157,7 @@ public class SimulatorEngine {
 		if (newDisplay != null) {
 			this.display = newDisplay;
 		} else {
-			this.display = SimulatorEngine.EmptyDisplayAdapter;
+			this.display = new EmptyDisplayAdapter();
 		}
 	}
 
@@ -170,6 +180,8 @@ public class SimulatorEngine {
 			System.err.println(
 					"warn: Interrupted while waiting for simulation to finish! No guarantee of thread safety beyond this point.");
 		}
+
+		this.setDisplay(new EmptyDisplayAdapter());
 
 		this.simulation = newSimulation;
 		this.simulation.setEngine(this);

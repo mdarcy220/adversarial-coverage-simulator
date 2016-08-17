@@ -4,32 +4,20 @@ import java.awt.Dimension;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-
 import adsim.NodeType;
 import adsim.Robot;
+import adsim.SettingsReloadable;
 import adsim.SimulatorMain;
 import adsim.TerminalCommand;
 
-public class GridEnvironment {
+public class GridEnvironment implements SettingsReloadable {
 	public GridNode[][] grid;
 	public Dimension gridSize = new Dimension();
 	public List<GridRobot> robots;
 	private int stepCount = 0;
-	
-
-	private Random randgen = new Random();
-
-	private GridNodeGenerator nodegen = new GridNodeGenerator();
 
 	private boolean RANDOMIZE_ROBOT_LOCATION_ON_INIT = SimulatorMain.settings.getBoolean("autorun.randomize_robot_start");
 	private boolean CLEAR_ADJACENT_CELLS_ON_INIT = SimulatorMain.settings.getBoolean("env.clear_adjacent_cells_on_init");
-	private boolean VARIABLE_GRID_SIZE = SimulatorMain.settings.getBoolean("env.variable_grid_size");
-	private boolean FORCE_SQUARE = SimulatorMain.settings.getBoolean("env.grid.force_square");
-	private int MAX_HEIGHT = SimulatorMain.settings.getInt("env.grid.maxheight");
-	private int MAX_WIDTH = SimulatorMain.settings.getInt("env.grid.maxwidth");
-	private int MIN_HEIGHT = SimulatorMain.settings.getInt("env.grid.minheight");
-	private int MIN_WIDTH = SimulatorMain.settings.getInt("env.grid.minwidth");
 
 
 	public GridEnvironment(Dimension gridSize) {
@@ -100,7 +88,7 @@ public class GridEnvironment {
 	 * Initialize all the robots in the environment
 	 */
 	public void init() {
-		
+
 		this.stepCount = 1;
 		for (int robotNum = 0; robotNum < this.robots.size(); robotNum++) {
 			if (this.RANDOMIZE_ROBOT_LOCATION_ON_INIT) {
@@ -120,7 +108,7 @@ public class GridEnvironment {
 			this.robots.get(robotNum).coverAlgo.init();
 
 		}
-		
+
 		SimulatorMain.controller.runCommand_noEcho(SimulatorMain.settings.getString("hooks.env.post_init.cmd"));
 		SimulatorMain.getEngine().getSimulation().onEnvInit();
 	}
@@ -198,34 +186,6 @@ public class GridEnvironment {
 
 		this.gridSize.width = newGridSize.width;
 		this.gridSize.height = newGridSize.height;
-	}
-
-
-	public void regenerateGrid() {
-		if (this.VARIABLE_GRID_SIZE) {
-			int newWidth = (int) (this.randgen.nextDouble() * (this.MAX_WIDTH - this.MIN_WIDTH) + this.MIN_WIDTH);
-			int newHeight = (int) (this.randgen.nextDouble() * (this.MAX_HEIGHT - this.MIN_HEIGHT) + this.MIN_HEIGHT);
-			if (this.FORCE_SQUARE) {
-				newHeight = newWidth;
-			}
-
-			this.setSize(new Dimension(newWidth, newHeight));
-		}
-
-		String dangerValStr = SimulatorMain.settings.getString("env.grid.dangervalues");
-
-		// To save time, only recompile the generator if the string has changed
-		if (!this.nodegen.getGeneratorString().equals(dangerValStr)) {
-			this.nodegen.setGeneratorString(dangerValStr);
-		}
-
-		this.nodegen.setRandomMap();
-
-		for (int x = 0; x < this.getWidth(); x++) {
-			for (int y = 0; y < this.getHeight(); y++) {
-				this.nodegen.genNext(this.grid[x][y]);
-			}
-		}
 	}
 
 
@@ -379,17 +339,12 @@ public class GridEnvironment {
 	}
 
 
+	@Override
 	public void reloadSettings() {
 		for (Robot r : this.robots) {
 			r.reloadSettings();
 		}
 		this.RANDOMIZE_ROBOT_LOCATION_ON_INIT = SimulatorMain.settings.getBoolean("autorun.randomize_robot_start");
 		this.CLEAR_ADJACENT_CELLS_ON_INIT = SimulatorMain.settings.getBoolean("env.clear_adjacent_cells_on_init");
-		this.VARIABLE_GRID_SIZE = SimulatorMain.settings.getBoolean("env.variable_grid_size");
-		this.FORCE_SQUARE = SimulatorMain.settings.getBoolean("env.grid.force_square");
-		this.MAX_HEIGHT = SimulatorMain.settings.getInt("env.grid.maxheight");
-		this.MAX_WIDTH = SimulatorMain.settings.getInt("env.grid.maxwidth");
-		this.MIN_HEIGHT = SimulatorMain.settings.getInt("env.grid.minheight");
-		this.MIN_WIDTH = SimulatorMain.settings.getInt("env.grid.minwidth");
 	}
 }

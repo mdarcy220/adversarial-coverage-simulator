@@ -12,12 +12,12 @@ import adsim.SimulatorSettings;
 import adsim.TerminalCommand;
 import adsim.stats.SampledVariableDouble;
 import deeplearning.NeuralNet;
-import deeplearning.StatePreprocessor;
 import deeplearning.StateTransition;
 import deeplearning.NeuralNet.TrainingType;
 import deeplearning.DQLActuator;
+import deeplearning.DQLStatePreprocessor;
 import gridenv.GridSensor;
-import simulations.coverage.CoverageGridActuator;
+import simulations.coverage.CoverageStatePreprocessor;
 import deeplearning.ActivationFunction;
 import deeplearning.ExternalTorchNN;
 
@@ -58,17 +58,17 @@ public class DQL implements Algorithm {
 	private Random randgen = new Random();
 	private SampledVariableDouble trainingLoss = new SampledVariableDouble();
 	private SampledVariableDouble trainingAbsLoss = new SampledVariableDouble();
-	private StatePreprocessor preprocessor;
+	private DQLStatePreprocessor preprocessor;
 	private StateTransition[] lastStates;
 	private TrainingType NN_TRAINING_TYPE = TrainingType.RMSPROP;
 
 	private double[] nnOutput = null;
 
 
-	public DQL(GridSensor sensor, CoverageGridActuator actuator) {
+	public DQL(GridSensor sensor, DQLActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
-		this.preprocessor = new StatePreprocessor(this.sensor);
+		this.preprocessor = new CoverageStatePreprocessor(this.sensor);
 
 		this.reloadSettings();
 
@@ -334,7 +334,7 @@ public class DQL implements Algorithm {
 	private void initNeuralNet() {
 		final String setupMode = SimulatorMain.settings.getString("deepql.nn_setup_mode");
 		if (setupMode.equalsIgnoreCase("native")) {
-			this.nn = new NeuralNet(new int[] { this.preprocessor.getNNInputSize(), 1 });
+			this.nn = new NeuralNet(new int[] { this.preprocessor.getStateSize(), 1 });
 			this.nn.removeLastLayer();
 			for (int i = 0; i < this.NUM_HIDDEN_LAYERS; i++) {
 				this.nn.addFullyConnectedLayer(this.HIDDEN_LAYER_SIZE, ActivationFunction.RELU_ACTIVATION);
@@ -393,11 +393,15 @@ public class DQL implements Algorithm {
 	}
 
 
+	public void setStatePreprocessor(DQLStatePreprocessor spp) {
+		this.preprocessor = spp;
+	}
+
+
 	@Override
 	public void reloadSettings() {
 		this.actuator.reloadSettings();
 		this.sensor.reloadSettings();
-		this.preprocessor.reloadSettings();
 
 		final SimulatorSettings settings = SimulatorMain.settings;
 

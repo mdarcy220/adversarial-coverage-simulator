@@ -1,11 +1,11 @@
 package simulations.generic.algo;
 
+import adsim.Actuator;
 import adsim.Algorithm;
 import adsim.Node;
 import adsim.NodeType;
 import gridenv.GridNode;
 import gridenv.GridSensor;
-import simulations.coverage.CoverageGridActuator;
 
 /**
  * A coverage algorithm that covers the grid using an e-greedy policy, moving either
@@ -17,11 +17,11 @@ import simulations.coverage.CoverageGridActuator;
  */
 public class RandomActionAlgo implements Algorithm {
 	GridSensor sensor;
-	CoverageGridActuator actuator;
+	Actuator actuator;
 	long stepNum = 0;
 
 
-	public RandomActionAlgo(GridSensor sensor, CoverageGridActuator actuator) {
+	public RandomActionAlgo(GridSensor sensor, Actuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 	}
@@ -29,7 +29,7 @@ public class RandomActionAlgo implements Algorithm {
 
 	@Override
 	public void init() {
-		this.actuator.coverCurrentNode();
+		
 	}
 
 
@@ -64,23 +64,8 @@ public class RandomActionAlgo implements Algorithm {
 			direction = (int) (Math.random() * 4);
 		}
 
-		takeAction(direction);
+		this.actuator.takeActionById(direction);
 		this.stepNum++;
-	}
-
-
-	private void takeAction(int actionNum) {
-		if (actionNum == 0) {
-			this.actuator.moveRight();
-		} else if (actionNum == 1) {
-			this.actuator.moveUp();
-		} else if (actionNum == 2) {
-			this.actuator.moveLeft();
-		} else if (actionNum == 3) {
-			this.actuator.moveDown();
-		} else {
-			this.actuator.coverCurrentNode();
-		}
 	}
 
 
@@ -101,7 +86,6 @@ public class RandomActionAlgo implements Algorithm {
 
 	@Override
 	public void reloadSettings() {
-		// TODO Auto-generated method stub
 		
 	}
 

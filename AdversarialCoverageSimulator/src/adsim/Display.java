@@ -1,6 +1,6 @@
 package adsim;
 
-public interface DisplayAdapter {
+public interface Display {
 	public void refresh();
 	public void dispose();
 }

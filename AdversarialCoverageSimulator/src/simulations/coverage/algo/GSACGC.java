@@ -13,7 +13,7 @@ import adsim.NodeType;
 import gridenv.Coordinate;
 import gridenv.GridNode;
 import gridenv.GridSensor;
-import simulations.coverage.CoverageGridActuator;
+import simulations.coverage.CoverageActuator;
 
 /**
  * A coverage algorithm that uses the GSAC coverage path algorithm created by Roi Yehoshua
@@ -25,13 +25,13 @@ import simulations.coverage.CoverageGridActuator;
 public class GSACGC implements Algorithm {
 
 	GridSensor sensor;
-	CoverageGridActuator actuator;
+	CoverageActuator actuator;
 
 	private List<GridNode> coveragePath;
 	private int stepNum = 0;
 
 
-	public GSACGC(GridSensor sensor, CoverageGridActuator actuator) {
+	public GSACGC(GridSensor sensor, CoverageActuator actuator) {
 		this.sensor = sensor;
 		this.actuator = actuator;
 	}
