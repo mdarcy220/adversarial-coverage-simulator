@@ -245,8 +245,14 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 		for (int x = 0; x < gridWidth; x++) {
 			for (int y = 0; y < gridHeight; y++) {
 				double curDanger = envgrid[x][y].getDangerProb();
-				double dangerSpread = curDanger * this.DANGER_SPREAD_FACTOR;
-				this.dangerDeltas[x][y] -= curDanger * this.DANGER_DECAY_FACTOR;
+				double dangerSpread = curDanger * envgrid[x][y].spreadability * this.DANGER_SPREAD_FACTOR;
+				if (0.0 < envgrid[x][y].dangerFuel) {
+					envgrid[x][y].dangerFuel -= curDanger * this.DANGER_DECAY_FACTOR;
+					this.dangerDeltas[x][y] += curDanger * this.DANGER_DECAY_FACTOR;
+				} else {
+					this.dangerDeltas[x][y] -= curDanger * this.DANGER_DECAY_FACTOR;
+				}
+				
 				if ((x + 1) < gridWidth) {
 					this.dangerDeltas[x + 1][y] += dangerSpread;
 				}
@@ -401,7 +407,7 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 	@Override
 	public void dispose() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

@@ -25,18 +25,6 @@ public class CoveragePanel extends JPanel {
 	}
 
 
-	@Override
-	public void paint(Graphics g) {
-		g.clearRect(0, 0, this.getWidth(), this.getHeight());
-		this.draw(g, this.getSize());
-	}
-
-
-	public void setSimulation(CoverageSimulation sim) {
-		this.sim = sim;
-	}
-
-
 	private void draw(Graphics g, Dimension windowSize) {
 		GridEnvironment env = this.sim.getEnv();
 		if (env == null) {
@@ -104,5 +92,17 @@ public class CoveragePanel extends JPanel {
 
 	public int getGridY(int y) {
 		return this.sim.getEnv().getHeight() * y / this.getHeight();
+	}
+
+
+	@Override
+	public void paint(Graphics g) {
+		g.clearRect(0, 0, this.getWidth(), this.getHeight());
+		this.draw(g, this.getSize());
+	}
+
+
+	public void setSimulation(CoverageSimulation sim) {
+		this.sim = sim;
 	}
 }

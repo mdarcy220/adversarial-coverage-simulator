@@ -2,10 +2,6 @@ package adsim;
 
 public class Node {
 	/**
-	 * The number of times this node was covered by a robot
-	 */
-	protected int coverCount = 0;
-	/**
 	 * The type of node this is (obstacle, free, etc)
 	 */
 	protected NodeType nodeType;
@@ -15,30 +11,6 @@ public class Node {
 	 */
 	protected double dangerProb = 0.0;
 
-	/**
-	 * Increment the cover count of this node
-	 */
-	public void incrementCoverCount() {
-		this.coverCount++;
-	}
-
-	/**
-	 * Set the cover count
-	 * 
-	 * @param count
-	 */
-	public void setCoverCount(int count) {
-		this.coverCount = count;
-	}
-
-	/**
-	 * Gets the cover count
-	 * 
-	 * @return the number of times this node has been covered
-	 */
-	public int getCoverCount() {
-		return this.coverCount;
-	}
 
 	/**
 	 * Get the node type
@@ -48,6 +20,7 @@ public class Node {
 	public NodeType getNodeType() {
 		return this.nodeType;
 	}
+
 
 	/**
 	 * Set the node type
@@ -59,15 +32,17 @@ public class Node {
 		this.nodeType = nodeType;
 	}
 
+
 	/**
 	 * Set the probability of a robot being stopped when it lands on this node
 	 * 
 	 * @param dangerProb
-	 *            the new probability (between 0 and 1)
+	 *                the new probability (between 0 and 1)
 	 */
 	public void setDangerProb(double dangerProb) {
 		this.dangerProb = dangerProb;
 	}
+
 
 	/**
 	 * Gets the probability of a robot being stopped upon landing in this node.
@@ -78,17 +53,18 @@ public class Node {
 		return this.dangerProb;
 	}
 
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + this.coverCount;
 		long temp;
 		temp = Double.doubleToLongBits(this.dangerProb);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result + ((this.nodeType == null) ? 0 : this.nodeType.hashCode());
 		return result;
 	}
+
 
 	@Override
 	public boolean equals(Object obj) {
@@ -102,9 +78,6 @@ public class Node {
 			return false;
 		}
 		Node other = (Node) obj;
-		if (this.coverCount != other.coverCount) {
-			return false;
-		}
 		if (Double.doubleToLongBits(this.dangerProb) != Double.doubleToLongBits(other.dangerProb)) {
 			return false;
 		}

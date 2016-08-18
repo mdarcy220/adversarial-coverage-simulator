@@ -160,6 +160,24 @@ public class GridNodeGenerator {
 			curNode.repeatCount = paramScanner.nextInt();
 		} else if (code == 'd' && paramScanner.hasNextDouble()) {
 			curNode.dangerNodeProb = paramScanner.nextDouble();
+		} else if (code == 's' && paramScanner.hasNextDouble()) {
+			curNode.spreadabilityMin = paramScanner.nextDouble();
+			if (!paramScanner.hasNextDouble()) {
+				System.err.println("Missing parameter for spreadability. Using 0.0 as default.");
+				curNode.spreadabilityMax = 0.0;
+			} else {
+				curNode.spreadabilityMax = paramScanner.nextDouble();
+			}
+		} else if (code == 'f' && paramScanner.hasNextDouble()) {
+			curNode.fuelMin = paramScanner.nextDouble();
+			if (!paramScanner.hasNextDouble()) {
+				System.err.println("Missing parameter for fuel. Using 0.0 as default.");
+				curNode.fuelMax = 0.0;
+			} else {
+				curNode.fuelMax = paramScanner.nextDouble();
+			}
+		} else {
+			System.err.println("Unknown map code: " + code);
 		}
 
 		if (strVal.equals("@lastInMap")) {
@@ -202,6 +220,10 @@ class GridNodeTemplate {
 	public double dangerMax = 0.0;
 	public double dangerNodeProb = 0.0;
 	public double obstacleProb = 0.0;
+	public double spreadabilityMax = 0.0;
+	public double spreadabilityMin = 0.0;
+	public double fuelMax = 0.0;
+	public double fuelMin = 0.0;
 
 	public int coverCountStart = 0;
 	public int repeatCount = 1;
@@ -229,6 +251,8 @@ class GridNodeTemplate {
 		} else if ((rand - this.obstacleProb) < this.dangerNodeProb) {
 			node.setNodeType(NodeType.FREE);
 			node.setDangerProb(randgen.nextDouble() * (this.dangerMax - this.dangerMin) + this.dangerMin);
+			node.spreadability = randgen.nextDouble() * (this.spreadabilityMax - this.spreadabilityMin) + this.spreadabilityMin;
+			node.dangerFuel = randgen.nextDouble() * (this.fuelMax - this.fuelMin) + this.fuelMin;
 		} else {
 			node.setNodeType(NodeType.FREE);
 			node.setDangerProb(0.0);

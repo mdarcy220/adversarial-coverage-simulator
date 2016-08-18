@@ -21,6 +21,12 @@ public interface Actuator {
 
 
 	/**
+	 * Returns the total number of actions available to this actuator
+	 */
+	public int getNumActions();
+
+
+	/**
 	 * Gets the ID of the last action taken.
 	 * 
 	 * @return the id of the last action

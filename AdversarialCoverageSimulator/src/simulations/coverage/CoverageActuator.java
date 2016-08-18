@@ -190,4 +190,10 @@ public class CoverageActuator implements DQLActuator {
 		this.FULL_COVERAGE_REWARD = SimulatorMain.settings.getDouble("deepql.reward.full_coverage");
 		this.ROBOTS_BREAKABLE = SimulatorMain.settings.getBoolean("robots.breakable");
 	}
+
+
+	@Override
+	public int getNumActions() {
+		return 5;
+	}
 }

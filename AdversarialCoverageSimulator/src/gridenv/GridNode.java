@@ -13,12 +13,31 @@ public class GridNode extends Node {
 	/**
 	 * The location of the node within the grid.
 	 */
-	private Coordinate location;
+	protected Coordinate location;
 
 	/**
 	 * Cost of moving to this node
 	 */
-	double cost = 0.0;
+	protected double cost = 0.0;
+
+
+	/**
+	 * The number of times this node was covered by a robot
+	 */
+	protected int coverCount = 0;
+
+
+	/**
+	 * The "spreadability" of danger
+	 */
+	public double spreadability = 0.0;
+
+
+	/**
+	 * The amount of "fuel" the danger has (think of a fire). If the fuel reaches
+	 * zero, the danger will begin to decrease.
+	 */
+	public double dangerFuel = 0.0;
 
 
 	/**
@@ -37,48 +56,15 @@ public class GridNode extends Node {
 	}
 
 
-	public double getCost() {
-		return this.cost;
-	}
-
-
-	public void setCost(double cost) {
-		this.cost = cost;
-	}
-
-
 	/**
 	 * Create a clone of the node
 	 */
 	@Override
 	public GridNode clone() {
 		GridNode clone = new GridNode(this.location.x, this.location.y, this.nodeType);
-		clone.setCoverCount(this.coverCount);
 		clone.setCost(this.cost);
 		clone.setDangerProb(this.dangerProb);
 		return clone;
-	}
-
-
-	public int getX() {
-		return this.location.x;
-	}
-
-
-	public int getY() {
-		return this.location.y;
-	}
-
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		long temp;
-		temp = Double.doubleToLongBits(this.cost);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((this.location == null) ? 0 : this.location.hashCode());
-		return result;
 	}
 
 
@@ -106,7 +92,65 @@ public class GridNode extends Node {
 		}
 		return true;
 	}
+
+
+	public double getCost() {
+		return this.cost;
+	}
+
+
+	/**
+	 * Gets the cover count
+	 * 
+	 * @return the number of times this node has been covered
+	 */
+	public int getCoverCount() {
+		return this.coverCount;
+	}
+
+
+	public int getX() {
+		return this.location.x;
+	}
+
+
+	public int getY() {
+		return this.location.y;
+	}
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		long temp;
+		temp = Double.doubleToLongBits(this.cost);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + ((this.location == null) ? 0 : this.location.hashCode());
+		return result;
+	}
+
+
+	/**
+	 * Increment the cover count of this node
+	 */
+	public void incrementCoverCount() {
+		this.coverCount++;
+	}
+
+
+	public void setCost(double cost) {
+		this.cost = cost;
+	}
+
+
+	/**
+	 * Set the cover count
+	 * 
+	 * @param count
+	 */
+	public void setCoverCount(int count) {
+		this.coverCount = count;
+	}
 }
-
-
 

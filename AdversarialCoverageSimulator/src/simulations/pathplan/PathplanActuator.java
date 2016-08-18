@@ -200,4 +200,10 @@ public class PathplanActuator implements DQLActuator {
 		this.DEATH_REWARD = SimulatorMain.settings.getDouble("deepql.reward.death");
 		this.ROBOTS_BREAKABLE = SimulatorMain.settings.getBoolean("robots.breakable");
 	}
+
+
+	@Override
+	public int getNumActions() {
+		return 5;
+	}
 }
