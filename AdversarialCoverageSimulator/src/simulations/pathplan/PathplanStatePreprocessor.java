@@ -80,8 +80,10 @@ public class PathplanStatePreprocessor implements DQLStatePreprocessor, Settings
 			}
 		}
 
-		int goalOffset = (this.sim.getGoalX() * 5) + this.sim.getGoalY();
-		stateBuf[2 * layerSize + goalOffset] = 1.0;
+		int goalOffset = ((this.sim.getGoalX() - xLowBound) * 5) + (this.sim.getGoalY() - yLowBound);
+		if (0 <= goalOffset && goalOffset < layerSize) {
+			stateBuf[2 * layerSize + goalOffset] = 1.0;
+		}
 
 		if (this.GIVE_GLOBAL_POS_AND_SIZE) {
 			stateBuf[this.NN_INPUT_SIZE - 4] = this.sensor.getLocation().x;

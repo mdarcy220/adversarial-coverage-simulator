@@ -15,7 +15,6 @@ import adsim.SimulatorEngine;
 import adsim.SimulatorMain;
 import adsim.SimulatorSettings;
 import adsim.TerminalCommand;
-import adsim.stats.SampledVariableDouble;
 import adsim.stats.SampledVariableLong;
 import gridenv.Coordinate;
 import gridenv.GridEnvironment;
@@ -47,6 +46,9 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 	private double DANGER_SPREAD_FACTOR;
 	private double DANGER_DECAY_FACTOR;
 	private List<SettingsReloadable> settingsReloadableObjs = new ArrayList<>();
+
+	private SampledVariableLong batch_goalReached = new SampledVariableLong();
+	private SampledVariableLong batch_manhattanDist = new SampledVariableLong();
 
 
 	public PathplanSimulation() {
@@ -194,20 +196,19 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 
 	@Override
 	public void onRunEnd() {
-		long statsBatchSize = SimulatorMain.settings.getInt("stats.multirun.batch_size");
 		CoverageStats stats = SimulatorMain.getStats();
 		if (this.isTerminalState() && stats != null) {
-			System.out.printf("Run end: steps=%d, cov=%d/%d, tSv=%.3f, bots=%d/%d\n", stats.getNumTimeSteps(),
-					stats.getTotalCellsCovered(), stats.getTotalFreeCells(), stats.getTeamSurvivability(),
-					stats.getNumSurvivingRobots(), stats.getNumRobots());
-			if (statsBatchSize <= stats.getRunsInCurrentBatch()) {
-				final SampledVariableLong stepsPerRunInfo = stats.getBatchStepsPerRunInfo();
-				final SampledVariableDouble survivabilityInfo = stats.getBatchSurvivability();
-				final SampledVariableDouble coverageInfo = stats.getBatchCoverage();
-				System.out.printf("Batch end (size=%d): steps=%.1f (%.1f), cov=%.1f%% (%.1f), tSv=%.2f (%.1f)\n",
-						stats.getRunsInCurrentBatch(), stepsPerRunInfo.mean(), stepsPerRunInfo.stddev(), coverageInfo.mean(),
-						coverageInfo.stddev(), survivabilityInfo.mean(), survivabilityInfo.stddev());
-				stats.resetBatchStats();
+			int minManhattanDistance = calcMinManhattanGoalDist();
+			this.batch_manhattanDist.addSample(minManhattanDistance);
+			if (minManhattanDistance == 0) {
+				this.batch_goalReached.addSample(1);
+			} else {
+				this.batch_goalReached.addSample(0);
+			}
+			System.out.printf("Run end: steps=%d, minMdst=%d, tSv=%.1f, bots=%d/%d\n", stats.getNumTimeSteps(), minManhattanDistance,
+					stats.getTeamSurvivability(), stats.getNumSurvivingRobots(), stats.getNumRobots());
+			if (this.isBatchEnd()) {
+				this.onBatchEnd();
 			}
 		}
 
@@ -218,10 +219,44 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 
 			this.regenerateGrid();
 			this.env.init();
-
 		} else {
 			this.engine.pauseSimulation();
 		}
+	}
+
+
+	private int calcMinManhattanGoalDist() {
+		int minManhattanDistance = Integer.MAX_VALUE;
+		for (GridRobot r : this.env.robots) {
+			Coordinate loc = r.getLocation();
+			int manhattanDist = Math.abs(loc.x - this.getGoalX()) + Math.abs(loc.y - this.getGoalY());
+			if (manhattanDist < minManhattanDistance) {
+				minManhattanDistance = manhattanDist;
+			}
+		}
+		return minManhattanDistance;
+	}
+
+
+	private boolean isBatchEnd() {
+		return (SimulatorMain.settings.getInt("stats.multirun.batch_size") <= SimulatorMain.getStats().getRunsInCurrentBatch());
+	}
+
+
+	private void onBatchEnd() {
+		final CoverageStats stats = SimulatorMain.getStats();
+		final SampledVariableLong stepsPerRunInfo = stats.getBatchStepsPerRunInfo();
+		System.out.printf("Batch end (size=%d): steps=%.1f (%.1f), minMdst=%.1f (%.1f), success=%d (%.1f%%)\n", stats.getRunsInCurrentBatch(),
+				stepsPerRunInfo.mean(), stepsPerRunInfo.stddev(), this.batch_manhattanDist.mean(), this.batch_manhattanDist.stddev(),
+				(int) this.batch_goalReached.sum(), this.batch_goalReached.mean() * 100.0);
+		this.resetAllBatchStats();
+	}
+
+
+	private void resetAllBatchStats() {
+		SimulatorMain.getStats().resetBatchStats();
+		this.batch_goalReached.reset();
+		this.batch_manhattanDist.reset();
 	}
 
 
@@ -252,7 +287,7 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 				} else {
 					this.dangerDeltas[x][y] -= curDanger * this.DANGER_DECAY_FACTOR;
 				}
-				
+
 				if ((x + 1) < gridWidth) {
 					this.dangerDeltas[x + 1][y] += dangerSpread;
 				}

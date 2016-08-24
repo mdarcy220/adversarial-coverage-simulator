@@ -41,11 +41,16 @@ public class SampledVariableLong extends SampledVariable {
 	}
 
 
+	/**
+	 * Gets the mean of the samples
+	 * 
+	 * @return the mean
+	 */
 	public double mean() {
 		if (this.nSamples < 1) {
 			return Double.NaN;
 		}
-		return (this.runningSum / this.nSamples);
+		return (((double) this.runningSum) / ((double) this.nSamples));
 	}
 
 
