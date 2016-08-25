@@ -7,11 +7,11 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 
-import adsim.NodeType;
 import adsim.SimulatorMain;
 import gridenv.GridEnvironment;
 import gridenv.GridNode;
 import gridenv.GridRobot;
+import gridenv.NodeType;
 import simulations.pathplan.PathplanSimulation;
 
 public class PathplanPanel extends JPanel {

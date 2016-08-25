@@ -1,11 +1,11 @@
 package simulations.coverage;
 
-import adsim.NodeType;
 import adsim.SimulatorMain;
 import deeplearning.DQLActuator;
 import gridenv.Coordinate;
 import gridenv.GridEnvironment;
 import gridenv.GridRobot;
+import gridenv.NodeType;
 
 public class CoverageActuator implements DQLActuator {
 	private CoverageSimulation simulation;

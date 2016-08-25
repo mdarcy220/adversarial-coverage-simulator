@@ -1,8 +1,5 @@
 package gridenv;
 
-import adsim.Node;
-import adsim.NodeType;
-
 /**
  * Represents a node that is part of a grid.
  * 

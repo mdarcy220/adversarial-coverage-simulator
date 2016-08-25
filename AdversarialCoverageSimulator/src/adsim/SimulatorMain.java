@@ -19,14 +19,13 @@ public class SimulatorMain {
 	public SimulatorMain(String argsArr[]) {
 		// Set up args and settings first
 		args = new SimulatorArgs(argsArr);
+		controller = new ConsoleController();
 		settings = new SimulatorSettings();
 
 		// Set up the logger
 		logger = new Logger();
-
-		// Set up controller before engine (because engine could register commands
-		// to the controller)
-		SimulatorMain.controller = new ConsoleController();
+		
+		controller.setSimulatorSettings(settings);
 
 		SimulatorMain.engine = new SimulatorEngine(new CoverageSimulation());
 		SimulatorMain.engine.newRun();

@@ -4,7 +4,8 @@ import java.awt.Dimension;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import adsim.NodeType;
+
+import adsim.ConsoleController;
 import adsim.Robot;
 import adsim.SettingsReloadable;
 import adsim.SimulatorMain;
@@ -70,7 +71,7 @@ public class GridEnvironment implements SettingsReloadable {
 	 * @param y
 	 *                the y coordinate
 	 */
-	private void clear4AdjactentCells(int x, int y) {
+	public void clear4AdjactentCells(int x, int y) {
 		if (this.isOnGrid(x + 1, y)) {
 			this.getGridNode(x + 1, y).setNodeType(NodeType.FREE);
 		}
@@ -263,7 +264,8 @@ public class GridEnvironment implements SettingsReloadable {
 
 
 	private void registerCustomCommands() {
-		SimulatorMain.controller.registerCommand(":env_printgrid", new TerminalCommand() {
+		ConsoleController controller = SimulatorMain.controller;
+		controller.registerCommand(":env_printgrid", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
 				String streamname = "stdout";
@@ -281,7 +283,7 @@ public class GridEnvironment implements SettingsReloadable {
 			}
 		});
 
-		SimulatorMain.controller.registerCommand(":env_set_robot_pos", new TerminalCommand() {
+		controller.registerCommand(":env_set_robot_pos", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
 				if (args.length < 3) {
@@ -302,6 +304,18 @@ public class GridEnvironment implements SettingsReloadable {
 				} catch (NumberFormatException e) {
 					System.err.println("One or more numbers were formatted incorrectly.");
 				}
+			}
+		});
+
+
+		controller.registerCommand(":get_run_step", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				String toAppend = "";
+				if (1 <= args.length) {
+					toAppend = args[0];
+				}
+				System.out.printf("%d%s", GridEnvironment.this.stepCount, toAppend);
 			}
 		});
 	}

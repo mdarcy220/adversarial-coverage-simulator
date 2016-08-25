@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 import adsim.Algorithm;
-import adsim.NodeType;
 import gridenv.Coordinate;
 import gridenv.GridNode;
 import gridenv.GridSensor;
+import gridenv.NodeType;
 import simulations.coverage.CoverageActuator;
 
 /**

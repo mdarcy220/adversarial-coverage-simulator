@@ -26,9 +26,9 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import adsim.Display;
-import adsim.NodeType;
 import adsim.SimulatorMain;
 import gridenv.GridNode;
+import gridenv.NodeType;
 import simulations.pathplan.PathplanSimulation;
 import simulations.pathplan.display.PathplanGUIDisplay;
 import simulations.pathplan.display.PathplanPanel;
@@ -265,6 +265,18 @@ public class PathplanGUIDisplay implements Display {
 		dangerField.setValue(new Double(gridNode.getDangerProb()));
 		settingsPanel.add(dangerField);
 
+		final JLabel spreadLabel = new JLabel("Spread: ");
+		settingsPanel.add(spreadLabel);
+		final JFormattedTextField spreadField = new JFormattedTextField(doubleFormat);
+		spreadField.setValue(new Double(gridNode.spreadability));
+		settingsPanel.add(spreadField);
+
+		final JLabel fuelLabel = new JLabel("Fuel: ");
+		settingsPanel.add(fuelLabel);
+		final JFormattedTextField fuelField = new JFormattedTextField(doubleFormat);
+		fuelField.setValue(new Double(gridNode.dangerFuel));
+		settingsPanel.add(fuelField);
+
 		final JLabel coverCountLabel = new JLabel("Times covered: ");
 		settingsPanel.add(coverCountLabel);
 		final JSpinner coverCountSpinner = new JSpinner();
@@ -307,6 +319,8 @@ public class PathplanGUIDisplay implements Display {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				gridNode.spreadability = ((Number) spreadField.getValue()).doubleValue();
+				gridNode.dangerFuel = ((Number) fuelField.getValue()).doubleValue();
 				gridNode.setDangerProb(((Number) dangerField.getValue()).doubleValue());
 				gridNode.setCost(((Number) costField.getValue()).doubleValue());
 				gridNode.setCoverCount(((Number) coverCountSpinner.getValue()).intValue());

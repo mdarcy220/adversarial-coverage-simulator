@@ -44,12 +44,51 @@ public class SimulatorSettings {
 	 * Creates a new {@code SimulatorSettings} with the default settings set
 	 */
 	public SimulatorSettings() {
+		this.registerConsoleCommands();
 		// Set up defaults
 		this.setDefaults();
 
 		if (SimulatorMain.args.USE_SETTINGS_FILE) {
 			this.loadFromFile(new File(SimulatorMain.args.SETTINGS_FILE));
 		}
+	}
+
+
+	private void registerConsoleCommands() {
+
+		ConsoleController controller = SimulatorMain.controller;
+		controller.registerCommand(":set", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 2) {
+					return;
+				}
+				setAuto(args[0], args[1]);
+				SimulatorMain.getEngine().reloadSettings();
+			}
+		});
+
+		controller.registerCommand(":get", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 1) {
+					return;
+				}
+				System.out.print(getAsString(args[0]));
+			}
+		});
+
+
+		controller.registerCommand(":showsettings", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (0 < args.length && args[0].equals("ascommands")) {
+					System.out.println(exportToCommandString());
+				} else {
+					System.out.println(exportToString());
+				}
+			}
+		});
 	}
 
 
@@ -441,6 +480,7 @@ public class SimulatorSettings {
 					}
 				}
 				sd.dispose();
+				SimulatorMain.getEngine().reloadSettings();
 			}
 		});
 		buttonPanel.add(okButton);

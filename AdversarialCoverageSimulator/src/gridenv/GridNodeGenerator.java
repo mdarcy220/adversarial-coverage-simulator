@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
-import adsim.NodeType;
-
 public class GridNodeGenerator {
 
 	private Random randgen = new Random();
@@ -251,13 +249,15 @@ class GridNodeTemplate {
 		} else if ((rand - this.obstacleProb) < this.dangerNodeProb) {
 			node.setNodeType(NodeType.FREE);
 			node.setDangerProb(randgen.nextDouble() * (this.dangerMax - this.dangerMin) + this.dangerMin);
-			node.spreadability = randgen.nextDouble() * (this.spreadabilityMax - this.spreadabilityMin) + this.spreadabilityMin;
-			node.dangerFuel = randgen.nextDouble() * (this.fuelMax - this.fuelMin) + this.fuelMin;
 		} else {
 			node.setNodeType(NodeType.FREE);
 			node.setDangerProb(0.0);
 		}
 
+		if (node.getNodeType() != NodeType.OBSTACLE) {
+			node.spreadability = randgen.nextDouble() * (this.spreadabilityMax - this.spreadabilityMin) + this.spreadabilityMin;
+			node.dangerFuel = randgen.nextDouble() * (this.fuelMax - this.fuelMin) + this.fuelMin;
+		}
 
 		node.setCoverCount(this.coverCountStart);
 	}

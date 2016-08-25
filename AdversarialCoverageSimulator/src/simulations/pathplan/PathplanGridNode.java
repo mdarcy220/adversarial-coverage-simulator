@@ -1,7 +1,7 @@
 package simulations.pathplan;
 
-import adsim.NodeType;
 import gridenv.GridNode;
+import gridenv.NodeType;
 
 public class PathplanGridNode extends GridNode {
 	

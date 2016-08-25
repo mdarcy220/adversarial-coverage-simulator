@@ -63,27 +63,6 @@ public class ConsoleController {
 			}
 		});
 
-		this.registerCommand(":set", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				if (args.length < 2) {
-					return;
-				}
-				SimulatorMain.settings.setAuto(args[0], args[1]);
-				SimulatorMain.getEngine().reloadSettings();
-			}
-		});
-
-		this.registerCommand(":get", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				if (args.length < 1) {
-					return;
-				}
-				System.out.print(SimulatorMain.settings.getAsString(args[0]));
-			}
-		});
-
 		this.registerCommand(":print", new TerminalCommand() {
 			@Override
 			public void execute(String[] args) {
@@ -91,17 +70,6 @@ public class ConsoleController {
 					return;
 				}
 				System.out.print(args[0]);
-			}
-		});
-
-		this.registerCommand(":showsettings", new TerminalCommand() {
-			@Override
-			public void execute(String[] args) {
-				if (0 < args.length && args[0].equals("ascommands")) {
-					System.out.println(SimulatorMain.settings.exportToCommandString());
-				} else {
-					System.out.println(SimulatorMain.settings.exportToString());
-				}
 			}
 		});
 
@@ -346,6 +314,14 @@ public class ConsoleController {
 
 	public void quit() {
 		this.hasQuitInput = true;
+	}
+
+
+	public void setSimulatorSettings(SimulatorSettings settings) {
+		// Do nothing. This is a stub in case controller settings are needed
+		if (settings == null) {
+			return;
+		}
 	}
 
 }

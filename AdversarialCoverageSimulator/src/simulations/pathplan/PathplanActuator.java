@@ -1,12 +1,12 @@
 package simulations.pathplan;
 
-import adsim.NodeType;
 import adsim.SimulatorMain;
 import adsim.SimulatorSettings;
 import deeplearning.DQLActuator;
 import gridenv.Coordinate;
 import gridenv.GridEnvironment;
 import gridenv.GridRobot;
+import gridenv.NodeType;
 
 public class PathplanActuator implements DQLActuator {
 	private PathplanSimulation simulation;
@@ -149,10 +149,10 @@ public class PathplanActuator implements DQLActuator {
 	 */
 	private double calcMoveReward(boolean isThreat) {
 		double reward = 0.0;
-		if (isThreat) {
-			reward = this.DEATH_REWARD;
-		} else if (this.robot.getLocation().x == this.simulation.getGoalX() && this.robot.getLocation().y == this.simulation.getGoalY()) {
+		if (this.robot.getLocation().x == this.simulation.getGoalX() && this.robot.getLocation().y == this.simulation.getGoalY()) {
 			reward = this.REACH_GOAL_REWARD;
+		} else if (isThreat) {
+			reward = this.DEATH_REWARD;
 		}
 		return reward;
 	}

@@ -10,6 +10,7 @@ import adsim.stats.SampledVariableLong;
 import gridenv.GridEnvironment;
 import gridenv.GridNode;
 import gridenv.GridRobot;
+import gridenv.NodeType;
 
 
 public class CoverageStats {

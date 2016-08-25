@@ -1,4 +1,4 @@
-package adsim;
+package gridenv;
 
 public enum NodeType {
 	OBSTACLE,

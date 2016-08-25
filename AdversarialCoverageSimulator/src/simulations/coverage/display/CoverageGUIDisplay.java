@@ -13,9 +13,9 @@ import javax.swing.*;
 
 import adsim.SimulatorMain;
 import gridenv.GridNode;
+import gridenv.NodeType;
 import simulations.coverage.CoverageSimulation;
 import adsim.Display;
-import adsim.NodeType;
 
 public class CoverageGUIDisplay implements Display {
 	private CoveragePanel mainPanel = null;

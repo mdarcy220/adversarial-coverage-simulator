@@ -22,6 +22,7 @@ import gridenv.GridNode;
 import gridenv.GridNodeGenerator;
 import gridenv.GridRobot;
 import gridenv.GridSensor;
+import gridenv.NodeType;
 import simulations.coverage.CoverageStats;
 import simulations.generic.algo.DQL;
 import simulations.generic.algo.ExternalDQL;
@@ -45,6 +46,7 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 	private int MIN_WIDTH;
 	private double DANGER_SPREAD_FACTOR;
 	private double DANGER_DECAY_FACTOR;
+	private double DANGER_CAP;
 	private List<SettingsReloadable> settingsReloadableObjs = new ArrayList<>();
 
 	private SampledVariableLong batch_goalReached = new SampledVariableLong();
@@ -108,11 +110,24 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 
 	private void registerDefaultSettings() {
 		SimulatorSettings settings = SimulatorMain.settings;
-		if (!settings.hasProperty("pathplan.env.danger_decay_factor")) {
-			settings.setDouble("pathplan.env.danger_decay_factor", 0.1);
+		String settingName = "pathplan.env.danger_decay_factor";
+		if (!settings.hasProperty(settingName)) {
+			settings.setDouble(settingName, 0.1);
 		}
-		if (!settings.hasProperty("pathplan.env.danger_spread_factor")) {
-			settings.setDouble("pathplan.env.danger_spread_factor", 0.1);
+
+		settingName = "pathplan.env.danger_spread_factor";
+		if (!settings.hasProperty(settingName)) {
+			settings.setDouble(settingName, 0.1);
+		}
+
+		settingName = "pathplan.env.danger_cap";
+		if (!settings.hasProperty(settingName)) {
+			settings.setDouble(settingName, 0.25);
+		}
+
+		settingName = "pathplan.env.clear_obstacles_adjacent_to_goal";
+		if (!settings.hasProperty(settingName)) {
+			settings.setBoolean(settingName, true);
 		}
 	}
 
@@ -147,12 +162,36 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 				PathplanSimulation.this.restartSimulation();
 			}
 		});
+
+
+		controller.registerCommand(":set_goal_pos", new TerminalCommand() {
+			@Override
+			public void execute(String[] args) {
+				if (args.length < 2) {
+					return;
+				}
+
+				try {
+					int x = Integer.parseInt(args[0]);
+					int y = Integer.parseInt(args[1]);
+					PathplanSimulation.this.goalPos.x = x;
+					PathplanSimulation.this.goalPos.y = y;
+				} catch (NumberFormatException e) {
+					System.err.println("Unable to parse input. Usage: :set_goal_pos x y");
+				}
+			}
+		});
+
 	}
 
 
 	private void resetGoal() {
 		this.goalPos.x = this.random.nextInt(this.env.getWidth());
 		this.goalPos.y = this.random.nextInt(this.env.getHeight());
+		if (SimulatorMain.settings.getBoolean("pathplan.env.clear_obstacles_adjacent_to_goal")) {
+			this.env.clear4AdjactentCells(this.goalPos.x, this.goalPos.y);
+			this.env.getGridNode(this.goalPos.x, this.goalPos.y).setNodeType(NodeType.FREE);
+		}
 	}
 
 
@@ -184,7 +223,6 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 		if (this.env == null) {
 			return;
 		}
-		this.resetGoal();
 	}
 
 
@@ -282,8 +320,9 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 				double curDanger = envgrid[x][y].getDangerProb();
 				double dangerSpread = curDanger * envgrid[x][y].spreadability * this.DANGER_SPREAD_FACTOR;
 				if (0.0 < envgrid[x][y].dangerFuel) {
-					envgrid[x][y].dangerFuel -= curDanger * this.DANGER_DECAY_FACTOR;
-					this.dangerDeltas[x][y] += curDanger * this.DANGER_DECAY_FACTOR;
+					double fuelDelta = Math.min(envgrid[x][y].dangerFuel, curDanger * this.DANGER_DECAY_FACTOR);
+					envgrid[x][y].dangerFuel -= fuelDelta;
+					this.dangerDeltas[x][y] += fuelDelta;
 				} else {
 					this.dangerDeltas[x][y] -= curDanger * this.DANGER_DECAY_FACTOR;
 				}
@@ -308,8 +347,8 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 				double newVal = envgrid[x][y].getDangerProb() + this.dangerDeltas[x][y];
 				if (newVal < 0.0) {
 					newVal = 0;
-				} else if (1.0 < newVal) {
-					newVal = 1.0;
+				} else if (this.DANGER_CAP < newVal) {
+					newVal = this.DANGER_CAP;
 				}
 				envgrid[x][y].setDangerProb(newVal);
 			}
@@ -366,6 +405,7 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 		this.MIN_WIDTH = settings.getInt("env.grid.minwidth");
 		this.DANGER_DECAY_FACTOR = settings.getDouble("pathplan.env.danger_decay_factor");
 		this.DANGER_SPREAD_FACTOR = settings.getDouble("pathplan.env.danger_spread_factor");
+		this.DANGER_CAP = settings.getDouble("pathplan.env.danger_cap");
 	}
 
 
@@ -420,6 +460,9 @@ public class PathplanSimulation implements Simulation, SettingsReloadable {
 				this.nodegen.genNext(this.env.grid[x][y]);
 			}
 		}
+
+
+		this.resetGoal();
 	}
 
 

@@ -7,8 +7,8 @@ import adsim.SimulatorMain;
 import gridenv.GridEnvironment;
 import gridenv.GridNode;
 import gridenv.GridRobot;
+import gridenv.NodeType;
 import simulations.coverage.CoverageSimulation;
-import adsim.NodeType;
 
 public class CoveragePanel extends JPanel {
 	private static final long serialVersionUID = -3413050706073789678L;
