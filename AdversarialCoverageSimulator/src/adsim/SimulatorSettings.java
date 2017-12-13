@@ -152,7 +152,7 @@ public class SimulatorSettings {
 		this.setDouble("neuralnet.momentum", 0.9);
 		this.setDouble("neuralnet.rms.decay_rate", 0.9);
 
-		this.setString("adsim.algorithm_name", "DQL");
+		this.setString("adsim.algorithm_name", "GSACGC");
 		this.setString("deepql.external_torch_nn.io_file_prefix", "/home/ai04/midarcy/prog/lua/scratch/environments/betatester/");
 		this.setString("deepql.external_torch_nn.nninput_file_name", "input2.dat");
 		this.setString("deepql.external_torch_nn.nnoutput_file_name", "output2.dat");
